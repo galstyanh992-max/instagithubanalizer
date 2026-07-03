@@ -1,0 +1,1528 @@
+// AI Jarwisyan — Prisma schema (SQLite)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  settings  String? // JSON: flexible user settings (from agents)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspaces Workspace[]
+}
+
+model Setting {
+  id          String @id @default("singleton")
+  githubToken String @default("")
+  aiProvider  String @default("glm")
+  glmApiKey   String @default("")
+  glmBaseUrl  String @default("https://api.z.ai/api")
+  ocrProvider String @default("local")
+  ttsProvider String @default("browser")
+  sttProvider String @default("browser")
+
+  // PC specs (legacy simple fields — kept for backward compat with existing UI)
+  cpu             String  @default("Intel Xeon E5-2699 v3 @ 2.30GHz")
+  ram             String  @default("64")
+  gpu             String  @default("AMD Radeon RX 580 2048SP")
+  vram            String  @default("8")
+  os              String  @default("Windows 11 Pro 23H2")
+  freeDiskGb      Int     @default(335)
+  dockerAvailable Boolean @default(false)
+  pythonVersion   String  @default("")
+  nodeVersion     String  @default("")
+  gitAvailable    Boolean @default(true)
+  cudaAvailable   Boolean @default(false)
+
+  // Expanded PC profile (per spec)
+  pcProfileName      String  @default("Main Windows Workstation")
+  pcSystemType       String  @default("64-bit OS, x64-based processor")
+  pcCpuNotes         String  @default("high-core-count Xeon workstation CPU")
+  pcStorageTotalGb   Int     @default(704)
+  pcStorageUsedGb    Int     @default(369)
+  pcCudaNotes        String  @default("CUDA is not available because GPU is AMD Radeon RX 580, not NVIDIA.")
+  pcRocmAvailable    Boolean @default(false)
+  pcPreferredRunMode String  @default("local_or_docker_when_possible")
+  pcFallbackRunMode  String  @default("ollama_cloud_if_local_not_possible")
+
+  // Cloud provider policy
+  cloudProvider         String @default("ollama_cloud")
+  allowedCloudProviders String @default("ollama_cloud") // JSON-encoded array
+
+  // Language
+  language String @default("ru") // ru | en
+
+  // UI
+  enable3d      Boolean @default(false)
+  reduceMotion  Boolean @default(false)
+  compactMode   Boolean @default(false)
+  neonIntensity Int     @default(70)
+  voiceEnabled  Boolean @default(true)
+  autoSpeak     Boolean @default(false)
+
+  // Project context
+  projectAgentOs Boolean @default(true)
+  projectAiLegal Boolean @default(true)
+  projectRagOcr  Boolean @default(true)
+  projectVideo   Boolean @default(true)
+  projectSaas    Boolean @default(true)
+  projectTrading Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+}
+
+model Screenshot {
+  id                String               @id @default(cuid())
+  filename          String
+  filePath          String
+  mimeType          String               @default("image/png")
+  extractedText     String               @default("")
+  confidenceAverage Float                @default(0)
+  needsManualReview Boolean              @default(false)
+  sourceType        String               @default("upload")
+  createdAt         DateTime             @default(now())
+  candidates        ExtractedCandidate[]
+}
+
+model ExtractedCandidate {
+  id                String     @id @default(cuid())
+  screenshotId      String
+  screenshot        Screenshot @relation(fields: [screenshotId], references: [id], onDelete: Cascade)
+  rawText           String
+  candidateName     String
+  resolvedGithubUrl String     @default("")
+  owner             String     @default("")
+  repo              String     @default("")
+  confidenceScore   Float      @default(0)
+  needsManualReview Boolean    @default(false)
+  resolvedBy        String     @default("auto")
+  status            String     @default("pending")
+  createdAt         DateTime   @default(now())
+}
+
+model Repository {
+  id              String    @id @default(cuid())
+  owner           String
+  name            String
+  fullName        String    @unique
+  githubUrl       String
+  description     String    @default("")
+  stars           Int       @default(0)
+  forks           Int       @default(0)
+  watchers        Int       @default(0)
+  openIssues      Int       @default(0)
+  license         String    @default("unknown")
+  primaryLanguage String    @default("")
+  topics          String    @default("[]")
+  createdAtGithub DateTime?
+  updatedAtGithub DateTime?
+  pushedAtGithub  DateTime?
+  archived        Boolean   @default(false)
+  disabled        Boolean   @default(false)
+  defaultBranch   String    @default("main")
+  readmeText      String    @default("")
+
+  hasDocker        Boolean @default(false)
+  hasDockerCompose Boolean @default(false)
+  hasPackageJson   Boolean @default(false)
+  hasRequirements  Boolean @default(false)
+  hasPyproject     Boolean @default(false)
+  hasEnvExample    Boolean @default(false)
+
+  localRunPossible Boolean @default(true)
+  gpuRequired      Boolean @default(false)
+  difficulty       String  @default("MEDIUM")
+
+  usefulnessScore     Int @default(0)
+  healthScore         Int @default(0)
+  compatibilityScore  Int @default(0)
+  commercialRiskScore Int @default(0)
+  agentOsScore        Int @default(0)
+  aiLegalScore        Int @default(0)
+  securityScore       Int @default(0)
+  costScore           Int @default(0)
+  finalPriorityScore  Int @default(0)
+
+  verdict             String @default("TEST")
+  securityStatus      String @default("SAFE")
+  securityNotes       String @default("[]")
+  commercialUseStatus String @default("UNKNOWN")
+  commercialNotes     String @default("")
+  costNotes           String @default("")
+
+  isWatchlisted Boolean   @default(false)
+  lastCheckedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  analyses           RepositoryAnalysis[]
+  installPlans       InstallPlan[]
+  tags               RepositoryTag[]
+  analysisRuns       AnalysisRun[]
+  watchlistSnapshots WatchlistSnapshot[]
+}
+
+model RepositoryAnalysis {
+  id                  String     @id @default(cuid())
+  repositoryId        String
+  repository          Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  summary             String     @default("")
+  problemSolved       String     @default("")
+  usefulness          String     @default("")
+  projectFit          String     @default("{}")
+  extractedIdeas      String     @default("[]")
+  risks               String     @default("[]")
+  testPlan            String     @default("{}")
+  localRunPlan        String     @default("{}")
+  securityReview      String     @default("")
+  commercialReview    String     @default("")
+  costReview          String     @default("")
+  finalRecommendation String     @default("")
+  rawAiJson           String     @default("{}")
+  mock                Boolean    @default(false)
+  createdAt           DateTime   @default(now())
+}
+
+model InstallPlan {
+  id                String     @id @default(cuid())
+  repositoryId      String
+  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  prerequisites     String     @default("[]")
+  dockerCommands    String     @default("[]")
+  manualCommands    String     @default("[]")
+  envVars           String     @default("[]")
+  verificationSteps String     @default("[]")
+  commonErrors      String     @default("[]")
+  cleanupSteps      String     @default("[]")
+  mock              Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+}
+
+model Category {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String          @default("")
+  createdAt   DateTime        @default(now())
+  repos       RepositoryTag[]
+}
+
+model Tag {
+  id        String          @id @default(cuid())
+  name      String
+  slug      String          @unique
+  createdAt DateTime        @default(now())
+  repos     RepositoryTag[]
+}
+
+model RepositoryTag {
+  id           String     @id @default(cuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  categoryId   String?
+  category     Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tagId        String?
+  tag          Tag?       @relation(fields: [tagId], references: [id], onDelete: SetNull)
+  createdAt    DateTime   @default(now())
+}
+
+model AnalysisRun {
+  id           String     @id @default(cuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  status       String     @default("pending")
+  mode         String     @default("live")
+  startedAt    DateTime   @default(now())
+  finishedAt   DateTime?
+  errorMessage String     @default("")
+  createdAt    DateTime   @default(now())
+}
+
+model WatchlistSnapshot {
+  id                  String     @id @default(cuid())
+  repositoryId        String
+  repository          Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  starsDelta          Int        @default(0)
+  forksDelta          Int        @default(0)
+  issuesDelta         Int        @default(0)
+  newReleaseDetected  Boolean    @default(false)
+  lastCommitDelta     String     @default("")
+  breakingChangesNote String     @default("")
+  capturedAt          DateTime   @default(now())
+  createdAt           DateTime   @default(now())
+}
+
+// ============================================================
+// Connected Projects — мои проекты, в которые можно интегрировать
+// полезные части из анализируемых GitHub-репозиториев.
+// ============================================================
+
+model ConnectedProject {
+  id               String            @id @default(cuid())
+  name             String
+  description      String            @default("")
+  localPath        String            @default("")
+  githubUrl        String            @default("")
+  techStack        String            @default("[]") // JSON
+  goals            String            @default("[]") // JSON
+  constraints      String            @default("[]") // JSON
+  importantFiles   String            @default("[]") // JSON
+  currentTasks     String            @default("[]") // JSON
+  integrationRules String            @default("[]") // JSON
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  integrationPlans IntegrationPlan[]
+}
+
+model RepositoryHealthSnapshot {
+  id            String    @id @default(cuid())
+  repositoryId  String
+  stars         Int       @default(0)
+  forks         Int       @default(0)
+  openIssues    Int       @default(0)
+  watchers      Int       @default(0)
+  latestRelease String    @default("")
+  pushedAt      DateTime?
+  checkedAt     DateTime  @default(now())
+}
+
+model IntegrationPlan {
+  id                    String           @id @default(cuid())
+  connectedProjectId    String
+  connectedProject      ConnectedProject @relation(fields: [connectedProjectId], references: [id], onDelete: Cascade)
+  repositoryId          String?
+  title                 String           @default("")
+  summary               String           @default("")
+  usefulParts           String           @default("[]") // JSON
+  filesToInspect        String           @default("[]") // JSON
+  suggestedChanges      String           @default("[]") // JSON
+  reusableComponents    String           @default("[]") // JSON
+  apiPatterns           String           @default("[]") // JSON
+  agentWorkflowIdeas    String           @default("[]") // JSON
+  databasePatterns      String           @default("[]") // JSON
+  uiUxIdeas             String           @default("[]") // JSON
+  requiredDeps          String           @default("[]") // JSON
+  compatibilityConcerns String           @default("[]") // JSON
+  risks                 String           @default("[]") // JSON
+  implementationSteps   String           @default("[]") // JSON
+  doNotIntegrate        String           @default("[]") // JSON
+  estimatedEffort       String           @default("MEDIUM") // LOW | MEDIUM | HIGH
+  finalRecommendation   String           @default("")
+  status                String           @default("DRAFT") // DRAFT | READY | IMPLEMENTED | ARCHIVED
+  mock                  Boolean          @default(false)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+}
+
+// ============================================================
+// Memory Hub — память AI Jarwisyan
+// ============================================================
+
+model MemoryRecord {
+  id           String   @id @default(cuid())
+  kind         String // project | repository | user_preference | decision | integration_plan | error_solution | command | voice_note | note | external_doc
+  title        String
+  content      String   @default("")
+  source       String   @default("manual") // manual | chat | repo_analysis | voice | import | system
+  projectId    String?
+  repositoryId String?
+  tags         String   @default("[]") // JSON array
+  metadata     String   @default("{}") // JSON object
+  sensitive    Boolean  @default(false) // помечена как sensitive — не отправлять в AI
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model KnowledgeVaultSource {
+  id        String   @id @default(cuid())
+  name      String
+  type      String // obsidian | logseq | joplin | affine | siyuan | markdown_folder | github_docs
+  localPath String   @default("")
+  githubUrl String   @default("")
+  syncMode  String   @default("manual") // manual | auto
+  active    Boolean  @default(true)
+  metadata  String   @default("{}") // JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// === AGENTS MERGE ===
+// Agent OS — Foundation Schema
+// Single-user now, SaaS-ready architecture
+
+// ─── Core Entities ───────────────────────────────────────────
+
+model Workspace {
+  id               String   @id @default(cuid())
+  ownerId          String
+  name             String
+  mode             String   @default("single") // single | team | saas
+  monthlyBudgetUsd Decimal  @default(0.0)
+  spentThisMonth   Decimal  @default(0.0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  projects Project[]
+  agents   Agent[]
+
+  @@index([ownerId])
+  @@map("workspaces")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  sourceType  String   @default("local") // local | git | cloud
+  sourcePath  String?
+  repoUrl     String?
+  status      String   @default("active") // active | archived | deleted
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  epics     Epic[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([status])
+  @@map("projects")
+}
+
+model Epic {
+  id          String   @id @default(cuid())
+  projectId   String
+  title       String
+  description String?
+  status      String   @default("planned") // backlog | planned | in_progress | review | done | cancelled
+  priority    String   @default("medium") // low | medium | high | critical
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@index([projectId])
+  @@index([projectId, status])
+  @@index([status])
+  @@map("epics")
+}
+
+model Task {
+  id               String   @id @default(cuid())
+  epicId           String
+  parentTaskId     String?
+  title            String
+  description      String?
+  status           String   @default("backlog") // backlog | planned | in_progress | review | waiting_approval | done | failed | cancelled
+  priority         String   @default("medium") // low | medium | high | critical
+  assignedAgentId  String?
+  riskLevel        String   @default("low") // low | medium | high | critical
+  requiresApproval Boolean  @default(false)
+  costEstimate     Float?
+  costActual       Float?
+  maxCostUsd       Decimal  @default(2.00)
+  currentCostUsd   Decimal  @default(0.0)
+  maxIterations    Int      @default(15)
+  iterations       Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  epic             Epic              @relation(fields: [epicId], references: [id], onDelete: Cascade)
+  parentTask       Task?             @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks         Task[]            @relation("TaskSubtasks")
+  assignedAgent    Agent?            @relation("TaskAssignee", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  approvalRequests ApprovalRequest[]
+  costLogs         CostLog[]
+
+  @@index([epicId])
+  @@index([epicId, status])
+  @@index([assignedAgentId])
+  @@index([assignedAgentId, status])
+  @@index([parentTaskId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("tasks")
+}
+
+model Agent {
+  id                String   @id @default(cuid())
+  workspaceId       String
+  name              String
+  role              String
+  type              String   @default("permanent") // permanent | temporary
+  visualProfile     String? // JSON: appearance, avatar config
+  professionalStyle String? // JSON: behavior, communication style
+  systemPrompt      String? // System prompt for AI model
+  status            String   @default("offline") // idle | thinking | working | waiting_api | reviewing | waiting_approval | done | error | offline
+  locationZone      String   @default("lounge_area") // command_area | situation_room | development_area | design_area | research_area | server_room | meeting_room | lounge_area
+  activeTaskId      String? // Currently active task (not FK to avoid circular)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  workspace        Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks            Task[]                 @relation("TaskAssignee")
+  approvalRequests ApprovalRequest[]
+  costLogs         CostLog[]
+  profile          AgentProfile?
+  capabilities     AgentCapability[]
+  modelConfigs     AgentModelConfig[]
+  permissions      AgentPermission[]
+  runtimeState     AgentRuntimeState?
+  memoryLinks      AgentMemoryLink[]
+  skillLinks       AgentSkillLink[]
+  toolLinks        AgentToolLink[]
+  capabilityScores AgentCapabilityScore[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, role])
+  @@index([workspaceId, locationZone])
+  @@index([status])
+  @@index([role])
+  @@map("agents")
+}
+
+// ─── Agent System ───────────────────────────────────────────────
+
+model AgentProfile {
+  id               String   @id @default(cuid())
+  agentId          String   @unique
+  displayName      String
+  avatarKey        String? // avatar identifier / emoji
+  bio              String? // Professional bio
+  seniority        String   @default("senior") // junior | mid | senior | lead | principal
+  workingStyle     String? // JSON: preferences, habits
+  strengths        String? // JSON: array of strengths
+  limitations      String? // JSON: array of limitations
+  responsibilities String? // JSON: array of responsibilities
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("agent_profiles")
+}
+
+model AgentCapability {
+  id            String   @id @default(cuid())
+  agentId       String
+  capabilityKey String // orchestration | product_analysis | frontend_development | etc.
+  level         String   @default("intermediate") // basic | intermediate | advanced | expert
+  enabled       Boolean  @default(true)
+  metadata      String? // JSON
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, capabilityKey])
+  @@index([agentId])
+  @@index([capabilityKey])
+  @@map("agent_capabilities")
+}
+
+model AgentModelConfig {
+  id             String   @id @default(cuid())
+  agentId        String
+  provider       String // openai | anthropic | google | local | openrouter
+  model          String // OpenRouter model slug, normalized by the server-side model registry
+  preferenceType String   @default("preferred") // preferred | fallback
+  maxCostPerTask Float?
+  maxTokens      Int?
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@map("agent_model_configs")
+}
+
+model AgentPermission {
+  id              String   @id @default(cuid())
+  agentId         String
+  permissionKey   String // files | terminal | git | database | browser | documents | rag | ocr | translation | deployment | secrets | payments
+  permissionLevel String   @default("none") // none | read | write | admin
+  constraints     String? // JSON: additional constraints
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, permissionKey])
+  @@index([agentId])
+  @@map("agent_permissions")
+}
+
+model AgentRuntimeState {
+  id              String   @id @default(cuid())
+  agentId         String   @unique
+  status          String   @default("offline") // mirrors Agent.status
+  locationZone    String   @default("lounge_area")
+  activeTaskId    String? // Currently active task
+  lastActivityAt  DateTime @default(now())
+  currentActivity String? // Description of current activity
+  metadata        String? // JSON: extended runtime info
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("agent_runtime_states")
+}
+
+model AgentMemoryLink {
+  id           String   @id @default(cuid())
+  agentId      String
+  memoryItemId String
+  relevance    Float    @default(1.0) // 0.0–1.0 relevance score
+  createdAt    DateTime @default(now())
+
+  agent      Agent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  memoryItem MemoryItem @relation(fields: [memoryItemId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, memoryItemId])
+  @@index([agentId])
+  @@index([memoryItemId])
+  @@map("agent_memory_links")
+}
+
+// ─── Memory System ───────────────────────────────────────────
+
+model MemoryItem {
+  id      String  @id @default(cuid())
+  // ── Legacy scope fields (preserved for compatibility) ──────
+  scope   String  @default("workspace") // global | workspace | project | agent | task
+  scopeId String? // ID of the scope entity
+
+  // ── New workspace-first fields ────────────────────────────
+  workspaceId String? // direct workspace reference
+  projectId   String? // optional project binding
+  agentId     String? // which agent generated this
+
+  // ── Type and content ──────────────────────────────────────
+  type     String // decision | fact | architecture | bug | task_result |
+  // brand_rule | user_preference | risk | lead_note |
+  // workflow_note | file_reference | context | lesson |
+  // conversation_summary | error (extendable)
+  title    String  @default("") // brief label / search key
+  content  String
+  tags     String  @default("[]") // JSON array of string tags
+  metadata String? // JSON (legacy + extensions)
+
+  // ── Enrichment fields ─────────────────────────────────────
+  importance String @default("medium") // low | medium | high | critical
+  confidence Float  @default(0.8) // 0..1
+  visibility String @default("workspace") // global | workspace | agent_private
+
+  // ── Conflict tracking ─────────────────────────────────────
+  conflictIds String @default("[]") // JSON array of conflicting item IDs
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agentLinks AgentMemoryLink[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, type])
+  @@index([workspaceId, importance])
+  @@index([workspaceId, visibility])
+  @@index([agentId])
+  @@index([projectId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("memory_items")
+}
+
+// ─── Approval System ─────────────────────────────────────────
+
+model ApprovalRequest {
+  id          String   @id @default(cuid())
+  taskId      String? // Optional: null when approval is for a tool execution without task context
+  workspaceId String? // Direct workspace reference for task-independent approvals
+  agentId     String
+  actionType  String // execute | deploy | delete | modify | spend | access
+  summary     String
+  risk        String   @default("medium") // low | medium | high | critical
+  payload     String? // JSON: action details
+  status      String   @default("pending") // pending | approved | rejected | expired
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  task           Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  agent          Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  toolExecutions ToolExecution[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([agentId])
+  @@index([taskId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("approval_requests")
+}
+
+// ─── Event Log ───────────────────────────────────────────────
+
+model EventLog {
+  id          String   @id @default(cuid())
+  eventType   String
+  entityType  String? // project | epic | task | agent | approval | memory | cost | orchestrator | tool
+  entityId    String?
+  workspaceId String? // Workspace scope — extracted from payload on emit. Null for global/system events.
+  payload     String? // JSON
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([workspaceId, eventType])
+  @@index([workspaceId, createdAt])
+  @@index([eventType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("event_logs")
+}
+
+// ─── Cost Tracking ───────────────────────────────────────────
+
+model CostLog {
+  id        String   @id @default(cuid())
+  agentId   String
+  taskId    String?
+  provider  String? // openai | anthropic | google | local | etc.
+  model     String?
+  tokensIn  Int      @default(0)
+  tokensOut Int      @default(0)
+  cost      Float    @default(0)
+  createdAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  task  Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([agentId])
+  @@index([taskId])
+  @@index([createdAt])
+  @@map("cost_logs")
+}
+
+// ─── Tool Hub ────────────────────────────────────────────────
+
+model Tool {
+  id               String   @id @default(cuid())
+  workspaceId      String? // null = global tool
+  name             String
+  key              String // unique per workspace/global, e.g. "filesystem.read"
+  category         String // model_provider | filesystem | terminal | git | browser | database | document | ocr | translation | rag | deployment | notification | media | cost | internal
+  description      String?
+  configSchema     String? // JSON: expected input schema
+  enabled          Boolean  @default(true)
+  riskLevel        String   @default("low") // low | medium | high | critical
+  requiresApproval Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  policies   ToolPermissionPolicy[]
+  executions ToolExecution[]
+  agentLinks AgentToolLink[]
+  packItems  ToolPackItem[]
+  usageLogs  ToolUsageLog[]
+
+  @@unique([key, workspaceId])
+  @@index([workspaceId])
+  @@index([workspaceId, category])
+  @@index([workspaceId, enabled])
+  @@index([category])
+  @@map("tools")
+}
+
+model ToolExecution {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  agentId           String?
+  taskId            String?
+  toolId            String
+  action            String // e.g. "read", "write", "run", "deploy"
+  correlationId     String? // Links orchestrator → tool events for UI animation correlation
+  inputSummary      String? // JSON: truncated summary of input (display/logs only)
+  inputFull         String? // JSON: full input — used on resume (never truncated)
+  outputSummary     String? // JSON: safe summary of output
+  status            String    @default("pending") // pending | running | success | failed | blocked | requires_approval
+  riskLevel         String    @default("low") // low | medium | high | critical
+  approvalRequestId String? // FK to ApprovalRequest if requires_approval
+  errorMessage      String?
+  metadata          String? // JSON: extended execution info
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+
+  tool            Tool             @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  approvalRequest ApprovalRequest? @relation(fields: [approvalRequestId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, createdAt])
+  @@index([agentId])
+  @@index([taskId])
+  @@index([toolId])
+  @@index([approvalRequestId])
+  @@index([correlationId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("tool_executions")
+}
+
+model ToolPermissionPolicy {
+  id            String   @id @default(cuid())
+  toolId        String
+  permissionKey String // maps to AgentPermission.permissionKey
+  requiredLevel String   @default("read") // none | read | write | admin
+  constraints   String? // JSON: additional constraints
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tool Tool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([toolId, permissionKey])
+  @@index([toolId])
+  @@map("tool_permission_policies")
+}
+
+// ─── Browser Operator ────────────────────────────────────────
+
+model BrowserOperatorTask {
+  id               String    @id @default(cuid())
+  workspaceId      String?
+  agentId          String?
+  toolExecutionId  String? // FK to ToolExecution for DB-backed Tool Hub sync
+  provider         String    @default("custom") // custom | playwright
+  prompt           String
+  url              String?
+  mode             String    @default("extract") // navigate | extract | interact | automate
+  status           String    @default("queued") // queued | running | completed | failed | needs_human | cancelled
+  priority         String    @default("normal") // low | normal | high | critical
+  result           String? // JSON: extracted content or result
+  error            String?
+  needsHumanReason String?
+  finalUrl         String?
+  retryCount       Int       @default(0)
+  maxRetries       Int       @default(2)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  logs        BrowserOperatorLog[]
+  screenshots BrowserOperatorScreenshot[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("browser_operator_tasks")
+}
+
+model BrowserOperatorLog {
+  id        String   @id @default(cuid())
+  taskId    String
+  level     String   @default("info") // info | warn | error | debug
+  message   String
+  step      Int?
+  timestamp DateTime @default(now())
+
+  task BrowserOperatorTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([taskId, level])
+  @@index([timestamp])
+  @@map("browser_operator_logs")
+}
+
+model BrowserOperatorScreenshot {
+  id        String   @id @default(cuid())
+  taskId    String
+  filename  String
+  label     String?
+  sizeBytes Int      @default(0)
+  createdAt DateTime @default(now())
+
+  task BrowserOperatorTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("browser_operator_screenshots")
+}
+
+model BrowserOperatorProviderConfig {
+  id             String   @id @default(cuid())
+  providerId     String   @unique // custom | playwright | chatgpt | claude | gemini | zai
+  name           String
+  description    String?
+  headless       Boolean  @default(false)
+  profileDir     String?
+  viewportWidth  Int      @default(1280)
+  viewportHeight Int      @default(720)
+  defaultTimeout Int      @default(30000)
+  maxSessions    Int      @default(1)
+  blockedDomains String? // JSON: array of blocked domain strings
+  allowedDomains String? // JSON: array of allowed domain strings
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("browser_operator_provider_configs")
+}
+
+// ─── Skill Registry ──────────────────────────────────────────
+
+model SkillDefinition {
+  id            String   @id @default(cuid())
+  key           String   @unique // research | deep_research | web_search | legal_analysis | etc.
+  name          String
+  description   String
+  category      String // analysis | creation | communication | automation | management | technical | media | specialized
+  icon          String? // emoji or icon name
+  version       String   @default("1.0.0")
+  status        String   @default("available") // available | deprecated | beta | experimental
+  requiredTools String? // JSON: array of tool keys required
+  tags          String? // JSON: array of tags
+  installCount  Int      @default(0)
+  metadata      String? // JSON: extended info
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  agentLinks AgentSkillLink[]
+  packItems  SkillPackItem[]
+  usageLogs  SkillUsageLog[]
+
+  @@index([category])
+  @@index([status])
+  @@map("skill_definitions")
+}
+
+model AgentSkillLink {
+  id          String   @id @default(cuid())
+  agentId     String
+  skillId     String
+  enabled     Boolean  @default(true)
+  installed   Boolean  @default(true) // installed vs available
+  config      String? // JSON: agent-specific config
+  score       Int      @default(50) // 0-100 capability score
+  installedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  skill SkillDefinition @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, skillId])
+  @@index([agentId])
+  @@index([skillId])
+  @@map("agent_skill_links")
+}
+
+model SkillUsageLog {
+  id         String   @id @default(cuid())
+  skillId    String
+  agentId    String?
+  taskId     String?
+  action     String // execute | install | uninstall | enable | disable
+  success    Boolean  @default(true)
+  durationMs Int?
+  metadata   String? // JSON
+  createdAt  DateTime @default(now())
+
+  skill SkillDefinition @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([skillId])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("skill_usage_logs")
+}
+
+// ─── Skill Packs ─────────────────────────────────────────────
+
+model SkillPack {
+  id           String   @id @default(cuid())
+  key          String   @unique // legal_pack | research_pack | coding_pack | etc.
+  name         String
+  description  String
+  icon         String?
+  color        String? // theme color
+  version      String   @default("1.0.0")
+  status       String   @default("available") // available | deprecated | beta
+  installCount Int      @default(0)
+  metadata     String? // JSON
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items SkillPackItem[]
+
+  @@index([status])
+  @@map("skill_packs")
+}
+
+model SkillPackItem {
+  id       String  @id @default(cuid())
+  packId   String
+  skillId  String
+  required Boolean @default(true) // required vs optional in pack
+
+  pack  SkillPack       @relation(fields: [packId], references: [id], onDelete: Cascade)
+  skill SkillDefinition @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([packId, skillId])
+  @@index([packId])
+  @@index([skillId])
+  @@map("skill_pack_items")
+}
+
+// ─── Tool Packs ──────────────────────────────────────────────
+
+model ToolPack {
+  id           String   @id @default(cuid())
+  key          String   @unique // dev_tools | analytics_tools | etc.
+  name         String
+  description  String
+  icon         String?
+  color        String?
+  version      String   @default("1.0.0")
+  status       String   @default("available") // available | deprecated | beta
+  installCount Int      @default(0)
+  metadata     String? // JSON
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items ToolPackItem[]
+
+  @@index([status])
+  @@map("tool_packs")
+}
+
+model ToolPackItem {
+  id       String  @id @default(cuid())
+  packId   String
+  toolId   String
+  required Boolean @default(true)
+
+  pack ToolPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  tool Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([packId, toolId])
+  @@index([packId])
+  @@index([toolId])
+  @@map("tool_pack_items")
+}
+
+// ─── Agent Capability Scores ─────────────────────────────────
+
+model AgentCapabilityScore {
+  id             String   @id @default(cuid())
+  agentId        String
+  capabilityKey  String // coding | research | design | communication | automation | etc.
+  score          Int      @default(0) // 0-100
+  trend          String   @default("stable") // improving | stable | declining
+  evidence       String? // JSON: array of evidence items
+  lastAssessedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, capabilityKey])
+  @@index([agentId])
+  @@map("agent_capability_scores")
+}
+
+// ─── Agent Tool Links (DB-level) ─────────────────────────────
+
+model AgentToolLink {
+  id          String   @id @default(cuid())
+  agentId     String
+  toolId      String
+  enabled     Boolean  @default(true)
+  installed   Boolean  @default(true)
+  config      String? // JSON
+  installedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  tool  Tool  @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, toolId])
+  @@index([agentId])
+  @@index([toolId])
+  @@map("agent_tool_links")
+}
+
+// ─── Marketplace ─────────────────────────────────────────────
+
+model MarketplaceItem {
+  id           String   @id @default(cuid())
+  type         String // skill_pack | tool_pack | agent_template | workflow_template
+  key          String   @unique
+  name         String
+  description  String
+  author       String   @default("Agent OS")
+  version      String   @default("1.0.0")
+  icon         String?
+  color        String?
+  category     String?
+  tags         String? // JSON: array
+  content      String? // JSON: full item definition (skills, tools, config, etc.)
+  rating       Float    @default(0) // 0-5 average rating
+  reviewCount  Int      @default(0)
+  installCount Int      @default(0)
+  status       String   @default("published") // published | review | draft | deprecated
+  featured     Boolean  @default(false)
+  metadata     String? // JSON
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([category])
+  @@map("marketplace_items")
+}
+
+// ─── Workflow Templates ──────────────────────────────────────
+
+model WorkflowTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  steps       String // JSON: array of { agentId, skillId, toolId, input, output } steps
+  category    String? // development | research | deployment | review | custom
+  icon        String?
+  version     String   @default("1.0.0")
+  status      String   @default("available")
+  metadata    String? // JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@map("workflow_templates")
+}
+
+// ─── Tool Usage Analytics ────────────────────────────────────
+
+model ToolUsageLog {
+  id         String   @id @default(cuid())
+  toolId     String
+  agentId    String?
+  taskId     String?
+  action     String // execute | install | disable | enable
+  success    Boolean  @default(true)
+  durationMs Int?
+  metadata   String? // JSON
+  createdAt  DateTime @default(now())
+
+  tool Tool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@index([toolId])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("tool_usage_logs")
+}
+
+// ─── Department System ───────────────────────────────────────
+
+model Department {
+  id          String   @id @default(cuid())
+  key         String   @unique // dev_department | marketing_department
+  name        String
+  description String?
+  color       String? // Theme color for UI
+  icon        String? // Icon name
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  handoffs HandoffRecord[]
+
+  @@map("departments")
+}
+
+model HandoffRecord {
+  id               String    @id @default(cuid())
+  workspaceId      String
+  projectId        String?
+  fromDepartment   String // dev_department | marketing_department
+  toDepartment     String // dev_department | marketing_department
+  triggerEvent     String // handoff.product_concept_ready | etc.
+  status           String    @default("pending") // pending | in_progress | completed | failed
+  inputArtifacts   String? // JSON: array of HandoffArtifact
+  outputArtifacts  String? // JSON: array of HandoffArtifact
+  receivingAgentId String?
+  errors           String? // JSON: array of error strings
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  department Department @relation(fields: [fromDepartment], references: [key], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([fromDepartment])
+  @@index([toDepartment])
+  @@index([status])
+  @@map("handoff_records")
+}
+
+// ─── Content Calendar ─────────────────────────────────────────
+
+model ContentItem {
+  id          String  @id @default(cuid())
+  workspaceId String
+  projectId   String?
+
+  // Content fields
+  title    String
+  platform String // instagram | tiktok | telegram | twitter | linkedin | youtube | whatsapp | general
+  format   String  @default("text") // image | video | text | carousel | reel | story
+  caption  String  @default("")
+  script   String  @default("")
+  hashtags String  @default("[]") // JSON array of strings
+  mediaUrl String? // URL/path to media asset (future integration)
+
+  // Workflow status
+  status String @default("draft")
+  // draft | in_review | approved | scheduled | published_manual | rejected | archived
+
+  // Scheduling
+  scheduledAt DateTime?
+  publishedAt DateTime? // set when status = published_manual
+
+  // Attribution
+  createdByAgentId  String?
+  approvedByAgentId String?
+
+  // Brand Guardian scores
+  riskLevel String @default("low") // low | medium | high | critical
+  score     Int    @default(0) // 0–100
+
+  // Notes
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews    ContentReview[]
+  queueItems PublishingQueueItem[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, platform])
+  @@index([workspaceId, scheduledAt])
+  @@index([createdByAgentId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("content_items")
+}
+
+model ContentReview {
+  id            String   @id @default(cuid())
+  contentItemId String
+  agentId       String?
+  agentName     String?
+  status        String // approved | rejected | needs_changes
+  score         Int      @default(0)
+  riskLevel     String   @default("low")
+  notes         String?
+  issues        String   @default("[]") // JSON array
+  suggestions   String   @default("[]") // JSON array
+  reviewedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+  @@index([contentItemId, status])
+  @@map("content_reviews")
+}
+
+model PublishingQueueItem {
+  id            String    @id @default(cuid())
+  contentItemId String
+  workspaceId   String
+  scheduledAt   DateTime
+  publishedAt   DateTime?
+  isPublished   Boolean   @default(false)
+  publishedBy   String? // agentId or "manual"
+  platform      String
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([workspaceId, isPublished])
+  @@index([workspaceId, scheduledAt])
+  @@index([contentItemId])
+  @@index([scheduledAt])
+  @@map("publishing_queue_items")
+}
+
+// ─── Mini CRM ─────────────────────────────────────────────────
+
+model Lead {
+  id          String @id @default(cuid())
+  workspaceId String
+
+  // Identity
+  name    String
+  company String?
+  source  String  @default("manual")
+  // manual | telegram | email | website | instagram | whatsapp | referral
+
+  // Status pipeline
+  status String @default("new")
+  // new | contacted | qualified | proposal | won | lost | archived
+
+  // Assignment
+  assignedAgentId String?
+
+  // Contact info
+  phone          String?
+  email          String?
+  telegramHandle String?
+
+  // Scoring & timing
+  score          Int       @default(0) // 0–100 lead quality score
+  lastMessageAt  DateTime?
+  nextFollowUpAt DateTime?
+
+  // Notes
+  notes    String?
+  tags     String  @default("[]") // JSON array
+  metadata String  @default("{}") // JSON (source data, budget, etc.)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts      Contact[]
+  conversations Conversation[]
+  deals         Deal[]
+  followUps     FollowUp[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, source])
+  @@index([workspaceId, score])
+  @@index([assignedAgentId])
+  @@index([status])
+  @@index([nextFollowUpAt])
+  @@map("leads")
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  leadId    String
+  name      String
+  phone     String?
+  email     String?
+  role      String? // decision_maker | influencer | user | other
+  notes     String?
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("contacts")
+}
+
+model Conversation {
+  id               String   @id @default(cuid())
+  leadId           String
+  platform         String // telegram | whatsapp | email | instagram | manual
+  externalThreadId String? // platform-side thread/chat ID
+  title            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  lead     Lead                  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  messages ConversationMessage[]
+
+  @@index([leadId])
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  agentId        String? // null = human / external
+  agentName      String?
+  content        String
+  direction      String // in (from lead) | out (from agent/human)
+  timestamp      DateTime @default(now())
+  metadata       String? // JSON: attachments, message_id, etc.
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([conversationId, direction])
+  @@index([timestamp])
+  @@map("conversation_messages")
+}
+
+model Deal {
+  id          String    @id @default(cuid())
+  leadId      String
+  title       String
+  value       Float     @default(0)
+  currency    String    @default("USD")
+  stage       String    @default("discovery")
+  // discovery | proposal | negotiation | won | lost
+  probability Int       @default(0) // 0–100 %
+  closedAt    DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([leadId, stage])
+  @@index([stage])
+  @@map("deals")
+}
+
+model FollowUp {
+  id        String    @id @default(cuid())
+  leadId    String
+  agentId   String?
+  agentName String?
+  date      DateTime
+  note      String?
+  done      Boolean   @default(false)
+  doneAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([leadId, done])
+  @@index([date])
+  @@index([done])
+  @@map("follow_ups")
+}
+
+// ─── PromptOps / Prompt Manager ──────────────────────────────
+
+model PromptTemplate {
+  id            String    @id @default(cuid())
+  key           String    @unique // unique identifier like "system.orchestrator"
+  name          String
+  description   String?
+  type          String    @default("system") // system | developer | user
+  status        String    @default("draft") // draft | staging | production | deprecated
+  targetAgentId String? // Optional linkage to a specific agent role
+  archivedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  versions  PromptVersion[]
+  auditLogs PromptAuditLog[]
+  costLogs  PromptCostLog[]
+
+  @@index([type])
+  @@index([status])
+  @@map("prompt_templates")
+}
+
+model PromptVersion {
+  id               String @id @default(cuid())
+  promptTemplateId String
+  version          Int
+
+  // Structured Pack
+  systemPrompt      String?
+  developerPrompt   String?
+  userPrompt        String?
+  templateVariables String? // JSON: array of required variables
+  outputContract    String? // JSON: schema or formatting rules
+
+  // Operational Metadata
+  providerAdapter String? // null = generic, or "claude" | "openai" | "gemini"
+  metadata        String? // JSON: constraints, validation rules
+  auditMetadata   String? // JSON: who/when promoted, rollback reasons
+  environment     String  @default("draft") // draft | staging | production | archived
+
+  createdByAgentId String?
+  updatedByAgentId String?
+  createdAt        DateTime @default(now())
+
+  template PromptTemplate @relation(fields: [promptTemplateId], references: [id], onDelete: Cascade)
+
+  @@unique([promptTemplateId, version])
+  @@index([promptTemplateId])
+  @@index([environment])
+  @@map("prompt_versions")
+}
+
+model PromptAuditLog {
+  id               String   @id @default(cuid())
+  promptTemplateId String
+  promptVersionId  String?
+  action           String // create | edit | delete | archive | rollback | promote | dry_run
+  agentId          String? // Actor ID
+  agentRole        String? // Viewer | Editor | Prompt Engineer | Admin | Owner
+  environment      String? // target environment if promotion
+  details          String? // JSON string of changes or results
+  createdAt        DateTime @default(now())
+
+  template PromptTemplate @relation(fields: [promptTemplateId], references: [id], onDelete: Cascade)
+
+  @@index([promptTemplateId])
+  @@index([action])
+  @@map("prompt_audit_logs")
+}
+
+model PromptRoleBinding {
+  id        String   @id @default(cuid())
+  agentId   String   @unique
+  role      String   @default("viewer") // viewer | editor | prompt_engineer | admin | owner
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("prompt_role_bindings")
+}
+
+model PromptCostLog {
+  id               String   @id @default(cuid())
+  promptTemplateId String?
+  promptVersionId  String?
+  provider         String // openrouter, claude, openai, etc.
+  model            String
+  tokensIn         Int      @default(0)
+  tokensOut        Int      @default(0)
+  estimatedCostUsd Float    @default(0)
+  latencyMs        Int      @default(0)
+  agentId          String? // The operator or agent that ran it
+  isDryRun         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  template PromptTemplate? @relation(fields: [promptTemplateId], references: [id], onDelete: SetNull)
+
+  @@index([provider])
+  @@index([model])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("prompt_cost_logs")
+}

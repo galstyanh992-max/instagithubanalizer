@@ -1,0 +1,551 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Holographic dark theme — applied to BOTH scopes; dark is the canonical look. */
+  --background: #05060a;
+  --foreground: #e6f0ff;
+  --card: rgba(13, 18, 30, 0.78);
+  --card-foreground: #e6f0ff;
+  --popover: rgba(10, 14, 22, 0.92);
+  --popover-foreground: #e6f0ff;
+  --primary: #22d3ee;
+  --primary-foreground: #04121a;
+  --secondary: rgba(232, 121, 249, 0.14);
+  --secondary-foreground: #fbcffa;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #8a9bb4;
+  --accent: rgba(34, 211, 238, 0.16);
+  --accent-foreground: #c9f7ff;
+  --destructive: #f87171;
+  --border: rgba(34, 211, 238, 0.18);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #22d3ee;
+  --chart-1: #22d3ee;
+  --chart-2: #e879f9;
+  --chart-3: #a3e635;
+  --chart-4: #fbbf24;
+  --chart-5: #f472b6;
+  --sidebar: rgba(8, 11, 18, 0.85);
+  --sidebar-foreground: #cdd9ea;
+  --sidebar-primary: #22d3ee;
+  --sidebar-primary-foreground: #04121a;
+  --sidebar-accent: rgba(34, 211, 238, 0.12);
+  --sidebar-accent-foreground: #c9f7ff;
+  --sidebar-border: rgba(34, 211, 238, 0.16);
+  --sidebar-ring: #22d3ee;
+
+  /* Neon tokens */
+  --neon-cyan: #22d3ee;
+  --neon-magenta: #e879f9;
+  --neon-lime: #a3e635;
+  --neon-amber: #fbbf24;
+  --neon-red: #f87171;
+  --neon-blue: #60a5fa;
+  --holographic-border: rgba(34, 211, 238, 0.35);
+  --holo-bg-grad: radial-gradient(ellipse at 20% 10%, rgba(34, 211, 238, 0.06), transparent 70%),
+                  radial-gradient(ellipse at 80% 90%, rgba(168, 85, 247, 0.04), transparent 70%);
+  --holo-intensity: 0.7;
+
+  /* Jarwisyan AI Core — Cyan / Ice Blue / Amber palette */
+  --jarwisyan-core-primary: #22d3ee;
+  --jarwisyan-core-secondary: #38bdf8;
+  --jarwisyan-core-inner: #67e8f9;
+  --jarwisyan-core-accent: #fbbf24; /* Amber / Gold accent */
+  --jarwisyan-core-deep: #020617;
+  --jarwisyan-core-violet-muted: rgba(251, 191, 36, 0.15); /* Amber glow instead of violet */
+}
+
+.dark {
+  --background: #05060a;
+  --foreground: #e6f0ff;
+  --card: rgba(13, 18, 30, 0.78);
+  --card-foreground: #e6f0ff;
+  --popover: rgba(10, 14, 22, 0.92);
+  --popover-foreground: #e6f0ff;
+  --primary: #22d3ee;
+  --primary-foreground: #04121a;
+  --secondary: rgba(232, 121, 249, 0.14);
+  --secondary-foreground: #fbcffa;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #8a9bb4;
+  --accent: rgba(34, 211, 238, 0.16);
+  --accent-foreground: #c9f7ff;
+  --destructive: #f87171;
+  --border: rgba(34, 211, 238, 0.18);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #22d3ee;
+  --chart-1: #22d3ee;
+  --chart-2: #e879f9;
+  --chart-3: #a3e635;
+  --chart-4: #fbbf24;
+  --chart-5: #f472b6;
+  --sidebar: rgba(8, 11, 18, 0.85);
+  --sidebar-foreground: #cdd9ea;
+  --sidebar-primary: #22d3ee;
+  --sidebar-primary-foreground: #04121a;
+  --sidebar-accent: rgba(34, 211, 238, 0.12);
+  --sidebar-accent-foreground: #c9f7ff;
+  --sidebar-border: rgba(34, 211, 238, 0.16);
+  --sidebar-ring: #22d3ee;
+
+  --neon-cyan: #22d3ee;
+  --neon-magenta: #e879f9;
+  --neon-lime: #a3e635;
+  --neon-amber: #fbbf24;
+  --neon-red: #f87171;
+  --neon-blue: #60a5fa;
+  --holographic-border: rgba(34, 211, 238, 0.35);
+  --holo-intensity: 0.7;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html, body {
+    background: var(--background);
+    color: var(--foreground);
+    min-height: 100%;
+  }
+  body {
+    background-image: var(--holo-bg-grad);
+    background-attachment: fixed;
+  }
+  /* Neon scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(34,211,238,0.5), rgba(232,121,249,0.5));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(34,211,238,0.8), rgba(232,121,249,0.8));
+  }
+}
+
+/* ============ Futuristic utility classes ============ */
+@layer utilities {
+  .glass-panel {
+    background: rgba(13, 18, 30, 0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid var(--holographic-border);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.06),
+      0 8px 40px -12px rgba(34, 211, 238, calc(0.18 * var(--holo-intensity))),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .glass-panel-magenta {
+    background: rgba(20, 13, 30, 0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(232, 121, 249, 0.30);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 40px -12px rgba(232, 121, 249, 0.20);
+  }
+
+  .neon-text {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(34, 211, 238, calc(0.5 * var(--holo-intensity))),
+                 0 0 24px rgba(34, 211, 238, calc(0.25 * var(--holo-intensity)));
+  }
+
+  .neon-text-magenta {
+    color: var(--neon-magenta);
+    text-shadow: 0 0 8px rgba(232, 121, 249, calc(0.5 * var(--holo-intensity))),
+                 0 0 24px rgba(232, 121, 249, calc(0.25 * var(--holo-intensity)));
+  }
+
+  .neon-text-lime {
+    color: var(--neon-lime);
+    text-shadow: 0 0 8px rgba(163, 230, 53, calc(0.5 * var(--holo-intensity))),
+                 0 0 24px rgba(163, 230, 53, calc(0.25 * var(--holo-intensity)));
+  }
+
+  .neon-border {
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(34, 211, 238, calc(0.35 * var(--holo-intensity))),
+                inset 0 0 12px rgba(34, 211, 238, calc(0.10 * var(--holo-intensity)));
+  }
+
+  .holo-grid-bg {
+    background-image:
+      linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .holo-corner::before,
+  .holo-corner::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: var(--neon-cyan);
+    opacity: 0.85;
+  }
+  .holo-corner::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+  .holo-corner::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+  }
+
+  .holo-pulse {
+    animation: holo-pulse 2.4s ease-in-out infinite;
+  }
+
+  .holo-scan {
+    background: linear-gradient(180deg, transparent 0%, rgba(34,211,238,0.10) 50%, transparent 100%);
+    background-size: 100% 8px;
+    animation: holo-scan 6s linear infinite;
+  }
+
+  .text-gradient-neon {
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-lime));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .neon-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    opacity: 0.5;
+  }
+
+  .fade-mask-r {
+    -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent);
+    mask-image: linear-gradient(90deg, #000 70%, transparent);
+  }
+}
+
+@keyframes holo-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+@keyframes holo-scan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  41% { opacity: 1; }
+  42% { opacity: 0.6; }
+  43% { opacity: 1; }
+  45% { opacity: 0.5; }
+  46% { opacity: 1; }
+}
+
+.animate-flicker { animation: neon-flicker 4s linear infinite; }
+
+/* Reduced motion */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ============================================================
+   Jarwisyan AI Core — animations (CSS fallback component)
+   ============================================================ */
+@keyframes ai-core-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes ai-core-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+@keyframes ai-core-spin-fast {
+  from { transform: rotate(0deg) rotateX(65deg); }
+  to { transform: rotate(360deg) rotateX(65deg); }
+}
+@keyframes ai-core-breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+@keyframes ai-core-scan {
+  0% { background-position: 0 -100%; }
+  100% { background-position: 0 200%; }
+}
+@keyframes ai-core-orbit-1 {
+  from { transform: rotate(0deg) translateX(42%) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(42%) rotate(-360deg); }
+}
+@keyframes ai-core-orbit-2 {
+  from { transform: rotate(0deg) translateX(48%) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(48%) rotate(-360deg); }
+}
+@keyframes ai-core-orbit-3 {
+  from { transform: rotate(0deg) translateX(38%) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(38%) rotate(-360deg); }
+}
+
+.ai-core-spin-slow { animation: ai-core-spin-slow 18s linear infinite; }
+.ai-core-spin-reverse { animation: ai-core-spin-reverse 26s linear infinite; }
+.ai-core-spin-fast { animation: ai-core-spin-fast 12s linear infinite; }
+
+/* Respect prefers-reduced-motion for AI Core animations */
+@media (prefers-reduced-motion: reduce) {
+  .ai-core-spin-slow,
+  .ai-core-spin-reverse,
+  .ai-core-spin-fast {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   Cosmic Background animations
+   ============================================================ */
+@keyframes cosmic-drift-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+@keyframes cosmic-drift-reverse {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 25px) scale(1.08); }
+  66% { transform: translate(25px, -15px) scale(0.92); }
+}
+@keyframes cosmic-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.cosmic-drift-slow { animation: cosmic-drift-slow 30s ease-in-out infinite; }
+.cosmic-drift-reverse { animation: cosmic-drift-reverse 35s ease-in-out infinite; }
+
+/* ============================================================
+   Cosmic UI utilities
+   ============================================================ */
+.cosmic-page-shell {
+  min-height: calc(100vh - 8rem);
+  position: relative;
+}
+
+.signal-console {
+  position: relative;
+  background: linear-gradient(135deg, rgba(13, 18, 30, 0.85) 0%, rgba(8, 12, 22, 0.9) 100%);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.signal-console::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.6), transparent);
+}
+
+.signal-console::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(34, 211, 238, 0.03) 50%, transparent 100%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.command-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: rgba(34, 211, 238, 0.06);
+  color: rgba(224, 252, 255, 0.9);
+  font-size: 10px;
+  font-family: monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.command-chip:hover {
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(34, 211, 238, 0.12);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.25);
+}
+
+.holo-border {
+  position: relative;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.04),
+    0 0 30px -10px rgba(34, 211, 238, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ============================================================
+   Cosmic Main Frame — rounded container как на референсе
+   ============================================================ */
+.cosmic-main-frame {
+  position: relative;
+  min-height: calc(100vh - 16px);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  background:
+    radial-gradient(circle at 28% 28%, rgba(34, 211, 238, 0.12), transparent 34%),
+    radial-gradient(circle at 78% 42%, rgba(139, 92, 246, 0.14), transparent 36%),
+    linear-gradient(135deg, #020617 0%, #050816 48%, #030712 100%);
+  box-shadow:
+    inset 0 0 60px rgba(34, 211, 238, 0.06),
+    0 0 38px rgba(34, 211, 238, 0.10);
+}
+
+/* Holographic top accent line */
+.cosmic-main-frame::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.5), transparent);
+  z-index: 1;
+}
+
+/* ============================================================
+   Jarwisyan Hero title — крупный градиент
+   ============================================================ */
+.jarwisyan-title {
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  background: linear-gradient(
+    90deg,
+    #22d3ee 0%,
+    #67e8f9 22%,
+    #8b5cf6 46%,
+    #f0abfc 58%,
+    #e5e7eb 72%,
+    #a3e635 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 28px rgba(34, 211, 238, 0.25),
+    0 0 44px rgba(139, 92, 246, 0.18);
+  text-align: center;
+}
+
+.jarwisyan-subtitle {
+  letter-spacing: 0.55em;
+  color: rgba(226, 232, 240, 0.55);
+  font-size: 11px;
+  text-transform: uppercase;
+  font-family: monospace;
+  text-align: center;
+}
+
+/* ============================================================
+   AI Core stage — platform + beam
+   ============================================================ */
+.ai-core-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.ai-core-stage::before {
+  content: '';
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 24px;
+  background: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.35) 0%, transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.ai-core-stage::after {
+  content: '';
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.6), transparent);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-drift-slow,
+  .cosmic-drift-reverse {
+    animation: none !important;
+  }
+}
