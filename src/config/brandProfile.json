@@ -1,0 +1,71 @@
+{
+  "name": "Agent OS Default Brand",
+  "brandVoice": [
+    "innovative", "intelligent", "efficient", "reliable", "powerful",
+    "automated", "streamlined", "productive", "professional", "smart",
+    "seamless", "intuitive", "modern", "scalable", "secure",
+    "transformative", "collaborative", "cutting-edge", "robust", "precise"
+  ],
+  "targetAudience": [
+    "founders", "startups", "developers", "engineers", "product managers",
+    "CTOs", "tech teams", "agencies", "SaaS companies", "AI enthusiasts",
+    "entrepreneurs", "marketing teams", "businesses", "professionals"
+  ],
+  "forbiddenClaims": [
+    "guaranteed results",
+    "100% success",
+    "risk-free",
+    "no effort required",
+    "instant results",
+    "unlimited money",
+    "get rich",
+    "cure",
+    "miracle",
+    "clinically proven",
+    "FDA approved",
+    "legally required",
+    "as seen on TV",
+    "endorsed by government"
+  ],
+  "requiredDisclaimers": [
+    "results may vary",
+    "individual results may differ"
+  ],
+  "toneRules": [
+    "professional but approachable",
+    "confident but not arrogant",
+    "helpful and solution-focused",
+    "clear and direct",
+    "no aggressive sales language",
+    "no excessive exclamation marks",
+    "no ALL CAPS unless brand name",
+    "no profanity",
+    "no offensive language"
+  ],
+  "toneKeywords": {
+    "positive": ["help", "improve", "grow", "build", "create", "achieve", "discover", "transform", "empower", "unlock"],
+    "negative": ["destroy", "crush", "kill", "dominate", "annihilate", "obliterate", "hate", "terrible", "worst", "stupid"]
+  },
+  "ctaPhrases": [
+    "get started", "learn more", "try now", "sign up", "join", "discover",
+    "explore", "see how", "find out", "start today", "book a demo",
+    "request access", "get access", "see it in action"
+  ],
+  "platformRules": {
+    "instagram": { "maxLength": 2200, "hashtagMax": 30, "minCTA": 1 },
+    "twitter": { "maxLength": 280, "hashtagMax": 3, "minCTA": 0 },
+    "tiktok": { "maxLength": 2200, "hashtagMax": 10, "minCTA": 1 },
+    "telegram": { "maxLength": 4096, "hashtagMax": 5, "minCTA": 0 },
+    "linkedin": { "maxLength": 3000, "hashtagMax": 5, "minCTA": 1 },
+    "whatsapp": { "maxLength": 65536, "hashtagMax": 0, "minCTA": 0 }
+  },
+  "legalRiskKeywords": [
+    "lawsuit", "sue", "legal action", "attorney", "court", "fraud",
+    "defamation", "slander", "libel", "harassment", "discrimination",
+    "copyright infringement", "trademark", "illegal", "arrest", "criminal"
+  ],
+  "prRiskKeywords": [
+    "scandal", "controversy", "outrage", "boycott", "cancel", "problematic",
+    "offensive", "racist", "sexist", "toxic", "abuse", "corrupt", "cover-up"
+  ]
+}
