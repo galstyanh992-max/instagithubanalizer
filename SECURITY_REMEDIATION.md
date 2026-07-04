@@ -10,6 +10,17 @@
 ## Remains in history
 Same 3 paths present in `git log --all --diff-filter=A --name-only` — blobs recoverable from history until rewritten.
 
+## History cleanup — EXECUTED LOCALLY (2026-07-04, force-push NOT done)
+`git filter-repo --path temp_NEXT_PUBLIC_SUPABASE_ANON_KEY.txt --path db/custom.db --path-glob 'tool-results/bash_*.txt' --invert-paths`
+Backup: branch `backup/pre-history-cleanup-20260704-233826`, tag `backup-pre-history-cleanup-20260704-233826` (local only, not pushed).
+Verified: 0 matches for the 3 paths across `git log --all --name-only` and `git ls-files`. `origin` remote was auto-removed by filter-repo (expected) and re-added (fetch/push URL only, no network calls made).
+Gates re-run post-cleanup: typecheck/lint/test (198/198)/build/prisma validate/smoke:security/smoke:repo — all PASS.
+**Remote (GitHub) still contains the old history** — nothing pushed. Force-push is a separate, explicitly-approved step (see below).
+
+## Force-push (NOT executed — requires separate explicit approval)
+`git push --force-with-lease origin main`
+Preconditions before running: (1) GitHub token rotated, (2) Supabase RLS/rotation decision resolved, (3) user gives explicit go-ahead, (4) user acknowledges collaborators must re-clone/reset (history hashes changed from `009a43a`/`d05d26a` onward).
+
 ## GitHub token rotation checklist
 - [ ] Revoke the token that was pasted in chat (`Git.txt`), regardless of scope.
 - [ ] Issue a new least-privilege token (repo-scoped only) via GitHub Settings → Developer settings → Tokens.
