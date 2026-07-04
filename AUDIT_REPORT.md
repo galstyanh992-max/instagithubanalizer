@@ -1,3 +1,10 @@
+> **STATUS: HISTORICAL / STALE (2026-07-03).** This report predates the current HEAD.
+> Superseded by Phase 3 / Prompt 1 audit. Corrections: `/agents`, `/workflows`, `/approvals`
+> routes and the Safety Gates modules (`src/lib/safety/*`) now EXIST. Typecheck/lint were
+> failing before the Phase 3 / Prompt 2 cleanup (now fixed). The "no secrets" claim was
+> incorrect — a tracked `temp_NEXT_PUBLIC_SUPABASE_ANON_KEY.txt` was found and removed.
+> Kept for history only; do not treat claims below as current.
+
 # ДЖАРВИС — Full Project Audit
 
 ## Audit Metadata

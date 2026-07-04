@@ -5,7 +5,18 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
-const AUTH_ENABLED = process.env.JARWISYAN_AUTH_ENABLED === "true";
+// Auth policy (fail closed in production):
+// - production: enabled UNLESS explicitly set to "false".
+// - non-production: disabled UNLESS explicitly set to "true".
+const IS_PROD = process.env.NODE_ENV === "production";
+const RAW = process.env.JARWISYAN_AUTH_ENABLED;
+const AUTH_ENABLED = IS_PROD ? RAW !== "false" : RAW === "true";
+
+if (IS_PROD && RAW === undefined) {
+  console.warn(
+    "[SECURITY] JARWISYAN_AUTH_ENABLED is unset in production — defaulting to ENABLED (fail closed). Set it explicitly."
+  );
+}
 
 // Если auth выключен — middleware не запускается
 export default AUTH_ENABLED
