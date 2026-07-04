@@ -669,6 +669,12 @@ model ApprovalRequest {
   summary     String
   risk        String   @default("medium") // low | medium | high | critical
   payload     String? // JSON: action details
+  actorId     String?
+  actorRole   String?
+  actorSource String?
+  commandText String?
+  intent      String?
+  reason      String?
   status      String   @default("pending") // pending | approved | rejected | expired
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

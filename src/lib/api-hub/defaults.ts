@@ -1,0 +1,26 @@
+import type { ApiRegistryItem } from "./types";
+
+export const DEFAULT_APIS: ApiRegistryItem[] = [
+  { id: "openrouter", name: "OpenRouter", category: "ai", provider: "openrouter", secretRef: "OPENROUTER_API_KEY", docsUrl: "https://openrouter.ai/docs", status: "configured", enabled: true, costLevel: "medium",
+    capabilities: [{ id: "chat", label: "Chat completion", description: "LLM chat", riskLevel: "MEDIUM", requiresApproval: false }] },
+  { id: "glm", name: "GLM (z.ai)", category: "ai", provider: "glm", secretRef: "GLM_API_KEY", status: "configured", enabled: true, costLevel: "low",
+    capabilities: [{ id: "chat", label: "Chat", description: "GLM chat", riskLevel: "MEDIUM", requiresApproval: false }] },
+  { id: "github", name: "GitHub", category: "github", provider: "github", secretRef: "GITHUB_TOKEN", docsUrl: "https://docs.github.com/rest", status: "configured", enabled: true, costLevel: "free",
+    capabilities: [{ id: "read_repo", label: "Read repo", description: "Repo metadata", riskLevel: "LOW", requiresApproval: false }, { id: "write_repo", label: "Write repo", description: "Push/PR", riskLevel: "HIGH", requiresApproval: true }] },
+  { id: "vercel", name: "Vercel", category: "deployment", provider: "vercel", secretRef: "VERCEL_TOKEN", status: "configured", enabled: true, costLevel: "low",
+    capabilities: [{ id: "deploy", label: "Deploy", description: "Production deploy", riskLevel: "CRITICAL", requiresApproval: true }] },
+  { id: "telegram", name: "Telegram", category: "social", provider: "telegram", secretRef: "TELEGRAM_BOT_TOKEN", status: "not_configured", enabled: false, costLevel: "free",
+    capabilities: [{ id: "send_msg", label: "Send message", description: "Bot message", riskLevel: "MEDIUM", requiresApproval: true }] },
+  { id: "gmail", name: "Gmail", category: "email", provider: "google", secretRef: "GMAIL_CLIENT_SECRET", status: "not_configured", enabled: false, costLevel: "free",
+    capabilities: [{ id: "send_email", label: "Send email", description: "Send/draft email", riskLevel: "HIGH", requiresApproval: true }] },
+  { id: "finance_news", name: "Finance News Provider", category: "finance", provider: "custom", secretRef: "FINANCE_NEWS_API_KEY", status: "not_configured", enabled: false, costLevel: "unknown",
+    capabilities: [{ id: "news", label: "Finance news", description: "News feed", riskLevel: "LOW", requiresApproval: false }] },
+  { id: "image_gen", name: "Image Generation Provider", category: "content_generation", provider: "custom", secretRef: "IMAGE_GEN_API_KEY", status: "not_configured", enabled: false, costLevel: "unknown",
+    capabilities: [{ id: "gen_image", label: "Generate image", description: "Image gen", riskLevel: "MEDIUM", requiresApproval: true }] },
+  { id: "video_gen", name: "Video Generation Provider", category: "content_generation", provider: "custom", secretRef: "VIDEO_GEN_API_KEY", status: "not_configured", enabled: false, costLevel: "unknown",
+    capabilities: [{ id: "gen_video", label: "Generate video", description: "Video gen", riskLevel: "MEDIUM", requiresApproval: true }] },
+  { id: "voice_gen", name: "Voice Generation Provider", category: "content_generation", provider: "custom", secretRef: "VOICE_GEN_API_KEY", status: "not_configured", enabled: false, costLevel: "unknown",
+    capabilities: [{ id: "gen_voice", label: "Generate voice", description: "TTS gen", riskLevel: "MEDIUM", requiresApproval: true }] },
+  { id: "music", name: "Music Provider", category: "music", provider: "custom", secretRef: "MUSIC_PROVIDER_API_KEY", status: "not_configured", enabled: false, costLevel: "unknown",
+    capabilities: [{ id: "gen_music", label: "Generate music", description: "Music gen", riskLevel: "MEDIUM", requiresApproval: true }] },
+];

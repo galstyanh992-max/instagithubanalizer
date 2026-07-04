@@ -97,3 +97,48 @@ Result shape: `{ allowed, requiresApproval, reason, riskLevel }`.
 - Approval requests are not yet auto-created from `runSafeAction` (returns `requiresApproval`; caller must persist via `approvalSystem.requestApproval`). ApprovalRequest schema has no dedicated `actorId`/`source` columns — actor is captured in audit log + `payload` only.
 - Telegram/MCP/Agent Factory/Developer Operator remain out of scope.
 - Full shell sandboxing (containerization) not implemented; guard is heuristic denylist/allowlist.
+
+---
+
+# Command Router (Phase 3 / Prompt 4)
+
+Pipeline: `text → classifyIntent → assessRisk → actor check (permission-checker) → approval|dispatch → audit`.
+
+- Module: `src/lib/command-router/` (types, intent-classifier, risk-classifier, approval, dispatch, router).
+- Intents: conversation, open_page, github_analysis, developer_task, database_task, browser_task, memory_task, agent_task, terminal_task, settings_task, unknown.
+- Risk: intent→base risk; `terminal_task` uses `terminal-guard`.
+- Unknown actor → deny (fail closed). Unknown intent → clarify.
+- HIGH/CRITICAL → `createApprovalForCommand` (persists ApprovalRequest with actor/source/intent/reason inside `payload`; returns `approvalId` when DB reachable, else payload only).
+- Integrated into `/api/voice/command`: only `execute_safe_action` delegates to `voiceService`; risky/deny/clarify return router decision without execution.
+
+## NOT IMPLEMENTED (deferred)
+- Telegram, MCP, Desktop Commander, full Agent Factory, full Developer Operator.
+- Real terminal execution through the router (guarded stub only).
+- Dedicated ApprovalRequest columns `actorId/actorRole/actorSource` — actor carried in `payload` (no migration this phase).
+- AI-based intent classification (current is deterministic regex).
+
+---
+
+# Testing Foundation (Phase 3 / Prompt 5)
+
+## Real smoke checks (no secrets, no external services)
+- `npm run smoke:repo` — key dirs/docs/files present; removed artifacts absent.
+- `npm run smoke:env` — `.env.example` placeholders (current-required vs future-required).
+- `npm run smoke:security` — no suspicious tracked files, `.env` not tracked, `.gitignore` protections, no `ignoreBuildErrors`, prod auth fail-closed.
+- `npm run smoke:command-router` — runs router scenario tests headlessly.
+- `npm run smoke` — runs all four in order.
+
+## Unit/integration (vitest, `npm test`)
+- safety (17), command-router (10), voice/command route (5), plus service tests. 51 total.
+
+## Requires live secrets / runtime (NOT RUN here)
+- `db:deploy`, `db:status`, AI provider live, OpenRouter live.
+
+## NOT IMPLEMENTED (honest placeholders → scripts/not-implemented.mjs, exit 1)
+- browser/E2E (`browser:smoke`, `browser:session-smoke`) — no Playwright config yet.
+- Telegram bot, MCP, dev-tools/generator/promptops/github/ai-* smokes.
+
+## Before production
+- Provide live `DATABASE_URL`/`DIRECT_URL`; run `db:deploy`.
+- Resolve R-01 (Supabase key RLS/rotate), R-04 (git history purge).
+- Add Playwright E2E when UI stabilizes.
