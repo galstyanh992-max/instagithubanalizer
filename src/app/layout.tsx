@@ -49,8 +49,8 @@ export default function RootLayout({
         <Providers>
           <CosmicBackground />
           <SettingsHydrator />
-          <div className="relative flex min-h-screen p-2 gap-2">
-            <div className="cosmic-main-frame flex min-h-[calc(100vh-16px)] flex-1 flex-col w-full relative">
+          <div className="relative flex h-screen overflow-hidden p-2 gap-2">
+            <div className="cosmic-main-frame flex h-[calc(100vh-16px)] flex-1 flex-col w-full relative">
               
               {/* Global AI Core Background Layer */}
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0 opacity-80 lg:mt-4 overflow-hidden">
@@ -61,7 +61,7 @@ export default function RootLayout({
               </div>
 
               <TopBar />
-              <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 lg:px-10 lg:py-8 pb-24 relative z-10">
+              <main className="flex-1 overflow-hidden px-4 py-6 lg:px-10 lg:py-8 pb-24 relative z-10 flex flex-col">
                 {children}
               </main>
               <GlobalCommandDock />

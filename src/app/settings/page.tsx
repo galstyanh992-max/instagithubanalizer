@@ -86,8 +86,8 @@ export default function SettingsPage() {
   const fallbackActive = !s.githubToken;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 pb-32">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-5xl space-y-4 pb-4 flex flex-col h-full overflow-hidden w-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="font-mono text-2xl font-bold neon-text">SETTINGS</h1>
           <p className="text-xs text-zinc-500">Configure API keys, PC specs, UI and project context</p>

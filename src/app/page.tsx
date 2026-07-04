@@ -6,10 +6,10 @@ import JarwisyanAICore from "@/components/three/JarwisyanAICore";
 
 export default function Home() {
   return (
-    <div className="cosmic-page-shell flex h-screen w-full flex-col overflow-hidden">
+    <div className="cosmic-page-shell flex flex-1 h-full w-full flex-col overflow-hidden min-h-0">
       
       {/* Top Header */}
-      <div className="flex flex-col items-center justify-center pt-6 pb-4 z-10 gap-3">
+      <div className="flex flex-col items-center justify-center pt-2 pb-2 z-10 gap-2 shrink-0">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -30,7 +30,7 @@ export default function Home() {
       </div>
 
       {/* 3-Column Layout */}
-      <div className="flex-1 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-8 px-8 pb-32 items-center z-10">
+      <div className="flex-1 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 px-4 pb-4 items-center z-10 min-h-0">
         
         {/* Left Column: Merged Panels */}
         <motion.div 
@@ -125,11 +125,9 @@ export default function Home() {
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="hidden lg:flex flex-col w-[280px] justify-self-end"
+          className="hidden lg:flex flex-col w-[280px] justify-self-end min-h-0 h-full max-h-full"
         >
-          <div className="h-full max-h-[600px]">
-            <TaskListSidebar />
-          </div>
+          <TaskListSidebar />
         </motion.div>
         
       </div>
