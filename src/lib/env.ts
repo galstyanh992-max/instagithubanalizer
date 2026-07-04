@@ -7,9 +7,9 @@ const envSchema = z.object({
   GITHUB_TOKEN: z.string().default(""),
   
   // Provider Router configuration
-  AI_PROVIDER: z.string().default("ollama-cloud"),
-  DEFAULT_AI_PROVIDER: z.string().default("ollama-cloud"),
-  HEAVY_AI_PROVIDER: z.string().default("glm"),
+  AI_PROVIDER: z.string().default("openrouter"),
+  DEFAULT_AI_PROVIDER: z.string().default("openrouter"),
+  HEAVY_AI_PROVIDER: z.string().default("ollama-cloud"),
   
   // Ollama Cloud Pro (Default fast)
   OLLAMA_CLOUD_API_KEY: z.string().default(""),

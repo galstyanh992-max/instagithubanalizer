@@ -55,13 +55,13 @@ export function AiProviderCenter() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Primary & Heavy</div>
-          <StatusRow label="OLLAMA CLOUD" isConfigured={getProv("ollama-cloud")} subtext="Role: Primary Fast (Chat, UI)" />
-          <StatusRow label="GLM 5.2" isConfigured={getProv("glm")} subtext="Role: Heavy Reasoning (Analysis, Patch)" />
+          <StatusRow label="OPENROUTER" isConfigured={getProv("openrouter")} subtext="Role: Primary Fast (Chat, UI)" />
+          <StatusRow label="OLLAMA CLOUD (GLM 5.2)" isConfigured={getProv("ollama-cloud")} subtext="Role: Heavy Reasoning (Analysis, Patch)" />
         </div>
 
         <div className="space-y-2">
           <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Fallback Providers</div>
-          <StatusRow label="OpenRouter" isConfigured={getProv("openrouter")} />
+          <StatusRow label="GLM 5.2 (Zhipu Direct)" isConfigured={getProv("glm")} />
           <StatusRow label="Gemini" isConfigured={getProv("gemini")} />
           <StatusRow label="OpenAI" isConfigured={getProv("openai")} />
           <StatusRow label="Groq" isConfigured={getProv("groq")} />

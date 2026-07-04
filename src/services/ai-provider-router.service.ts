@@ -26,15 +26,15 @@ export class AiProviderRouter {
     const providers: ProviderStatus[] = [];
 
     // primary fast
-    const hasOllama = Boolean(env.OLLAMA_CLOUD_API_KEY);
-    providers.push({ name: "ollama-cloud", configured: hasOllama, role: "primary-fast" });
+    const hasOpenRouter = Boolean(env.OPENROUTER_API_KEY);
+    providers.push({ name: "openrouter", configured: hasOpenRouter, role: "primary-fast" });
 
     // heavy reasoning
-    const hasGlm = Boolean(env.GLM_API_KEY);
-    providers.push({ name: "glm", configured: hasGlm, role: "heavy-reasoning" });
+    const hasOllama = Boolean(env.OLLAMA_CLOUD_API_KEY);
+    providers.push({ name: "ollama-cloud", configured: hasOllama, role: "heavy-reasoning" });
 
     // fallbacks
-    providers.push({ name: "openrouter", configured: Boolean(env.OPENROUTER_API_KEY), role: "fallback" });
+    providers.push({ name: "glm", configured: Boolean(env.GLM_API_KEY), role: "fallback" });
     providers.push({ name: "gemini", configured: Boolean(env.GEMINI_API_KEY), role: "fallback" });
     providers.push({ name: "openai", configured: Boolean(env.OPENAI_API_KEY), role: "fallback" });
     providers.push({ name: "groq", configured: Boolean(env.GROQ_API_KEY), role: "fallback" });
