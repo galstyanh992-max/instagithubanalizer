@@ -308,7 +308,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         style={{ filter: `drop-shadow(0 0 8px ${cfg.white}) drop-shadow(0 0 2px ${cfg.white})`, opacity: cfg.ringOpacity }}
       >
         <ellipse cx="50" cy="50" rx="46" ry="12" fill="none" stroke={cfg.white} strokeWidth="0.25" strokeDasharray="4 4" transform="rotate(25 50 50)">
-          {!motionOff && <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite" linear="true" />}
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite" calcMode="linear" />}
         </ellipse>
       </svg>
       
@@ -318,7 +318,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         style={{ filter: `drop-shadow(0 0 6px ${cfg.primary}) drop-shadow(0 0 3px ${cfg.primary})`, opacity: cfg.ringOpacity * 0.9 }}
       >
         <ellipse cx="50" cy="50" rx="48" ry="18" fill="none" stroke={cfg.primary} strokeWidth="0.2" strokeDasharray="8 6 2 6" transform="rotate(-35 50 50)">
-          {!motionOff && <animate attributeName="stroke-dashoffset" values="22;0" dur="2s" repeatCount="indefinite" linear="true" />}
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="22;0" dur="2s" repeatCount="indefinite" calcMode="linear" />}
         </ellipse>
       </svg>
 
@@ -328,7 +328,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         style={{ filter: `drop-shadow(0 0 10px ${cfg.inner}) drop-shadow(0 0 4px ${cfg.inner})`, opacity: cfg.ringOpacity }}
       >
         <ellipse cx="50" cy="50" rx="45" ry="8" fill="none" stroke={cfg.inner} strokeWidth="0.3" strokeDasharray="12 4 4 4" transform="rotate(75 50 50)">
-          {!motionOff && <animate attributeName="stroke-dashoffset" values="24;0" dur="2.5s" repeatCount="indefinite" linear="true" />}
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="24;0" dur="2.5s" repeatCount="indefinite" calcMode="linear" />}
         </ellipse>
       </svg>
 

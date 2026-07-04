@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 
@@ -15,11 +15,7 @@ export function TaskListSidebar() {
   const [newTask, setNewTask] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       const res = await fetch("/api/tasks");
       const data = await res.json();
@@ -31,7 +27,11 @@ export function TaskListSidebar() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const addTask = async (e: React.FormEvent) => {
     e.preventDefault();

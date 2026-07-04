@@ -9,10 +9,12 @@
 - Разработка ведётся локально, API отвечают корректно.
 
 ## GitHub Readiness
-- Секреты защищены: `.gitignore` включает все виды `.env` файлов и ключей (`*.pem`, `*.key`). 
-- Добавлены заглушки в `.env.example`.
-- Проверка `git status` и `git grep` не выявила утечек секретов.
-- **Статус**: ГОТОВ к загрузке в GitHub.
+- `.gitignore` покрывает `.env*` (кроме `.env.example`), `*.db`, `/tool-results/`, temp key files.
+- `.env.example` создан (только placeholder-значения) в рамках Phase 3 / Prompt 2 cleanup.
+- **Исправление**: ранее в репозитории был обнаружен tracked `temp_NEXT_PUBLIC_SUPABASE_ANON_KEY.txt`
+  (Supabase anon key). Файл удалён из индекса и с диска. Ранее заявленный "secret-clean" статус
+  был неверным. Рекомендуется убедиться в корректности Supabase RLS и при необходимости ротировать ключ.
+- **Статус**: условно готов к GitHub после подтверждения RLS/ротации ключа.
 
 ## Vercel Readiness
 - Сборка: `npm run build` проходит.
