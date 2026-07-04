@@ -15,17 +15,19 @@
 - **Статус**: ГОТОВ к загрузке в GitHub.
 
 ## Vercel Readiness
-- Сборка: `npm run build` завершается без ошибок (~7s).
-- Роутинг: Ошибок Hydration нет.
-- Файловая система: Vercel является serverless-платформой, поэтому **SQLite не будет работать в продакшене** (база данных будет обнуляться с каждым запросом).
-- **Статус**: ТРЕБУЕТ миграции на PostgreSQL.
+- Сборка: `npm run build` проходит.
+- Prisma datasource: PostgreSQL.
+- `postinstall: prisma generate` добавлен.
+- SQLite больше не является блокером.
+- Остаётся: добавить Environment Variables в Vercel и применить миграции Supabase.
+- **Статус**: ГОТОВ к настройке Vercel Environment Variables, затем к деплою.
 
 ## Supabase/PostgreSQL Migration
-Для продакшена необходимо:
-1. Зарегистрировать проект в Supabase.
-2. Изменить provider в `prisma/schema.prisma` с `sqlite` на `postgresql`.
-3. Добавить `DATABASE_URL` и `DIRECT_URL`.
-4. Выполнить `npx prisma migrate dev --name init_postgres`.
+Для продакшена выполнено:
+1. Зарегистрирован проект в Supabase.
+2. Изменен provider в `prisma/schema.prisma` на `postgresql`.
+3. Добавлены `DATABASE_URL` и `DIRECT_URL`.
+4. В `package.json` добавлен `postinstall: "prisma generate"`.
 
 ## Required Environment Variables
 Перед деплоем необходимо убедиться, что все ключи из `.env.example` прописаны в настройках Vercel Environment Variables.
@@ -34,7 +36,9 @@
 `.env.local`, `.env.production` и папка `.vercel` не должны коммититься. Секреты (JWT_SECRET, API Keys) нужно загружать только через Vercel UI.
 
 ## Known Blockers
-- Prisma использует SQLite. Это главный блокер для Vercel.
+- Нет критических code blockers.
+- До деплоя нужно добавить все Environment Variables в Vercel.
+- Нужно применить Prisma migrations к Supabase/PostgreSQL.
 
 ## Pre-Push Checklist
 - [x] Проверить `.gitignore`
@@ -43,7 +47,7 @@
 - [x] Запустить `npm run lint`
 
 ## Pre-Deploy Checklist
-- [ ] Переключить Prisma на PostgreSQL
+- [x] Переключить Prisma на PostgreSQL
 - [ ] Проверить миграции базы данных на Supabase
 - [ ] Заполнить Environment Variables в Vercel
-- [ ] Запустить `npm run build` и убедиться в отсутствии проблем
+- [x] Запустить `npm run build`

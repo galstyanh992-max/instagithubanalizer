@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Save, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { PcProfileSettings } from "@/components/settings/pc-profile-settings";
 import { CloudProviderPolicy } from "@/components/settings/cloud-provider-policy";
+import { AiProviderCenter } from "@/components/settings/ai-provider-center";
 
 interface Settings {
   githubToken: string;
@@ -82,10 +83,10 @@ export default function SettingsPage() {
 
   if (!s) return <div className="text-cyan-300">Loading...</div>;
 
-  const fallbackActive = !s.githubToken || !s.glmApiKey || s.aiProvider === "mock";
+  const fallbackActive = !s.githubToken;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="mx-auto max-w-5xl space-y-4 pb-32">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-mono text-2xl font-bold neon-text">SETTINGS</h1>
@@ -100,8 +101,8 @@ export default function SettingsPage() {
         <HolographicPanel accent="amber" className="flex items-center gap-3 p-4">
           <AlertTriangle className="h-5 w-5 text-amber-300" />
           <div className="text-sm text-amber-100">
-            Fallback mode is active. Some features (live GitHub API, AI analysis) will use mock data.
-            Add a GitHub token and GLM API key to unlock full power.
+            GitHub API key is missing. Some features (live GitHub API) will use mock data.
+            Add a GitHub token to unlock full power.
           </div>
         </HolographicPanel>
       )}
@@ -116,31 +117,15 @@ export default function SettingsPage() {
         </TabsList>
 
         {/* API keys */}
-        <TabsContent value="keys">
+        <TabsContent value="keys" className="space-y-4">
+          <AiProviderCenter />
+          
           <HolographicPanel accent="cyan" className="space-y-3 p-5">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <Label>GitHub Token</Label>
                 <Input type="password" value={s.githubToken === "***" ? "" : s.githubToken} onChange={(e) => update("githubToken", e.target.value)} placeholder="ghp_..." className="bg-zinc-900/60 border-cyan-400/20" />
                 <p className="mt-1 text-[10px] text-zinc-500">Required for higher GitHub API rate limits.</p>
-              </div>
-              <div>
-                <Label>AI Provider</Label>
-                <Select value={s.aiProvider} onValueChange={(v) => update("aiProvider", v)}>
-                  <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="glm">GLM 5.2 (z.ai)</SelectItem>
-                    <SelectItem value="mock">Mock (no key)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>GLM API Key</Label>
-                <Input type="password" value={s.glmApiKey === "***" ? "" : s.glmApiKey} onChange={(e) => update("glmApiKey", e.target.value)} placeholder="zai-..." className="bg-zinc-900/60 border-cyan-400/20" />
-              </div>
-              <div>
-                <Label>GLM Base URL</Label>
-                <Input value={s.glmBaseUrl} onChange={(e) => update("glmBaseUrl", e.target.value)} className="bg-zinc-900/60 border-cyan-400/20" />
               </div>
               <div>
                 <Label>OCR Provider</Label>

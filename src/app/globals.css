@@ -47,19 +47,19 @@
   --radius: 0.625rem;
   /* Holographic dark theme — applied to BOTH scopes; dark is the canonical look. */
   --background: #05060a;
-  --foreground: #e6f0ff;
+  --foreground: #ffffff;
   --card: rgba(13, 18, 30, 0.78);
-  --card-foreground: #e6f0ff;
+  --card-foreground: #ffffff;
   --popover: rgba(10, 14, 22, 0.92);
-  --popover-foreground: #e6f0ff;
+  --popover-foreground: #ffffff;
   --primary: #22d3ee;
   --primary-foreground: #04121a;
   --secondary: rgba(232, 121, 249, 0.14);
   --secondary-foreground: #fbcffa;
-  --muted: rgba(255, 255, 255, 0.06);
-  --muted-foreground: #8a9bb4;
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: #a1b0c7;
   --accent: rgba(34, 211, 238, 0.16);
-  --accent-foreground: #c9f7ff;
+  --accent-foreground: #e0f2fe;
   --destructive: #f87171;
   --border: rgba(34, 211, 238, 0.18);
   --input: rgba(255, 255, 255, 0.08);
@@ -101,19 +101,19 @@
 
 .dark {
   --background: #05060a;
-  --foreground: #e6f0ff;
+  --foreground: #ffffff;
   --card: rgba(13, 18, 30, 0.78);
-  --card-foreground: #e6f0ff;
+  --card-foreground: #ffffff;
   --popover: rgba(10, 14, 22, 0.92);
-  --popover-foreground: #e6f0ff;
+  --popover-foreground: #ffffff;
   --primary: #22d3ee;
   --primary-foreground: #04121a;
   --secondary: rgba(232, 121, 249, 0.14);
   --secondary-foreground: #fbcffa;
-  --muted: rgba(255, 255, 255, 0.06);
-  --muted-foreground: #8a9bb4;
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: #a1b0c7;
   --accent: rgba(34, 211, 238, 0.16);
-  --accent-foreground: #c9f7ff;
+  --accent-foreground: #e0f2fe;
   --destructive: #f87171;
   --border: rgba(34, 211, 238, 0.18);
   --input: rgba(255, 255, 255, 0.08);
@@ -317,8 +317,8 @@
   to { transform: rotate(360deg) rotateX(65deg); }
 }
 @keyframes ai-core-breathe {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.08); }
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.045); }
 }
 @keyframes ai-core-scan {
   0% { background-position: 0 -100%; }
@@ -337,9 +337,9 @@
   to { transform: rotate(360deg) translateX(38%) rotate(-360deg); }
 }
 
-.ai-core-spin-slow { animation: ai-core-spin-slow 18s linear infinite; }
-.ai-core-spin-reverse { animation: ai-core-spin-reverse 26s linear infinite; }
-.ai-core-spin-fast { animation: ai-core-spin-fast 12s linear infinite; }
+.ai-core-spin-slow { animation: ai-core-spin-slow 38s linear infinite; }
+.ai-core-spin-reverse { animation: ai-core-spin-reverse 28s linear infinite; }
+.ai-core-spin-fast { animation: ai-core-spin-fast 15s linear infinite; }
 
 /* Respect prefers-reduced-motion for AI Core animations */
 @media (prefers-reduced-motion: reduce) {
@@ -449,12 +449,16 @@
   border-radius: 24px;
   overflow: hidden;
   border: 1px solid rgba(34, 211, 238, 0.18);
-  background:
-    radial-gradient(circle at 28% 28%, rgba(34, 211, 238, 0.12), transparent 34%),
-    radial-gradient(circle at 78% 42%, rgba(139, 92, 246, 0.14), transparent 36%),
-    linear-gradient(135deg, #020617 0%, #050816 48%, #030712 100%);
+  background-color: #02040a;
+  background-image: 
+    linear-gradient(180deg, rgba(2, 4, 10, 0.6) 0%, rgba(2, 4, 10, 0.2) 50%, rgba(2, 4, 10, 0.8) 100%),
+    url('/bg-tunnel.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   box-shadow:
-    inset 0 0 60px rgba(34, 211, 238, 0.06),
+    inset 0 0 100px rgba(0, 0, 0, 0.9),
+    inset 0 0 20px rgba(34, 211, 238, 0.15),
     0 0 38px rgba(34, 211, 238, 0.10);
 }
 
@@ -463,43 +467,67 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 10%;
-  right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.5), transparent);
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.6), rgba(232, 121, 249, 0.4), rgba(34, 211, 238, 0.6), transparent);
   z-index: 1;
+}
+
+/* Base style for sidebar panels */
+.cyber-panel {
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.6) 0%, rgba(5, 7, 12, 0.8) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  border-radius: 12px;
+  box-shadow: inset 0 0 20px rgba(34, 211, 238, 0.02);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.cyber-panel:hover {
+  transform: translateY(-4px);
+  border-color: rgba(34, 211, 238, 0.4);
+  box-shadow: 
+    0 8px 30px rgba(34, 211, 238, 0.1),
+    inset 0 0 30px rgba(34, 211, 238, 0.05);
+}
+.cyber-panel-header {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(34, 211, 238, 0.7);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* Signal Console Dock */
+.signal-console {
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 4, 15, 0.95) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.8),
+    inset 0 0 20px rgba(34, 211, 238, 0.05);
 }
 
 /* ============================================================
    Jarwisyan Hero title — крупный градиент
    ============================================================ */
 .jarwisyan-title {
-  font-size: clamp(40px, 6vw, 80px);
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  line-height: 1;
   text-transform: uppercase;
-  background: linear-gradient(
-    90deg,
-    #22d3ee 0%,
-    #67e8f9 22%,
-    #8b5cf6 46%,
-    #f0abfc 58%,
-    #e5e7eb 72%,
-    #a3e635 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--neon-cyan);
   text-shadow:
-    0 0 28px rgba(34, 211, 238, 0.25),
-    0 0 44px rgba(139, 92, 246, 0.18);
+    0 0 12px rgba(34, 211, 238, 0.4),
+    0 0 24px rgba(34, 211, 238, 0.2);
   text-align: center;
 }
 
 .jarwisyan-subtitle {
   letter-spacing: 0.55em;
-  color: rgba(226, 232, 240, 0.55);
+  color: rgba(226, 232, 240, 0.85);
   font-size: 11px;
   text-transform: uppercase;
   font-family: monospace;

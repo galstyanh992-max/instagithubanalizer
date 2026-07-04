@@ -1,6 +1,7 @@
 "use client";
 
 import { useMounted } from "@/lib/use-mounted";
+import { useCinematicParallax } from "@/lib/use-cinematic-parallax";
 
 /**
  * CosmicBackground — космический завораживающий фон
@@ -9,6 +10,7 @@ import { useMounted } from "@/lib/use-mounted";
  */
 export function CosmicBackground() {
   const mounted = useMounted();
+  const parallax = useCinematicParallax(10);
 
   return (
     <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden bg-[#020617]">
@@ -24,12 +26,13 @@ export function CosmicBackground() {
         }}
       />
 
-      {/* Nebula cloud 1 — cyan, brighter */}
+      {/* Nebula cloud 1 — cyan, brighter (Deep background depth 0.2) */}
       <div
         className={`absolute -left-1/4 top-0 h-[60vh] w-[80vw] rounded-full ${mounted ? "cosmic-drift-slow" : ""}`}
         style={{
           background: "radial-gradient(circle, rgba(34, 211, 238, 0.20) 0%, rgba(56, 189, 248, 0.10) 40%, transparent 70%)",
           filter: "blur(70px)",
+          transform: `translate3d(${parallax.x * 0.2}px, ${parallax.y * 0.2}px, 0)`,
         }}
       />
 
@@ -39,6 +42,7 @@ export function CosmicBackground() {
         style={{
           background: "radial-gradient(circle, rgba(139, 92, 246, 0.16) 0%, rgba(168, 85, 247, 0.08) 40%, transparent 70%)",
           filter: "blur(80px)",
+          transform: `translate3d(${parallax.x * 0.3}px, ${parallax.y * 0.3}px, 0)`,
         }}
       />
 
@@ -48,12 +52,16 @@ export function CosmicBackground() {
         style={{
           background: "radial-gradient(circle, rgba(163, 230, 53, 0.08) 0%, transparent 60%)",
           filter: "blur(50px)",
+          transform: `translate3d(${parallax.x * 0.4}px, ${parallax.y * 0.4}px, 0)`,
         }}
       />
 
-      {/* Star dust — deterministic dots */}
+      {/* Star dust — deterministic dots (Mid ground depth 0.6) */}
       {mounted && (
-        <div className="absolute inset-0">
+        <div 
+          className="absolute inset-0"
+          style={{ transform: `translate3d(${parallax.x * 0.6}px, ${parallax.y * 0.6}px, 0)` }}
+        >
           {STAR_DUST.map((star, i) => (
             <div
               key={i}
@@ -73,7 +81,7 @@ export function CosmicBackground() {
         </div>
       )}
 
-      {/* Holographic grid */}
+      {/* Holographic grid (Foreground depth 0.8) */}
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
@@ -84,11 +92,12 @@ export function CosmicBackground() {
           backgroundSize: "48px 48px",
           maskImage: "radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%)",
           WebkitMaskImage: "radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%)",
+          transform: `translate3d(${parallax.x * 0.8}px, ${parallax.y * 0.8}px, 0)`,
         }}
       />
 
-      {/* Orbit lines — thin curved cosmic paths */}
-      <svg className="absolute inset-0 h-full w-full" aria-hidden style={{ opacity: 0.08 }}>
+      {/* Orbit lines — thin curved cosmic paths (Max depth 1.2) */}
+      <svg className="absolute inset-0 h-full w-full" aria-hidden style={{ opacity: 0.08, transform: `translate3d(${parallax.x * 1.2}px, ${parallax.y * 1.2}px, 0)` }}>
         <ellipse cx="50%" cy="50%" rx="40%" ry="15%" fill="none" stroke="#22d3ee" strokeWidth="0.5" transform="rotate(15 50% 50%)" />
         <ellipse cx="50%" cy="50%" rx="35%" ry="12%" fill="none" stroke="#38bdf8" strokeWidth="0.5" transform="rotate(-25 50% 50%)" />
         <ellipse cx="50%" cy="50%" rx="45%" ry="18%" fill="none" stroke="#8b5cf6" strokeWidth="0.3" transform="rotate(45 50% 50%)" />

@@ -2,6 +2,7 @@
 // v2 — system prompt includes user PC profile + cloud provider policy.
 
 import { env, isAiConfigured } from "@/lib/env";
+import { aiProviderRouter, AiIntent } from "./ai-provider-router.service";
 import type {
   RepoMetadata,
   RepoAnalysisResult,
@@ -31,23 +32,12 @@ export interface ProjectContextFlags {
   tradingFinance: boolean;
 }
 
-class GlmProvider implements AIProvider {
-  name = "glm";
+class RoutedProvider implements AIProvider {
+  name = "routed-provider";
   isMock = false;
 
-  private async chat(prompt: string, system: string): Promise<string> {
-    // Dynamic import — z-ai-web-dev-sdk is server-side only
-    const ZAISDK = (await import("z-ai-web-dev-sdk")).default;
-    const zai = await ZAISDK.create();
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 4096,
-    });
-    return completion.choices[0]?.message?.content ?? "";
+  private async chat(intent: AiIntent, prompt: string, system: string): Promise<string> {
+    return aiProviderRouter.chat(intent, system, prompt);
   }
 
   async analyze(meta: RepoMetadata, ctx: ProjectContextFlags): Promise<RepoAnalysisResult> {
@@ -59,16 +49,24 @@ class GlmProvider implements AIProvider {
       "Верни ТОЛЬКО валидный JSON объект. Без прозы, без markdown ограждений. " +
       "JSON keys — английские, но все человекочитаемые значения — на русском.";
     const prompt = buildAnalysisPrompt(meta, ctx);
-    const raw = await this.chat(prompt, system);
-    return parseAnalysisJson(raw, meta);
+    try {
+      const raw = await this.chat("repo_analysis", prompt, system);
+      return parseAnalysisJson(raw, meta);
+    } catch {
+      return mockAnalyze(meta, ctx);
+    }
   }
 
   async generateInstallPlan(meta: RepoMetadata, _analysis: RepoAnalysisResult): Promise<InstallPlanData> {
     const system =
       "Ты — DevOps инженер. ВСЕГДА отвечай на русском. Верни ТОЛЬКО валидный JSON с планом установки. Без прозы. JSON keys — английские, значения — на русском.";
     const prompt = buildInstallPlanPrompt(meta);
-    const raw = await this.chat(prompt, system);
-    return parseInstallPlanJson(raw, meta);
+    try {
+      const raw = await this.chat("integration_plan", prompt, system);
+      return parseInstallPlanJson(raw, meta);
+    } catch {
+      return mockInstallPlan(meta);
+    }
   }
 }
 
@@ -88,9 +86,9 @@ class MockProvider implements AIProvider {
 export function getAiProvider(): AIProvider {
   if (isAiConfigured()) {
     try {
-      return new GlmProvider();
+      return new RoutedProvider();
     } catch (e) {
-      console.warn("[ai] GLM provider init failed, using mock:", e);
+      console.warn("[ai] Provider init failed, using mock:", e);
       return new MockProvider();
     }
   }

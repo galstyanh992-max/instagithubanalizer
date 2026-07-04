@@ -4,6 +4,7 @@
 // Интегрирован с Memory Hub — достаёт релевантную память перед ответом.
 
 import { aiService } from "./ai.service";
+import { aiProviderRouter } from "./ai-provider-router.service";
 import { db } from "@/lib/db";
 import { memoryService } from "./memory/memory.service";
 import { memorySafetyService } from "./memory/memory-safety.service";
@@ -87,8 +88,24 @@ async function generateMockReply(message: string, intent: ChatIntent, repoRef: s
       return "Откройте репозиторий → вкладка «Мой ПК». Я проверю совместимость с вашим профилем (Windows 11, Xeon E5-2699 v3, 64 GB RAM, AMD Radeon RX 580 8 GB, без CUDA) и предложу local/docker/CPU-only/Ollama Cloud варианты.";
     case "find_alternatives":
       return "На странице репозитория → вкладка «Альтернативы». Я поищу на GitHub CPU-only/no-CUDA/lightweight/Ollama-compatible альтернативы. Без GITHUB_TOKEN верну suggested search queries.";
-    default:
-      return `Я AI Jarwisyan — анализирую GitHub-репозитории, проверяю совместимость с вашим ПК, готовлю integration plans для ваших проектов. ${repoRef ? `Вижу репозиторий ${repoRef} — могу проанализировать.` : ""} Без GLM_API_KEY работаю в mock-режиме. Настройте AI provider в /settings для real AI.`;
+    default: {
+      const status = aiProviderRouter.getStatus();
+      let providerText = "AI provider не настроен. Работаю в mock-режиме. Добавьте ключ Ollama Cloud, GLM 5.2, OpenRouter, Gemini или другой provider в Settings.";
+      
+      const route = aiProviderRouter.getProviderForIntent(intent);
+      if (!route.isMock) {
+        const activeProv = status.providers.find(p => p.name === route.providerName);
+        if (activeProv?.role === "primary-fast") {
+          providerText = "AI provider: Ollama Cloud. Быстрый режим активен.";
+        } else if (activeProv?.role === "heavy-reasoning") {
+          providerText = "AI provider: GLM 5.2. Тяжёлый аналитический режим активен.";
+        } else {
+          providerText = "AI provider: fallback. Основной provider недоступен, использую резервный.";
+        }
+      }
+
+      return `Я AI Jarwisyan. Сейчас проверяю доступные AI providers. Если Ollama Cloud, GLM 5.2 или другой provider настроен, я использую реальный AI. Mock-режим включается только если ни один реальный provider не доступен.\n\n${providerText}\n\n${repoRef ? `Вижу репозиторий ${repoRef} — могу проанализировать.` : ""}`;
+    }
   }
 }
 
@@ -111,6 +128,12 @@ export const chatService = {
       if (repo) {
         contextInfo += `\nRepository in context: ${repo.fullName} (${repo.verdict}, score ${repo.finalPriorityScore}).`;
       }
+    }
+    
+    // Inject user tasks
+    const pendingTasks = await db.userTask.findMany({ where: { completed: false } });
+    if (pendingTasks.length > 0) {
+      contextInfo += `\nUncompleted tasks (Текущие дела): ${pendingTasks.map((t) => t.title).join("; ")}. Учитывай их при ответах и предлагай помощь с ними, если это уместно.`;
     }
 
     // Determine actions
@@ -162,20 +185,10 @@ export const chatService = {
       }
     } else {
       try {
-        // Use GLM for chat — build a simple system prompt
         const systemPrompt = `Ты — AI Jarwisyan. ВСЕГДА отвечай пользователю на русском языке, если пользователь явно не попросил другой язык. Все объяснения, рекомендации, планы запуска, планы интеграции, анализ рисков, fallback-сообщения и голосовые ответы должны быть на русском языке. Технические имена файлов, команды, API endpoints, JSON keys и названия библиотек оставляй без перевода. ${contextInfo}${memoryContext}\nIntent: ${intent}. Ответь кратко на русском. Если нужно что-то сделать — предложи action.`;
-        const ZAISDK = (await import("z-ai-web-dev-sdk")).default;
-        const zai = await ZAISDK.create();
-        const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: message },
-          ],
-          temperature: 0.4,
-          max_tokens: 1024,
-        });
-        reply = completion.choices[0]?.message?.content ?? await generateMockReply(message, intent, repoRef);
-      } catch {
+        reply = await aiProviderRouter.chat(intent, systemPrompt, message);
+      } catch (err) {
+        console.error("[chat.service] AI router failed:", err);
         reply = await generateMockReply(message, intent, repoRef);
       }
     }

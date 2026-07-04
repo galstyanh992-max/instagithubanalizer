@@ -19,14 +19,14 @@ export type JarwisyanAICoreFallbackProps = {
   compact?: boolean;
   className?: string;
   /** Состояние ядра — определяет цвет, скорость, интенсивность */
-  state?: "calm" | "thinking" | "active" | "warning" | "overload";
+  state?: "idle" | "thinking" | "processing" | "speaking" | "error" | "critical" | "offline";
 };
 
 const SIZE_MAP = {
-  sm: { px: 200, core: 70 },
-  md: { px: 300, core: 110 },
-  lg: { px: 460, core: 170 },
-  xl: { px: 560, core: 210 },
+  sm: { px: 200, core: 110 },
+  md: { px: 300, core: 160 },
+  lg: { px: 460, core: 240 },
+  xl: { px: 560, core: 300 },
 };
 
 // Neural network — brain-like structure
@@ -67,40 +67,71 @@ const STATE_CONFIG = {
   calm: {
     primary: "#22d3ee", secondary: "#38bdf8", inner: "#67e8f9",
     accent: "#a3e635", white: "#ECFEFF", violet: "rgba(139, 92, 246, 0.12)",
-    breatheSpeed: "4s", pulseOpacity: 0.6, glowSize: 100, ringOpacity: 0.55,
+    breatheSpeed: "7s", pulseOpacity: 0.8, glowSize: 100, ringOpacity: 0.55,
     label: "Спокойствие",
   },
   thinking: {
     primary: "#38bdf8", secondary: "#818cf8", inner: "#a5b4fc",
     accent: "#a3e635", white: "#ECFEFF", violet: "rgba(139, 92, 246, 0.18)",
-    breatheSpeed: "2.5s", pulseOpacity: 0.8, glowSize: 120, ringOpacity: 0.7,
+    breatheSpeed: "5s", pulseOpacity: 0.9, glowSize: 120, ringOpacity: 0.7,
     label: "Анализ",
+  },
+  processing: {
+    primary: "#22d3ee", secondary: "#67e8f9", inner: "#ECFEFF",
+    accent: "#a3e635", white: "#ffffff", violet: "rgba(139, 92, 246, 0.10)",
+    breatheSpeed: "3s", pulseOpacity: 0.95, glowSize: 140, ringOpacity: 0.85,
+    label: "Обработка",
+  },
+  speaking: {
+    primary: "#c084fc", secondary: "#e879f9", inner: "#fbcfe8",
+    accent: "#a3e635", white: "#ffffff", violet: "rgba(139, 92, 246, 0.20)",
+    breatheSpeed: "2s", pulseOpacity: 0.95, glowSize: 130, ringOpacity: 0.8,
+    label: "Синтез",
   },
   active: {
     primary: "#22d3ee", secondary: "#67e8f9", inner: "#ECFEFF",
     accent: "#a3e635", white: "#ffffff", violet: "rgba(139, 92, 246, 0.10)",
-    breatheSpeed: "1.8s", pulseOpacity: 0.95, glowSize: 140, ringOpacity: 0.85,
+    breatheSpeed: "4s", pulseOpacity: 0.9, glowSize: 130, ringOpacity: 0.8,
     label: "Активен",
   },
   warning: {
     primary: "#fbbf24", secondary: "#f59e0b", inner: "#fde68a",
     accent: "#f97316", white: "#FFFBEB", violet: "rgba(139, 92, 246, 0.08)",
-    breatheSpeed: "1.2s", pulseOpacity: 0.85, glowSize: 110, ringOpacity: 0.75,
+    breatheSpeed: "2s", pulseOpacity: 0.85, glowSize: 110, ringOpacity: 0.75,
     label: "Внимание",
   },
-  overload: {
+  error: {
+    primary: "#f97316", secondary: "#ea580c", inner: "#fdba74",
+    accent: "#fbbf24", white: "#FFFBEB", violet: "rgba(234, 88, 12, 0.08)",
+    breatheSpeed: "1.5s", pulseOpacity: 0.9, glowSize: 120, ringOpacity: 0.8,
+    label: "Ошибка",
+  },
+  critical: {
     primary: "#f87171", secondary: "#ef4444", inner: "#fca5a5",
     accent: "#fbbf24", white: "#FEF2F2", violet: "rgba(139, 92, 246, 0.05)",
     breatheSpeed: "0.8s", pulseOpacity: 1, glowSize: 130, ringOpacity: 0.9,
-    label: "Перегрузка",
+    label: "Критическая ошибка",
+  },
+  offline: {
+    primary: "#475569", secondary: "#334155", inner: "#64748b",
+    accent: "#94a3b8", white: "#f1f5f9", violet: "transparent",
+    breatheSpeed: "10s", pulseOpacity: 0.3, glowSize: 40, ringOpacity: 0.2,
+    label: "Оффлайн",
   },
 } as const;
 
 export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
-  const { size = "md", active = false, reducedMotion = false, compact = false, className, state = "calm" } = props;
+  const { size = "md", active = false, reducedMotion = false, compact = false, className, state = "idle" } = props;
   const [systemReduced, setSystemReduced] = useState(false);
-  // Auto-cycle states for "living" feeling when active
-  const [liveState, setLiveState] = useState(state);
+  // User wants idle to map to calm
+  const [liveState, setLiveState] = useState<keyof typeof STATE_CONFIG>("calm");
+
+  useEffect(() => {
+    // Map standard states to our internal config
+    if (state === "idle") setLiveState("calm");
+    else if (state in STATE_CONFIG) setLiveState(state as keyof typeof STATE_CONFIG);
+    else setLiveState("calm");
+  }, [state]);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
@@ -111,14 +142,13 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
     return () => mq.removeEventListener?.("change", handler);
   }, []);
 
-  // When active, cycle through thinking → active → calm to simulate "living"
+  // When active without specific state, cycle gently
   useEffect(() => {
-    if (!active || reducedMotion) return;
+    if (!active || reducedMotion || state !== "idle") return;
     const t1 = setTimeout(() => setLiveState("thinking"), 100);
-    const t2 = setTimeout(() => setLiveState("active"), 3000);
-    const t3 = setTimeout(() => setLiveState("calm"), 7000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [active, reducedMotion]);
+    const t2 = setTimeout(() => setLiveState("calm"), 3000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [active, reducedMotion, state]);
 
   const motionOff = reducedMotion || systemReduced;
   const dim = SIZE_MAP[size];
@@ -139,59 +169,25 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
       {/* === Outer aura — soft volumetric glow === */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-full"
+        className="pointer-events-none absolute inset-[-10%] rounded-full"
         style={{
-          background: `radial-gradient(circle at 50% 50%, ${cfg.primary}${Math.round(cfg.glowSize * 0.4).toString(16).padStart(2, "0")} 0%, ${cfg.violet} 40%, transparent 70%)`,
-          filter: "blur(30px)",
-          opacity: cfg.pulseOpacity * 0.6,
+          background: `radial-gradient(circle at 50% 50%, #ffffff 0%, ${cfg.primary} 15%, ${cfg.primary}60 30%, ${cfg.violet}20 50%, transparent 70%)`,
+          opacity: cfg.pulseOpacity * 0.9,
+          animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
+        }}
+      />
+      {/* === Hot Core Center === */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-[35%] rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 80%)",
+          opacity: cfg.pulseOpacity,
           animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
         }}
       />
 
-      {/* === HUD Ring outer — tick marks === */}
-      <svg aria-hidden viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 h-full w-full" style={{ opacity: 0.3 }}>
-        <circle cx="50" cy="50" r="48" fill="none" stroke={cfg.primary} strokeWidth="0.15" strokeDasharray="0.5 2" />
-        <circle cx="50" cy="50" r="48" fill="none" stroke={cfg.primary} strokeWidth="0.1" opacity="0.5" />
-        {Array.from({ length: 24 }).map((_, i) => {
-          const angle = (i * 15 * Math.PI) / 180;
-          const x1 = 50 + 47 * Math.cos(angle);
-          const y1 = 50 + 47 * Math.sin(angle);
-          const x2 = 50 + 45 * Math.cos(angle);
-          const y2 = 50 + 45 * Math.sin(angle);
-          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={cfg.primary} strokeWidth="0.2" opacity="0.4" />;
-        })}
-      </svg>
-
-      {/* === Orbit Ring 1 — primary, rotating === */}
-      <svg
-        aria-hidden viewBox="0 0 100 100"
-        className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : "ai-core-spin-slow"}`}
-        style={{ filter: `drop-shadow(0 0 6px ${cfg.primary}66)`, opacity: cfg.ringOpacity }}
-      >
-        <ellipse cx="50" cy="50" rx="44" ry="44" fill="none" stroke={cfg.primary} strokeWidth="0.3" strokeDasharray="4 2" />
-      </svg>
-
-      {/* === Orbit Ring 2 — secondary, tilted, counter-rotating === */}
-      {!compact && (
-        <svg
-          aria-hidden viewBox="0 0 100 100"
-          className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : "ai-core-spin-reverse"}`}
-          style={{ filter: `drop-shadow(0 0 5px ${cfg.secondary}55)`, opacity: cfg.ringOpacity * 0.8 }}
-        >
-          <ellipse cx="50" cy="50" rx="40" ry="14" fill="none" stroke={cfg.secondary} strokeWidth="0.3" strokeDasharray="6 3" transform="rotate(30 50 50)" />
-        </svg>
-      )}
-
-      {/* === Orbit Ring 3 — accent, very tilted === */}
-      <svg
-        aria-hidden viewBox="0 0 100 100"
-        className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : "ai-core-spin-fast"}`}
-        style={{ filter: `drop-shadow(0 0 4px ${cfg.accent}55)`, opacity: cfg.ringOpacity * 0.6 }}
-      >
-        <ellipse cx="50" cy="50" rx="36" ry="10" fill="none" stroke={cfg.accent} strokeWidth="0.2" transform="rotate(-45 50 50)" />
-      </svg>
-
-      {/* === Glass sphere — liquid glass + plasma membrane === */}
+      {/* === Base Neural Sphere === */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
@@ -199,67 +195,39 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
           width: dim.core * 1.4,
           height: dim.core * 1.4,
           background: `
-            radial-gradient(circle at 35% 28%, rgba(255,255,255,0.9), transparent 0 12%),
-            radial-gradient(circle at 50% 50%, ${cfg.white}99, ${cfg.inner}73 20%, ${cfg.primary}4D 40%, rgba(15,23,42,0.15) 72%, transparent 100%)
+            radial-gradient(circle at 40% 30%, rgba(255,255,255,0.9), transparent 25%),
+            radial-gradient(circle at 50% 50%, #06b6d4, #0891b2 40%, rgba(8,145,178,0.4) 70%, transparent 100%)
           `,
           boxShadow: `
-            inset 0 0 50px ${cfg.inner}99,
-            inset 0 0 20px rgba(255,255,255,0.3),
-            0 0 ${cfg.glowSize}px ${cfg.primary}80,
-            0 0 ${cfg.glowSize * 0.5}px ${cfg.white}59
+            inset 0 0 40px #ffffff,
+            inset 0 0 60px #06b6d4,
+            0 0 80px rgba(6,182,212,0.6),
+            0 0 30px rgba(255,255,255,0.4)
           `,
-          border: `1px solid ${cfg.inner}99`,
+          border: `1px solid rgba(255,255,255,0.3)`,
           animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
         }}
       >
-        {/* === Subsurface energy flow — inner moving gradient === */}
-        <div
-          className="absolute inset-0 rounded-full overflow-hidden"
-          style={{ opacity: cfg.pulseOpacity * 0.7 }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `conic-gradient(from 0deg at 50% 50%, transparent 0%, ${cfg.primary}40 25%, transparent 50%, ${cfg.secondary}30 75%, transparent 100%)`,
-              animation: motionOff ? "none" : "ai-core-spin-slow 8s linear infinite",
-              filter: "blur(8px)",
-            }}
-          />
-        </div>
-
-        {/* === Neural Network — brain-like lattice === */}
-        <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
-          {/* Connection lines — base layer */}
-          <g stroke={cfg.inner} strokeWidth="0.2" opacity="0.5" fill="none">
+        {/* === Neural Network Lattice Overlay === */}
+        <svg viewBox="0 0 100 100" className={`absolute inset-0 h-full w-full ${motionOff ? "" : active ? "ai-core-spin-reverse" : "ai-core-spin-slow"}`} style={{ filter: 'drop-shadow(0 0 4px #ffffff)' }}>
+          {/* Connection lines */}
+          <g stroke="#ffffff" strokeWidth="0.3" opacity="0.6" fill="none">
             {NEURAL_LINKS.map(([a, b], i) => (
               <line key={i} x1={NEURAL_NODES[a].x} y1={NEURAL_NODES[a].y} x2={NEURAL_NODES[b].x} y2={NEURAL_NODES[b].y} />
             ))}
           </g>
-          {/* Pulsing connection lines — neural firing */}
-          <g stroke={cfg.white} strokeWidth="0.15" opacity="0.7" fill="none">
-            {NEURAL_LINKS.slice(0, 12).map(([a, b], i) => (
-              <line
-                key={`p${i}`}
-                x1={NEURAL_NODES[a].x} y1={NEURAL_NODES[a].y}
-                x2={NEURAL_NODES[b].x} y2={NEURAL_NODES[b].y}
-                opacity={motionOff ? 0.5 : undefined}
-                style={motionOff ? undefined : { animation: `ai-core-breathe ${1.5 + (i % 4) * 0.3}s ease-in-out ${i * 0.15}s infinite` }}
-              />
-            ))}
-          </g>
-          {/* Neural nodes — neurons */}
+          {/* Neural nodes */}
           <g>
             {NEURAL_NODES.map((node, i) => (
               <circle
                 key={i}
-                cx={node.x} cy={node.y} r={node.r}
-                fill={node.bright ? cfg.white : cfg.inner}
-                opacity={node.bright ? 0.95 : 0.7}
+                cx={node.x} cy={node.y} r={node.r * 1.2}
+                fill="#ffffff"
+                opacity={node.bright ? 1 : 0.8}
                 style={motionOff ? undefined : { animation: `ai-core-breathe ${1.5 + (i % 5) * 0.2}s ease-in-out ${i * 0.08}s infinite` }}
               />
             ))}
           </g>
-          {/* Neural firing — bright pulses traveling along connections */}
           {!motionOff && liveState !== "calm" && (
             <g>
               {NEURAL_LINKS.slice(0, 5).map(([a, b], i) => {
@@ -332,6 +300,37 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
           />
         )}
       </div>
+
+      {/* === Neural Globe Orbit Rings === */}
+      <svg
+        aria-hidden viewBox="0 0 100 100"
+        className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : active ? "ai-core-spin-fast" : "ai-core-spin-slow"}`}
+        style={{ filter: `drop-shadow(0 0 8px ${cfg.white}) drop-shadow(0 0 2px ${cfg.white})`, opacity: cfg.ringOpacity }}
+      >
+        <ellipse cx="50" cy="50" rx="46" ry="12" fill="none" stroke={cfg.white} strokeWidth="0.25" strokeDasharray="4 4" transform="rotate(25 50 50)">
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite" linear="true" />}
+        </ellipse>
+      </svg>
+      
+      <svg
+        aria-hidden viewBox="0 0 100 100"
+        className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : "ai-core-spin-reverse"}`}
+        style={{ filter: `drop-shadow(0 0 6px ${cfg.primary}) drop-shadow(0 0 3px ${cfg.primary})`, opacity: cfg.ringOpacity * 0.9 }}
+      >
+        <ellipse cx="50" cy="50" rx="48" ry="18" fill="none" stroke={cfg.primary} strokeWidth="0.2" strokeDasharray="8 6 2 6" transform="rotate(-35 50 50)">
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="22;0" dur="2s" repeatCount="indefinite" linear="true" />}
+        </ellipse>
+      </svg>
+
+      <svg
+        aria-hidden viewBox="0 0 100 100"
+        className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : active ? "ai-core-spin-reverse" : "ai-core-spin-fast"}`}
+        style={{ filter: `drop-shadow(0 0 10px ${cfg.inner}) drop-shadow(0 0 4px ${cfg.inner})`, opacity: cfg.ringOpacity }}
+      >
+        <ellipse cx="50" cy="50" rx="45" ry="8" fill="none" stroke={cfg.inner} strokeWidth="0.3" strokeDasharray="12 4 4 4" transform="rotate(75 50 50)">
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="24;0" dur="2.5s" repeatCount="indefinite" linear="true" />}
+        </ellipse>
+      </svg>
 
       {/* === Orbit particles — energy dots === */}
       {!compact && !motionOff && (
