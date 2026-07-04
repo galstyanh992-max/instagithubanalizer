@@ -34,11 +34,10 @@ export function JarwisyanChatPanel({ className }: { className?: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/settings")
+    fetch("/api/providers/status")
       .then((r) => r.json())
       .then((d) => {
-        const s = d.settings;
-        setFallbackMode(!s?.glmApiKey || s?.aiProvider === "mock");
+        setFallbackMode(d.mockMode);
       })
       .catch(() => void 0);
   }, []);

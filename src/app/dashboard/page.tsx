@@ -6,7 +6,6 @@ import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { StatCard } from "@/components/futuristic/stat-card";
 import { VerdictBadge } from "@/components/futuristic/neon-badge";
 import { JarwisyanAICore } from "@/components/three/JarwisyanAICore";
-import { JarwisyanChatPanel } from "@/components/chat/JarwisyanChatPanel";
 import {
   FolderGit2, Rocket, FlaskConical, Bookmark, XCircle, Eye,
   ShieldAlert, Cpu,
@@ -153,8 +152,6 @@ export default function DashboardPage() {
         </HolographicPanel>
       </div>
 
-      {/* Signal Console */}
-      <JarwisyanChatPanel />
     </div>
   );
 }

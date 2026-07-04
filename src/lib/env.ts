@@ -7,25 +7,44 @@ const envSchema = z.object({
   GITHUB_TOKEN: z.string().default(""),
   
   // Provider Router configuration
-  DEFAULT_AI_PROVIDER: z.string().default("ollama_cloud_pro"),
+  AI_PROVIDER: z.string().default("ollama-cloud"),
+  DEFAULT_AI_PROVIDER: z.string().default("ollama-cloud"),
+  HEAVY_AI_PROVIDER: z.string().default("glm"),
   
-  // Ollama Cloud Pro (Default)
-  OLLAMA_CLOUD_PRO_API_KEY: z.string().default(""),
-  OLLAMA_CLOUD_PRO_BASE_URL: z.string().default("https://api.ollama.com/v1"),
+  // Ollama Cloud Pro (Default fast)
+  OLLAMA_CLOUD_API_KEY: z.string().default(""),
+  OLLAMA_CLOUD_BASE_URL: z.string().default("https://api.ollama.com/v1"),
+  OLLAMA_CLOUD_MODEL: z.string().default("llama3.1-70b"),
   
-  // Gemini
-  GEMINI_API_KEY: z.string().default(""),
-  
-  // OpenRouter
+  // GLM 5.2 (Heavy reasoning)
+  GLM_API_KEY: z.string().default(""),
+  GLM_BASE_URL: z.string().default("https://open.bigmodel.cn/api/paas/v4"),
+  GLM_MODEL: z.string().default("glm-5.2"),
+
+  // OpenRouter (Fallback)
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_BASE_URL: z.string().default("https://openrouter.ai/api/v1"),
+  OPENROUTER_MODEL: z.string().default("anthropic/claude-3-5-sonnet-20240620"),
   
-  // OpenAI
+  // Gemini (Fallback)
+  GEMINI_API_KEY: z.string().default(""),
+  GEMINI_MODEL: z.string().default("gemini-1.5-pro"),
+  
+  // OpenAI (Fallback)
   OPENAI_API_KEY: z.string().default(""),
-  
-  // Unknown / confirm-first providers
-  OPENGO_API_KEY: z.string().default(""),
-  CERBEROS_API_KEY: z.string().default(""),
+  OPENAI_MODEL: z.string().default("gpt-4o"),
+
+  // Groq (Fallback)
+  GROQ_API_KEY: z.string().default(""),
+  GROQ_MODEL: z.string().default("llama-3.1-70b-versatile"),
+
+  // Cerebras (Fallback)
+  CEREBRAS_API_KEY: z.string().default(""),
+  CEREBRAS_MODEL: z.string().default("llama3.1-70b"),
+
+  // Mock configuration
+  AI_ENABLE_MOCK_FALLBACK: z.string().default("true"),
+
 
   OCR_PROVIDER: z.string().default("local"),
   OCR_API_KEY: z.string().default(""),
@@ -76,7 +95,15 @@ export const env = loadEnv();
 
 export const isGitHubConfigured = () => Boolean(env.GITHUB_TOKEN);
 export const isAiConfigured = () =>
-  env.DEFAULT_AI_PROVIDER !== "mock" && (Boolean(env.OLLAMA_CLOUD_PRO_API_KEY) || Boolean(env.OPENROUTER_API_KEY));
+  env.AI_PROVIDER !== "mock" && (
+    Boolean(env.OLLAMA_CLOUD_API_KEY) || 
+    Boolean(env.GLM_API_KEY) || 
+    Boolean(env.OPENROUTER_API_KEY) ||
+    Boolean(env.GEMINI_API_KEY) ||
+    Boolean(env.OPENAI_API_KEY) ||
+    Boolean(env.GROQ_API_KEY) ||
+    Boolean(env.CEREBRAS_API_KEY)
+  );
 export const isOcrConfigured = () => env.OCR_PROVIDER === "local" || Boolean(env.OCR_API_KEY);
 export const isVoiceConfigured = () =>
   env.TTS_PROVIDER === "browser" && env.STT_PROVIDER === "browser";

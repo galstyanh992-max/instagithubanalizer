@@ -59,7 +59,6 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
     }
     const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition
     if (Ctor) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSupported(true)
       const rec = new Ctor()
       rec.lang = 'ru-RU'
@@ -81,7 +80,6 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
   // Fake level animation while listening
   useEffect(() => {
     if (!listening) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLevel(0)
       return
     }

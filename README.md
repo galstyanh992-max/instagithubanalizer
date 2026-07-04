@@ -59,11 +59,16 @@ npm run smoke
 3. Добавьте файлы и сделайте коммит.
 
 ## Подготовка к Vercel
-Для деплоя на Vercel необходимо:
-1. Заменить базу данных SQLite на PostgreSQL (например, Supabase или Neon).
-2. Задать `DATABASE_URL` и `DIRECT_URL` в панели Vercel.
-3. Проверить `DEPLOYMENT_READINESS.md` для получения подробной информации.
+Для деплоя на Vercel (PostgreSQL) необходимо:
+1. Зарегистрировать проект в Supabase.
+2. В панели Vercel задать следующие переменные (Vercel Environment Variables):
+   - `DATABASE_URL` (используется для pooled connections в рантайме)
+   - `DIRECT_URL` (используется для direct connections при миграциях через Prisma)
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+3. Убедиться, что скрипт сборки включает `prisma generate` (в `package.json` добавлен `"postinstall": "prisma generate"`).
+4. Запустить миграции БД через `npx prisma migrate deploy` или `npm run db:deploy`.
 
 ## Текущие ограничения
-- БД настроена на SQLite, поэтому данные будут сброшены при деплое на Vercel (read-only file system). Ожидается миграция на Postgres.
 - Часть функций агентов находится в Fallback Mode.

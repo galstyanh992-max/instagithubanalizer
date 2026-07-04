@@ -3,6 +3,7 @@
 import { useFrame, Canvas } from "@react-three/fiber";
 import { useRef, useMemo, Suspense } from "react";
 import * as THREE from "three";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { useUiStore } from "@/lib/store";
 import { useMounted } from "@/lib/use-mounted";
 import { JarwisyanAICoreFallback } from "./JarwisyanAICoreFallback";
@@ -26,14 +27,14 @@ export type JarwisyanAICoreProps = {
   compact?: boolean;
   className?: string;
   /** Состояние ядра — определяет цвет, скорость, интенсивность */
-  state?: "calm" | "thinking" | "active" | "warning" | "overload";
+  state?: "idle" | "thinking" | "processing" | "speaking" | "error" | "critical" | "offline";
 };
 
 const SIZE_MAP = {
-  sm: { px: 200, scale: 0.7 },
-  md: { px: 300, scale: 1.0 },
-  lg: { px: 460, scale: 1.35 },
-  xl: { px: 560, scale: 1.6 },
+  sm: { px: 200, scale: 0.9 },
+  md: { px: 300, scale: 1.4 },
+  lg: { px: 460, scale: 1.8 },
+  xl: { px: 560, scale: 2.2 },
 };
 
 // Palette
@@ -43,86 +44,85 @@ const INNER_CYAN = "#67e8f9";
 const LIME = "#a3e635";
 const VIOLET_MUTED = "#a855f7";
 
-// ---------- Inner pieces ----------
+// --- NEURAL GLOBE COMPONENTS ---
 
-function GlassCore({ active }: { active: boolean }) {
-  const ref = useRef<THREE.Mesh>(null);
-  const wireRef = useRef<THREE.Mesh>(null);
-  const innerRef = useRef<THREE.Mesh>(null);
+function NeuralGlobe({ active }: { active: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime;
-    const pulse = 1 + Math.sin(t * (active ? 2.4 : 1.4)) * (active ? 0.04 : 0.02);
-    ref.current.scale.setScalar(pulse);
-    ref.current.rotation.y = t * 0.18;
-    if (wireRef.current) {
-      wireRef.current.rotation.y = -t * 0.28;
-      wireRef.current.rotation.x = Math.sin(t * 0.2) * 0.1;
-    }
-    if (innerRef.current) {
-      const innerPulse = 1 + Math.sin(t * 1.8) * 0.08;
-      innerRef.current.scale.setScalar(innerPulse);
-    }
+    ref.current.rotation.y = t * 0.15 * (active ? 1.5 : 1);
+    ref.current.rotation.x = Math.sin(t * 0.2) * 0.1;
   });
+
   return (
-    <group>
-      {/* Glass core — cyan, semi-transparent, depth via transmission — УСИЛЕН */}
-      <mesh ref={ref}>
-        <icosahedronGeometry args={[1, 3]} />
+    <group ref={ref}>
+      {/* 1. Base Glowing Sphere (The blue glass core) */}
+      <mesh scale={0.98}>
+        <sphereGeometry args={[1, 32, 32]} />
         <meshPhysicalMaterial
-          color="#0a1a2e"
-          emissive={CYAN}
-          emissiveIntensity={active ? 0.6 : 0.4}
-          metalness={0.7}
+          color="#06b6d4" // Cyan-500
+          emissive="#0891b2"
+          emissiveIntensity={0.8}
+          transparent
+          opacity={0.3}
           roughness={0.1}
-          transmission={0.75}
-          thickness={1.0}
-          transparent
-          opacity={0.55}
-          ior={1.3}
-          clearcoat={1}
-          clearcoatRoughness={0.03}
+          transmission={0.9}
+          thickness={1.5}
         />
       </mesh>
-      {/* Neural wireframe lattice — мозг-подобная структура, плотная */}
-      <mesh ref={wireRef} scale={1.02}>
-        <icosahedronGeometry args={[1, 2]} />
+
+      {/* 2. Inner Hot Core (To give volume) */}
+      <mesh scale={0.4}>
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.8} blending={THREE.AdditiveBlending} />
+      </mesh>
+
+      {/* 3. Neural Wireframe (The connections) */}
+      <mesh>
+        <icosahedronGeometry args={[1, 4]} />
         <meshBasicMaterial
-          color={INNER_CYAN}
+          color="#a5f3fc" // Cyan-200
           wireframe
           transparent
-          opacity={active ? 0.42 : 0.3}
-        />
-      </mesh>
-      {/* Второй слой wireframe — для эффекта нейронной сети */}
-      <mesh scale={0.95} rotation={[0.3, 0.5, 0.1]}>
-        <icosahedronGeometry args={[1, 1]} />
-        <meshBasicMaterial
-          color={"#E0FCFF"}
-          wireframe
-          transparent
-          opacity={active ? 0.25 : 0.18}
-        />
-      </mesh>
-      {/* White-hot inner core — яркое бело-голубое свечение */}
-      <mesh ref={innerRef} scale={0.38}>
-        <sphereGeometry args={[1, 20, 20]} />
-        <meshBasicMaterial
-          color="#ECFEFF"
-          transparent
-          opacity={active ? 0.9 : 0.75}
+          opacity={0.15}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
-      {/* Дополнительный очень яркий центр — white-hot */}
-      <mesh scale={0.18}>
-        <sphereGeometry args={[1, 12, 12]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={1} blending={THREE.AdditiveBlending} />
-      </mesh>
-      {/* Neural pulse particles — маленькие точки внутри мозга */}
-      <NeuralPulse active={active} />
+
+      {/* 4. Neural Nodes (The glowing dots at vertices) */}
+      <points>
+        <icosahedronGeometry args={[1, 4]} />
+        <pointsMaterial
+          size={0.03}
+          color="#ffffff"
+          transparent
+          opacity={0.9}
+          sizeAttenuation
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+      
+      {/* 5. Highlight Nodes (Larger, brighter dots for variety) */}
+      <points scale={1.01}>
+        <icosahedronGeometry args={[1, 1]} />
+        <pointsMaterial
+          size={0.06}
+          color="#cffafe"
+          transparent
+          opacity={1}
+          sizeAttenuation
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
     </group>
   );
+}
+
+function GlassCore({ active }: { active: boolean }) {
+  // We use NeuralGlobe instead now, this wrapper keeps it compatible
+  return <NeuralGlobe active={active} />;
 }
 
 // Neural pulse — маленькие яркие точки внутри ядра, имитируют нейронную активность
@@ -199,12 +199,25 @@ function ThinRing({
     ref.current.rotation.x = axis[0] * t * speed + Math.PI / 2.4;
     ref.current.rotation.y = axis[1] * t * speed;
     ref.current.rotation.z = axis[2] * t * speed;
+    
+    // Electric flicker effect for current flow
+    if (ref.current.material) {
+      const mat = ref.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = opacity * (0.7 + Math.sin(t * 40 + radius) * 0.3);
+    }
   });
   return (
-    <mesh ref={ref}>
-      <torusGeometry args={[radius, tube, 8, 96]} />
-      <meshBasicMaterial color={color} transparent opacity={opacity} blending={THREE.NormalBlending} />
-    </mesh>
+    <group>
+      <mesh ref={ref}>
+        <torusGeometry args={[radius, tube, 8, 96]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} blending={THREE.AdditiveBlending} />
+      </mesh>
+      {/* Wireframe shell to enhance the electric look */}
+      <mesh rotation-x={Math.PI / 2.4}>
+        <torusGeometry args={[radius, tube * 1.5, 4, 32]} />
+        <meshBasicMaterial color="#ffffff" wireframe transparent opacity={opacity * 0.3} blending={THREE.AdditiveBlending} />
+      </mesh>
+    </group>
   );
 }
 
@@ -290,6 +303,17 @@ function Scene({ active, compact, reducedMotion }: { active: boolean; compact: b
       <GlassCore active={active} />
 
       <OrbitDots count={dotCount} radius={1.2} active={active} />
+      
+      {!reducedMotion && (
+        <EffectComposer>
+          <Bloom
+            luminanceThreshold={0.2}
+            luminanceSmoothing={0.9}
+            intensity={active ? 1.5 : 1.0}
+            mipmapBlur
+          />
+        </EffectComposer>
+      )}
     </>
   );
 }
@@ -315,7 +339,7 @@ function hasWebGL(): boolean {
 // ---------- Main component ----------
 
 export function JarwisyanAICore(props: JarwisyanAICoreProps) {
-  const { size = "md", active = false, reducedMotion: reducedMotionProp, compact: compactProp, className, state = "calm" } = props;
+  const { size = "md", active = false, reducedMotion: reducedMotionProp, compact: compactProp, className, state = "idle" } = props;
   const mounted = useMounted();
   const enable3d = useUiStore((s) => s.enable3d);
   const storeReducedMotion = useUiStore((s) => s.reduceMotion);
@@ -347,7 +371,7 @@ export function JarwisyanAICore(props: JarwisyanAICoreProps) {
   const finalReducedMotion = reducedMotion || prefersReduced;
 
   const webglAvailable = hasWebGL();
-  const useWebGL = enable3d && webglAvailable;
+  const useWebGL = webglAvailable; // Forced 3D, bypassing enable3d
 
   if (!useWebGL) {
     return (
@@ -377,7 +401,7 @@ export function JarwisyanAICore(props: JarwisyanAICoreProps) {
     >
       <Canvas
         key={`ai-core-${size}`}
-        camera={{ position: [0, 0, 4.2], fov: 45 }}
+        camera={{ position: [0, 0, 5.5], fov: 45 }}
         dpr={[1, 1.5]}
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
         style={{ background: "transparent" }}

@@ -65,3 +65,5 @@ secrets.txt
 .vercel
 upload/
 dist/
+
+.vercel

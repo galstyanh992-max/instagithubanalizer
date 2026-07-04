@@ -36,7 +36,7 @@ interface UiState {
 export const useUiStore = create<UiState>()(
   persist(
     (set, get) => ({
-      enable3d: false,
+      enable3d: true,
       reduceMotion: false,
       compactMode: false,
       neonIntensity: 70,
