@@ -32,6 +32,17 @@ import { recordBrainEntry } from "@/lib/project-brain/project-brain-service";
 const DESTRUCTIVE_RE =
   /(rm\s+-rf|\bdrop\s+(database|table)|\bdelete\s+(from|folder|dir|directory)|format\s+[a-z]:|mkfs|удал(и|ить|яй)|снеси|уничтож|сотри\s+(папку|диск|файлы)|wipe\b|shred\b)/i;
 
+/**
+ * Local-computer intent patterns. When a phone user asks to run something ON
+ * THE COMPUTER (tests, scripts, files, desktop commander), the foundation
+ * surface must surface `local_agent_not_running` directly — the Local Agent is
+ * not running in this phase, and we must never silently route this to
+ * `not_implemented` (which would imply we don't understand, rather than "we
+ * understand but can't run it right now"). Mobile/Telegram always escalate.
+ */
+const LOCAL_COMPUTER_RE =
+  /(на\s+компьютере|на\s+пк|на\s+ноуте|на\s+машине|локально|local\s+machine|desktop\s+commander|mcp\s+(tool|server|bridge)|запусти\s+(.+\s+на\s+компьютере|локального\s+агента)|подключи\s+(desktop\s+commander|мой\s+компьютер|компьютер))/i;
+
 function actorSourceOf(input: PhoneCommandPreviewInput): ActorSource {
   if (input.source === "telegram") return "telegram";
   if (input.source === "api") return "api";
@@ -94,6 +105,33 @@ export async function previewPhoneCommand(input: PhoneCommandPreviewInput): Prom
       steps: [],
       blockedReasons: ["destructive_action_denied"],
       nextAction: "deny",
+    };
+  }
+
+  // 1b. Local-computer action — Local Agent is not running in this foundation
+  // phase. Mobile/Telegram escalate to approval_required instead of a pure
+  // plan, because remote execution on the user's machine must be confirmed.
+  if (LOCAL_COMPUTER_RE.test(text)) {
+    const status: PhoneCommandResultStatus = isStrictSource(input.source)
+      ? "approval_required"
+      : "local_agent_not_running";
+    recordPreviewEvent({ status, reason: "local_computer_detected" });
+    return {
+      status,
+      intent: "local_agent_runtime",
+      riskLevel: "MEDIUM",
+      requiresApproval: status === "approval_required",
+      summary:
+        status === "approval_required"
+          ? "Действие на компьютере требует подтверждения (local agent не запущен)."
+          : "Локальный агент не запущен. Запустите handshake, чтобы выполнить команду на компьютере.",
+      steps: [
+        "Запустите Local Agent Runtime handshake (future feature).",
+        "Подключите Desktop Commander/MCP bridge (plan-only).",
+        "Подтвердите выполнение на компьютере перед запуском.",
+      ],
+      blockedReasons: [],
+      nextAction: status === "approval_required" ? "request_approval" : "configure_local_agent",
     };
   }
 
