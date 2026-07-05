@@ -64,7 +64,6 @@ export default function RootLayout({
               <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 lg:px-10 lg:py-8 pb-24 relative z-10">
                 {children}
               </main>
-              <GlobalCommandDock />
             </div>
           </div>
           <Toaster />

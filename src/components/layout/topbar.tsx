@@ -56,78 +56,106 @@ function useFallbackMode() {
   return mode;
 }
 
+import { useOsMetrics } from "@/lib/os-mock-data";
+
 export function TopBar() {
   const pathname = usePathname();
   const now = useNow();
-  const fallback = useFallbackMode();
+  const metrics = useOsMetrics();
+
+  const links = [
+    { label: "Dashboard", href: "/" },
+    { label: "Projects", href: "/projects" },
+    { label: "Agents", href: "/agents" },
+    { label: "Memory", href: "/memory" },
+    { label: "Analysis", href: "/upload" },
+    { label: "System", href: "/system" },
+    { label: "Settings", href: "/settings" },
+  ];
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-cyan-400/20 bg-zinc-950/80 px-4 backdrop-blur-2xl lg:px-8">
+    <header className="sticky top-0 z-50 flex h-10 items-center justify-between border-b border-cyan-400/20 bg-zinc-950/90 px-3 backdrop-blur-md">
       {/* Subtle bottom accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-cyan-500/20 via-cyan-400/50 to-cyan-500/20" />
       
-      <div className="flex items-center gap-6">
+      {/* Left Area */}
+      <div className="flex items-center h-full">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative h-9 w-9">
-            <div className="absolute inset-0 rounded-full bg-cyan-400/30 blur-md group-hover:bg-cyan-400/50 transition-colors" />
-            <div className="relative h-9 w-9 rounded-full border border-cyan-400/50 bg-zinc-950 flex items-center justify-center">
-              <div className="absolute inset-1.5 rounded-full" style={{ background: "radial-gradient(circle at 35% 30%, rgba(224,252,255,0.9), rgba(34,211,238,0.5) 40%, rgba(15,23,42,0.8) 80%)" }} />
+        <Link href="/" className="flex items-center gap-2 group mr-6">
+          <div className="relative h-6 w-6">
+            <div className="absolute inset-0 rounded-full bg-cyan-400/30 blur-[4px] group-hover:bg-cyan-400/50 transition-colors" />
+            <div className="relative h-6 w-6 rounded-full border border-cyan-400/50 bg-zinc-950 flex items-center justify-center">
+              <div className="absolute inset-1 rounded-full" style={{ background: "radial-gradient(circle at 35% 30%, rgba(224,252,255,0.9), rgba(34,211,238,0.5) 40%, rgba(15,23,42,0.8) 80%)" }} />
             </div>
           </div>
           <div className="hidden sm:block">
-            <div className="font-mono text-sm font-bold tracking-wider neon-text">JARWISYAN</div>
+            <div className="font-mono text-[11px] font-bold tracking-widest neon-text">JARWISYAN OS</div>
           </div>
         </Link>
 
-        {/* Horizontal Nav */}
-        <nav className="hidden md:flex items-center gap-2">
-          {NAV_GROUPS.map(group => (
-            <DropdownMenu key={group.label}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-zinc-300 hover:text-cyan-300 hover:bg-cyan-400/10 data-[state=open]:bg-cyan-400/10 data-[state=open]:text-cyan-300 font-mono uppercase tracking-wider text-[11px] h-9 px-3 border border-transparent hover:border-cyan-400/30 transition-all rounded-lg">
-                  {group.label}
-                  <ChevronDown className="ml-1.5 h-3 w-3 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-zinc-950/95 border-cyan-400/30 backdrop-blur-xl">
-                {NAV_ITEMS.filter((item) => group.items.includes(item.href)).map((item) => {
-                  const Icon = ICONS[item.icon as keyof typeof ICONS];
-                  const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-                  return (
-                    <DropdownMenuItem key={item.href} asChild>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-2.5 cursor-pointer font-sans transition-colors",
-                          active ? "text-cyan-300 bg-cyan-400/10" : "text-zinc-400 hover:text-cyan-100 hover:bg-white/5"
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ))}
+        {/* Links */}
+        <nav className="hidden lg:flex items-center gap-1 h-full">
+          {links.map((link) => {
+            const active = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "font-mono uppercase tracking-wider text-[10px] h-full flex items-center px-3 border-b-2 transition-all",
+                  active 
+                    ? "text-cyan-300 border-cyan-400 bg-cyan-400/10" 
+                    : "text-zinc-400 border-transparent hover:text-cyan-100 hover:bg-white/5"
+                )}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
-      <div className="flex items-center gap-4">
-        {fallback && (fallback.github || fallback.ai) && (
-          <div className="flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-[10px] text-amber-400 font-mono shadow-[0_0_10px_rgba(251,191,36,0.15)]">
-            <AlertTriangle className="h-3 w-3" />
-            <span className="hidden sm:inline">FALLBACK</span>
+      {/* Right Area - Metrics */}
+      <div className="flex items-center gap-3 md:gap-4 lg:gap-6 h-full font-mono text-[9px] uppercase text-zinc-400">
+        
+        <div className="hidden xl:flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-zinc-500">GPU</span>
+            <span className={cn("font-bold", metrics.gpu > 80 ? "text-red-400" : "text-cyan-300")}>{metrics.gpu.toFixed(0)}%</span>
           </div>
-        )}
-        <div className="flex items-center gap-2 border border-cyan-400/20 bg-zinc-950/50 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(34,211,238,0.1)]">
-          <Activity className="h-3 w-3 text-lime-400 animate-pulse" />
-          <span className="font-mono text-xs text-cyan-50">
-            {now ? now.toLocaleTimeString("ru-RU") : "--:--:--"}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-zinc-500">RAM</span>
+            <span className="text-cyan-300">{(metrics.ram / 64 * 100).toFixed(0)}%</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-zinc-500">Model</span>
+            <span className="text-lime-400">OpenRouter (Primary)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-zinc-500">Tokens</span>
+            <span className="text-amber-300">{metrics.tokenUsage.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-zinc-500">Lat</span>
+            <span className={metrics.latency > 100 ? "text-amber-400" : "text-cyan-300"}>{metrics.latency.toFixed(0)}ms</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-zinc-500">Queue</span>
+            <span className="text-cyan-300">{metrics.queue}</span>
+          </div>
         </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-lime-500 animate-pulse shadow-[0_0_8px_rgba(132,204,22,0.8)]" />
+            <span className="text-lime-400 hidden sm:block">SYSTEM ONLINE</span>
+          </div>
+          
+          <div className="text-cyan-50 font-medium px-2 py-0.5 rounded bg-zinc-900 border border-cyan-400/20">
+            {now ? now.toLocaleTimeString("ru-RU") : "--:--:--"}
+          </div>
+        </div>
+
       </div>
     </header>
   );

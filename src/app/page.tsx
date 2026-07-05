@@ -4,135 +4,71 @@ import { motion } from "framer-motion";
 import { TaskListSidebar } from "@/components/sidebar/task-list-sidebar";
 import JarwisyanAICore from "@/components/three/JarwisyanAICore";
 
+import { OsSystemStatus } from "@/components/os/OsSystemStatus";
+import { OsModelsList } from "@/components/os/OsModelsList";
+import { OsAgentsRoster } from "@/components/os/OsAgentsRoster";
+import { OsMemoryTree } from "@/components/os/OsMemoryTree";
+import { OsTimeline } from "@/components/os/OsTimeline";
+import { OsActiveProjects } from "@/components/os/OsActiveProjects";
+import { OsRunningTasks } from "@/components/os/OsRunningTasks";
+import { OsNotifications } from "@/components/os/OsNotifications";
+import { OsConsole } from "@/components/os/OsConsole";
+import { MacDock } from "@/components/layout/mac-dock";
+
 export default function Home() {
   return (
-    <div className="cosmic-page-shell flex h-screen w-full flex-col overflow-hidden">
+    <div className="flex flex-col h-full w-full overflow-hidden absolute inset-0 pt-10">
       
-      {/* Top Header */}
-      <div className="flex flex-col items-center justify-center pt-6 pb-4 z-10 gap-3">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="jarwisyan-title text-xl md:text-2xl tracking-[0.3em] font-light opacity-90">J.A.R.V.I.S</h1>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-5 py-2 text-[10px] uppercase tracking-widest text-cyan-300 backdrop-blur-md shadow-[0_0_15px_rgba(34,211,238,0.2)]"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-lime-400 animate-pulse shadow-[0_0_8px_rgba(163,230,53,0.8)]" />
-          Система онлайн · Ядро активно
-        </motion.div>
-      </div>
-
-      {/* 3-Column Layout */}
-      <div className="flex-1 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-8 px-8 pb-32 items-center z-10">
+      {/* 3-Column Layout Area */}
+      <div className="flex-1 w-full max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-[300px_1fr_300px] gap-6 px-4 py-4 z-10 overflow-hidden relative">
         
-        {/* Left Column: Merged Panels */}
+        {/* Left Column */}
         <motion.div 
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="hidden lg:flex flex-col w-[280px]"
+          className="hidden lg:flex flex-col gap-4 overflow-y-auto custom-scrollbar pb-24"
         >
-          <div className="cyber-panel p-5 flex flex-col gap-6">
-            <div>
-              <h2 className="cyber-panel-header">System Status</h2>
-              <div className="flex flex-col gap-4 text-xs font-mono">
-                <div className="flex justify-between items-center">
-                  <span className="text-cyan-500">ONLINE</span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-lime-400 animate-pulse"></span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-cyan-200/50">CORE TEMP</span>
-                  <span className="text-cyan-100">36.7°C</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-cyan-200/50">MEMORY</span>
-                  <span className="text-cyan-100">78%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-cyan-200/50">NETWORK</span>
-                  <span className="text-cyan-400">SECURE</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-2 border-t border-cyan-400/10">
-              <h2 className="cyber-panel-header mt-2">Repository Matrix</h2>
-              <div className="h-[120px] relative w-full opacity-80">
-                <svg width="100%" height="100%" viewBox="0 0 200 100">
-                  <motion.path 
-                    d="M10,50 L40,30 L70,60 L120,20 L160,70 L190,40" 
-                    fill="none" 
-                    stroke="rgba(34,211,238,0.5)" 
-                    strokeWidth="1.5" 
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 2, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
-                  />
-                  <motion.path 
-                    d="M10,50 L40,30 L70,60 L120,20 L160,70 L190,40" 
-                    fill="none" 
-                    stroke="rgba(34,211,238,1)" 
-                    strokeWidth="2" 
-                    strokeDasharray="4 20"
-                    animate={{ strokeDashoffset: [24, 0] }}
-                    transition={{ duration: 1.5, ease: "linear", repeat: Infinity }}
-                  />
-                  {[
-                    { cx: 10, cy: 50, color: "#22d3ee", delay: 0 },
-                    { cx: 40, cy: 30, color: "#a3e635", delay: 0.2 },
-                    { cx: 70, cy: 60, color: "#22d3ee", delay: 0.4 },
-                    { cx: 120, cy: 20, color: "#e879f9", delay: 0.6 },
-                    { cx: 160, cy: 70, color: "#22d3ee", delay: 0.8 },
-                    { cx: 190, cy: 40, color: "#a3e635", delay: 1 },
-                  ].map((node, i) => (
-                    <motion.circle 
-                      key={i}
-                      cx={node.cx} 
-                      cy={node.cy} 
-                      fill={node.color} 
-                      animate={{ r: [2, 4, 2], opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 2, delay: node.delay, repeat: Infinity }}
-                    />
-                  ))}
-                  {/* Data points */}
-                  <motion.path 
-                    d="M10,90 L40,80 L70,85 L120,70 L160,88 L190,80" 
-                    fill="none" 
-                    stroke="rgba(168,85,247,0.3)" 
-                    strokeWidth="1" 
-                    initial={{ opacity: 0.3 }}
-                    animate={{ opacity: [0.3, 0.7, 0.3] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+          <OsSystemStatus />
+          <OsModelsList />
+          <OsAgentsRoster />
+          <OsMemoryTree />
         </motion.div>
 
-        {/* Center Column: Empty space for Global AI Core to show through */}
-        <div className="hidden lg:block w-full max-w-[400px] lg:max-w-[550px] mx-auto min-h-[500px]" />
+        {/* Center Column: Global AI Core Space + Timeline + Orbits */}
+        <div className="hidden lg:flex flex-col items-center justify-between relative min-h-[500px]">
+          
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center -mt-20">
+             {/* 3D Core Handles Orbits now */}
+          </div>
 
-        {/* Right Column: Merged Panels */}
+          <div className="flex-1" /> {/* Spacer for Core */}
+
+          <div className="w-full relative z-10 pb-10">
+            <OsTimeline />
+          </div>
+        </div>
+
+        {/* Right Column */}
         <motion.div 
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="hidden lg:flex flex-col w-[280px] justify-self-end"
+          className="hidden lg:flex flex-col gap-4 overflow-y-auto custom-scrollbar pb-24 justify-self-end w-full"
         >
-          <div className="h-full max-h-[600px]">
-            <TaskListSidebar />
-          </div>
+          <OsActiveProjects />
+          <OsRunningTasks />
+          <OsNotifications />
         </motion.div>
         
       </div>
+
+      {/* Bottom Area: AI Console */}
+      <OsConsole />
+
+      {/* MacOS Style Dock */}
+      <MacDock />
+
     </div>
   );
 }
