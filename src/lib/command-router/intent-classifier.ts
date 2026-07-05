@@ -7,7 +7,8 @@ interface Rule {
 
 // Order matters: more specific / higher-risk intents first.
 const RULES: Rule[] = [
-  { intent: "local_operator", re: /desktop commander|mcp\s*(tool|server)|покажи файлы проекта|прочитай файл|примени изменени|отредактируй файл|открой приложение/i },
+  { intent: "local_agent_runtime", re: /запусти локального агента|подключи мой компьютер|через телефон.*(запусти|выполни)|local agent runtime|подключи desktop commander/i },
+  { intent: "local_operator", re: /desktop commander|mcp\s*(tool|server)|покажи файлы проекта|прочитай файл|примени изменени|отредактируй файл|открой приложение|выполни команду на компьютере/i },
   { intent: "terminal_task", re: /(npm|pnpm|yarn|bun)\s+(run\s+)?(test|lint|build|typecheck)|запусти\s+(команду|npm|терминал)|terminal|exec\b|rm\s+-rf|git\s+push|prisma\s+migrate/i },
   { intent: "developer_task", re: /реализуй|напиши код|сгенерируй код|implement|по этим промптам|разработай|отрефактор|refactor|создай (модуль|компонент|api)|vercel|deploy|деплой|задеплой|github push|запушь|загрузи в github/i },
   { intent: "database_task", re: /база данных|базу|бд\b|database|prisma|sql\b|миграц|migrate|schema/i },

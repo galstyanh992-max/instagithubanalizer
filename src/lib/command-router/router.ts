@@ -14,6 +14,8 @@ import { planBrowserResearch } from "@/lib/browser-research/planner";
 import { buildEmailDraft } from "@/lib/email-foundation/draft-builder";
 import { planContentGeneration } from "@/lib/content-generation/planner";
 import { planLocalOperatorAction } from "@/lib/local-operator/planner";
+import { buildLocalAgentCommandEnvelope } from "@/lib/local-agent-runtime/envelope-builder";
+import { buildHandshakePlan } from "@/lib/local-agent-runtime/handshake";
 
 export async function routeCommand(input: CommandRouterInput): Promise<CommandRouterResult> {
   const { text, actor, source } = input;
@@ -104,6 +106,22 @@ export async function routeCommand(input: CommandRouterInput): Promise<CommandRo
       intent, riskLevel: risk.riskLevel, allowed: true, requiresApproval: false,
       message: report.summary, reason: "github watch report (no network, no install)",
       nextAction: "respond", data: { report },
+    };
+  }
+
+  // local_agent_runtime → spec/handshake plan, never executes, never runs a real local agent.
+  if (intent === "local_agent_runtime") {
+    const envelope = await buildLocalAgentCommandEnvelope({ text, actorId: actor.id, actorRole: actor.role, actorSource: actor.source, workspaceId: input.workspaceId });
+    const handshake = buildHandshakePlan();
+    const na = envelope.nextAction === "show_spec" ? "respond"
+      : envelope.nextAction === "request_approval" ? "request_approval"
+      : envelope.nextAction === "configure_local_agent" ? "clarify"
+      : envelope.nextAction === "deny" ? "deny" : "clarify";
+    void recordRouterDecision(text, { intent, status: envelope.status, nextAction: na });
+    return {
+      intent, riskLevel: risk.riskLevel, allowed: envelope.allowed, requiresApproval: envelope.requiresApproval,
+      message: envelope.blockedReasons[0] ?? "Local Agent Runtime: только spec/plan, локальный агент не запущен (LOCAL_AGENT_NOT_RUNNING).",
+      reason: `local_agent.${envelope.commandStatus}`, nextAction: na as CommandRouterResult["nextAction"], data: { envelope, handshake },
     };
   }
 

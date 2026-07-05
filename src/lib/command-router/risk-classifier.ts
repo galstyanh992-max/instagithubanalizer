@@ -17,6 +17,7 @@ const BASE_RISK: Record<CommandIntent, RiskLevel> = {
   email_task: "MEDIUM",
   content_task: "MEDIUM",
   local_operator: "MEDIUM",
+  local_agent_runtime: "MEDIUM",
   unknown: "MEDIUM",
 };
 

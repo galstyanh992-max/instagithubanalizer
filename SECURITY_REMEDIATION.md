@@ -45,3 +45,6 @@ Preconditions before running: (1) GitHub token rotated, (2) Supabase RLS/rotatio
 
 ## Rule
 No secret values in chat, repo, docs, or tool output — ever. Paths and types only.
+
+## Update (Phase 3 / Prompt 17)
+Remote force-push of cleaned history is still **pending** — last verification (Prompt 16.8) found `origin/main` diverged and still containing the sensitive blobs in its history. No further push/deploy until remote cleanup is verified by the user.
