@@ -1,0 +1,36 @@
+const fs = require('fs');
+// Restore component identifiers and imports that must NOT be renamed per FIND-4 rules.
+// Only internal React component names like JarwisyanChatPanel / JarwisyanAICore stay.
+const fixes = [
+  ['ДЖАРВИСAICore', 'JarwisyanAICore'],
+  ['ДЖАРВИСAICoreFallback', 'JarwisyanAICoreFallback'],
+  ['ДЖАРВИСChatPanel', 'JarwisyanChatPanel'],
+];
+const files = [
+  'src/app/voice/page.tsx',
+  'src/app/memory/page.tsx',
+  'src/app/dashboard/page.tsx',
+  'src/app/settings/page.tsx',
+  'src/components/three/repo-cube-canvas.tsx',
+  'src/components/os/OsActiveProjects.tsx',
+  'src/components/three/JarwisyanAICoreFallback.tsx',
+  'src/components/chat/JarwisyanChatPanel.tsx',
+  'src/components/chat/GlobalCommandDock.tsx',
+];
+for (const f of files) {
+  try {
+    let c = fs.readFileSync(f, 'utf8');
+    const orig = c;
+    for (const [r, s] of fixes) {
+      c = c.split(r).join(s);
+    }
+    if (c !== orig) {
+      fs.writeFileSync(f, c, 'utf8');
+      console.log('restored: ' + f);
+    } else {
+      console.log('no-change: ' + f);
+    }
+  } catch (e) {
+    console.log('skip: ' + f + ' ' + e.message);
+  }
+}

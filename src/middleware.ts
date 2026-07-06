@@ -28,7 +28,9 @@ export default AUTH_ENABLED
         callbacks: {
           authorized: ({ token, req }) => {
             const path = req.nextUrl.pathname;
-            const publicPaths = ["/api/auth", "/api/chat", "/api/settings", "/login"];
+            // /api/settings removed from publicPaths: GET/PATCH require auth.
+            // SettingsHydrator (layout) safely falls back to defaults on 401.
+            const publicPaths = ["/api/auth", "/login"];
             if (publicPaths.some((p) => path.startsWith(p))) return true;
             if (path.startsWith("/api/")) return !!token;
             if (path !== "/login") return !!token;

@@ -124,7 +124,7 @@ export function JarwisyanChatPanel({ className }: { className?: string }) {
             <Radio className={`h-4 w-4 ${listening ? "text-fuchsia-400" : "text-cyan-400"}`} />
             {listening && <div className="absolute inset-0 animate-ping"><Radio className="h-4 w-4 text-fuchsia-400/50" /></div>}
           </div>
-          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-300 font-semibold">Jarwisyan Signal Console</span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-300 font-semibold">ДЖАРВИС Signal Console</span>
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono">
           {loading ? (
@@ -219,7 +219,7 @@ export function JarwisyanChatPanel({ className }: { className?: string }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Спросите Jarwisyan: проанализировать репозиторий, подключить проект или создать план интеграции..."
+            placeholder="Спросите ДЖАРВИС: проанализировать репозиторий, подключить проект или создать план интеграции..."
             className="min-h-[46px] max-h-28 resize-none border-cyan-400/20 bg-zinc-950/60 text-sm placeholder:text-zinc-600 focus-visible:border-cyan-400/40 focus-visible:ring-cyan-400/10"
             rows={1}
           />

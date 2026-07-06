@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 // ============================================================
-// Jarwisyan AI Core — LIVING Neural Hologram (Premium)
+// ДЖАРВИС AI Core — LIVING Neural Hologram (Premium)
 // ============================================================
 // Концепт "живого 3D AI Core" — не просто объект, а визуально разумное,
 // дышащее, реагирующее энергетическое ядро ИИ.
@@ -164,7 +164,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         background: "transparent",
       }}
       role="img"
-      aria-label={`Ядро ИИ Jarwisyan — ${cfg.label}`}
+      aria-label={`Ядро ДЖАРВИС — ${cfg.label}`}
     >
       {/* === Outer aura — soft volumetric glow === */}
       <div

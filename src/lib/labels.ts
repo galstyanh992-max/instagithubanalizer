@@ -62,9 +62,9 @@ export const LABELS_RU = {
 
   // Чат
   chat: {
-    placeholder: "Спросите Jarwisyan проанализировать репо, подключить проект или подготовить план интеграции...",
-    thinking: "Jarwisyan думает...",
-    empty: "Спросите Jarwisyan проанализировать репозиторий, подключить проект или подготовить план интеграции.",
+    placeholder: "Спросите ДЖАРВИС проанализировать репо, подключить проект или подготовить план интеграции...",
+    thinking: "ДЖАРВИС думает...",
+    empty: "Спросите ДЖАРВИС проанализировать репозиторий, подключить проект или подготовить план интеграции.",
     voiceButton: "Голосовой ввод",
   },
 
@@ -110,13 +110,13 @@ export const LABELS_RU = {
     gpuRequired: "Требуют GPU",
     top10: "Топ-10 по приоритету",
     recentActivity: "Недавняя активность",
-    coreStatus: "ЯДРО JARWISYAN",
+    coreStatus: "ЯДРО ДЖАРВИС",
   },
 
   // Voice
   voice: {
     title: "ГОЛОСОВОЙ ИНТЕРФЕЙС",
-    subtitle: "Общайтесь с ИИ Jarwisyan через браузерный Web Speech API",
+    subtitle: "Общайтесь с ДЖАРВИС через браузерный Web Speech API",
     startListening: "СТАРТ",
     stopListening: "СТОП",
     transcript: "Транскрипт",

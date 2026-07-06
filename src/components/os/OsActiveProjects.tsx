@@ -2,7 +2,7 @@ import { FolderKanban, CheckCircle2 } from "lucide-react";
 
 export function OsActiveProjects() {
   const projects = [
-    { name: "Jarwisyan AI Core", progress: 85, status: "deploying" },
+    { name: "ДЖАРВИС AI Core", progress: 85, status: "deploying" },
     { name: "Next.js Admin Template", progress: 100, status: "completed" },
     { name: "Supabase Migration", progress: 45, status: "syncing" },
   ];

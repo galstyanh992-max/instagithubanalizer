@@ -23,6 +23,7 @@ import { routeCommand } from "@/lib/command-router";
 import type { CommandRouterResult } from "@/lib/command-router/types";
 import type { ActorSource, ActorRole } from "@/lib/safety/actor";
 import { recordBrainEntry } from "@/lib/project-brain/project-brain-service";
+import { getLocalAgentStatus } from "@/lib/local-agent-runtime/handshake";
 
 /**
  * Destructive/irreversible patterns that must never be planned for execution.
@@ -108,14 +109,21 @@ export async function previewPhoneCommand(input: PhoneCommandPreviewInput): Prom
     };
   }
 
-  // 1b. Local-computer action — Local Agent is not running in this foundation
-  // phase. Mobile/Telegram escalate to approval_required instead of a pure
-  // plan, because remote execution on the user's machine must be confirmed.
+  // 1b. Local-computer action — check Local Agent availability BEFORE approval.
+  // Runtime availability is a hard precondition for any local/computer action:
+  // if the Local Agent is not running (or not configured), we must surface
+  // `local_agent_not_running` regardless of the actor source. Approval can
+  // only be requested once the runtime is actually available. This prevents
+  // the UI from asking the user to approve an action that can never execute.
   if (LOCAL_COMPUTER_RE.test(text)) {
-    const status: PhoneCommandResultStatus = isStrictSource(input.source)
-      ? "approval_required"
+    const localAgentStatus = getLocalAgentStatus();
+    const localAgentAvailable = localAgentStatus === "connected_mock";
+    const status: PhoneCommandResultStatus = localAgentAvailable
+      ? isStrictSource(input.source)
+        ? "approval_required"
+        : "local_agent_not_running"
       : "local_agent_not_running";
-    recordPreviewEvent({ status, reason: "local_computer_detected" });
+    recordPreviewEvent({ status, reason: "local_computer_detected", localAgentStatus });
     return {
       status,
       intent: "local_agent_runtime",
@@ -123,7 +131,7 @@ export async function previewPhoneCommand(input: PhoneCommandPreviewInput): Prom
       requiresApproval: status === "approval_required",
       summary:
         status === "approval_required"
-          ? "Действие на компьютере требует подтверждения (local agent не запущен)."
+          ? "Действие на компьютере требует подтверждения (local agent доступен)."
           : "Локальный агент не запущен. Запустите handshake, чтобы выполнить команду на компьютере.",
       steps: [
         "Запустите Local Agent Runtime handshake (future feature).",

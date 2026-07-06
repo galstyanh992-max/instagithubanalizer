@@ -43,7 +43,7 @@ export function Sidebar() {
           </div>
         </div>
         <div>
-          <div className="font-mono text-base font-bold tracking-wider neon-text">JARWISYAN</div>
+          <div className="font-mono text-base font-bold tracking-wider neon-text">ДЖАРВИС</div>
           <div className="text-[9px] text-zinc-500 uppercase tracking-[0.25em]">AI Core v1.0</div>
         </div>
       </div>

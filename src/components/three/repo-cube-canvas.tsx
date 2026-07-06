@@ -68,7 +68,7 @@ function Cube({ name, fullName }: { name: string; fullName: string }) {
       onPointerOut={() => setHovered(false)}
     >
       <CubeFace position={[0, 0, 0.81]} rotation={[0, 0, 0]} label={name} sub={fullName} color={cyan} />
-      <CubeFace position={[0, 0, -0.81]} rotation={[0, Math.PI, 0]} label="AI" sub="Jarwisyan" color={magenta} />
+      <CubeFace position={[0, 0, -0.81]} rotation={[0, Math.PI, 0]} label="AI" sub="ДЖАРВИС" color={magenta} />
       <CubeFace position={[0.81, 0, 0]} rotation={[0, Math.PI / 2, 0]} label="SCORE" color={lime} />
       <CubeFace position={[-0.81, 0, 0]} rotation={[0, -Math.PI / 2, 0]} label="VERDICT" color={cyan} />
       <CubeFace position={[0, 0.81, 0]} rotation={[-Math.PI / 2, 0, 0]} label="LIVE" color={magenta} />

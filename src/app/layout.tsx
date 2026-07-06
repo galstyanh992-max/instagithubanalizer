@@ -19,19 +19,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Jarwisyan — Футуристический анализ репозиториев",
+  title: "ДЖАРВИС — персональный AI-оператор",
   description:
-    "Ультра-футуристическая ИИ-программа для анализа скриншотов, текста, ссылок и GitHub-репозиториев. Вердикты, скоринг, watchlist, голос, 3D-интерфейс.",
+    "Voice-first AI-оператор для управления задачами, анализа проектов, автоматизации рабочих процессов и взаимодействия с интеллектуальными модулями.",
   keywords: [
-    "AI Jarwisyan",
-    "анализатор GitHub",
-    "ИИ",
-    "GLM",
-    "Next.js",
-    "футуристический UI",
-    "3D дашборд",
+    "ДЖАРВИС",
+    "AI оператор",
+    "голосовой ассистент",
+    "автоматизация",
+    "AI agents",
+    "project analysis",
   ],
-  authors: [{ name: "AI Jarwisyan" }],
+  authors: [{ name: "Jarwisyan Team" }],
 };
 
 import { Providers } from "@/components/providers/providers";

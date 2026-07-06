@@ -43,7 +43,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-cyan-400/40 bg-cyan-500/10">
             <Lock className="h-5 w-5 text-cyan-300" />
           </div>
-          <h1 className="font-mono text-lg font-bold neon-text">JARWISYAN</h1>
+          <h1 className="font-mono text-lg font-bold neon-text">ДЖАРВИС</h1>
           <p className="mt-1 text-[10px] uppercase tracking-widest text-zinc-500">Вход в систему</p>
         </div>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -64,8 +64,7 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="mt-4 text-center text-[9px] text-zinc-600">
-          Пароль по умолчанию: jarwisyan-admin<br />
-          (измените через JARWISYAN_ADMIN_PASSWORD в .env)
+          Пароль задаётся через JARWISYAN_ADMIN_PASSWORD в .env
         </p>
       </HolographicPanel>
     </div>

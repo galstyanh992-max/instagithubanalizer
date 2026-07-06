@@ -1,10 +1,14 @@
 import { useOsMetrics } from "@/lib/os-mock-data";
 import { Cpu, HardDrive, Network, Thermometer, Database } from "lucide-react";
 
-export function OsSystemStatus() {
-  const metrics = useOsMetrics();
+type BarProps = {
+  label: string;
+  value: number;
+  color: string;
+};
 
-  const Bar = ({ label, value, color }: { label: string; value: number; color: string }) => (
+function Bar({ label, value, color }: BarProps) {
+  return (
     <div className="space-y-1">
       <div className="flex justify-between text-[10px] font-mono">
         <span className="text-zinc-500">{label}</span>
@@ -15,6 +19,10 @@ export function OsSystemStatus() {
       </div>
     </div>
   );
+}
+
+export function OsSystemStatus() {
+  const metrics = useOsMetrics();
 
   return (
     <div className="border border-cyan-400/20 bg-zinc-950/80 rounded-lg p-3 space-y-4 shadow-[0_0_15px_rgba(34,211,238,0.05)] backdrop-blur-md">

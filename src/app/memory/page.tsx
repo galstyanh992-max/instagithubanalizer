@@ -160,7 +160,7 @@ export default function MemoryPage() {
     <div className="cosmic-page-shell mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-mono text-2xl font-bold neon-text">ПАМЯТЬ JARWISYAN</h1>
+          <h1 className="font-mono text-2xl font-bold neon-text">ПАМЯТЬ ДЖАРВИС</h1>
           <p className="text-xs text-zinc-500">{records.length} записей · {sources.length} источников</p>
         </div>
         <div className="flex gap-2">

@@ -201,7 +201,7 @@ export default function SettingsPage() {
         {/* Project context */}
         <TabsContent value="ctx">
           <HolographicPanel accent="amber" className="space-y-3 p-5">
-            <p className="text-xs text-zinc-400">Enable the projects you want AI Jarwisyan to optimize scoring for.</p>
+            <p className="text-xs text-zinc-400">Enable the projects you want AI ДЖАРВИС to optimize scoring for.</p>
             {([
               ["projectAgentOs", "Agent OS"],
               ["projectAiLegal", "AI Legal Armenia"],

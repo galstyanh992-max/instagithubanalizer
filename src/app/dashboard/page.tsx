@@ -120,7 +120,7 @@ export default function DashboardPage() {
             <JarwisyanAICore size="md" active />
           </div>
           <div className="mt-2 text-center">
-            <div className="font-mono text-sm text-cyan-300">ЯДРО JARWISYAN</div>
+            <div className="font-mono text-sm text-cyan-300">ЯДРО ДЖАРВИС</div>
             <div className="text-[10px] text-zinc-500">онлайн</div>
           </div>
         </div>

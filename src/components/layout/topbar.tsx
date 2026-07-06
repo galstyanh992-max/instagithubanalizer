@@ -89,7 +89,7 @@ export function TopBar() {
             </div>
           </div>
           <div className="hidden sm:block">
-            <div className="font-mono text-[11px] font-bold tracking-widest neon-text">JARWISYAN OS</div>
+            <div className="font-mono text-[11px] font-bold tracking-widest neon-text">ДЖАРВИС OS</div>
           </div>
         </Link>
 

@@ -114,7 +114,7 @@ export default function VoicePage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
         <h1 className="font-mono text-2xl font-bold neon-text">ГОЛОСОВОЙ ИНТЕРФЕЙС</h1>
-        <p className="text-xs text-zinc-500">Общайтесь с ИИ Jarwisyan через браузерный Web Speech API</p>
+        <p className="text-xs text-zinc-500">Общайтесь с ДЖАРВИС через браузерный Web Speech API</p>
       </div>
 
       {!supported && (
