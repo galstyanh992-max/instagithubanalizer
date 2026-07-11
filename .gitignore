@@ -93,3 +93,4 @@ upload/
 dist/
 
 .vercel
+.codebuddy

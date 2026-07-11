@@ -171,7 +171,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         aria-hidden
         className="pointer-events-none absolute inset-[-10%] rounded-full"
         style={{
-          background: `radial-gradient(circle at 50% 50%, #ffffff 0%, ${cfg.primary} 15%, ${cfg.primary}60 30%, ${cfg.violet}20 50%, transparent 70%)`,
+          background: `radial-gradient(circle at 50% 50%, rgba(6,182,212,0.8) 0%, rgba(6,182,212,0.3) 20%, transparent 60%)`,
           opacity: cfg.pulseOpacity * 0.9,
           animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
         }}
@@ -194,10 +194,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         style={{
           width: dim.core * 1.4,
           height: dim.core * 1.4,
-          background: `
-            radial-gradient(circle at 40% 30%, rgba(255,255,255,0.9), transparent 25%),
-            radial-gradient(circle at 50% 50%, #06b6d4, #0891b2 40%, rgba(8,145,178,0.4) 70%, transparent 100%)
-          `,
+          background: `radial-gradient(circle at 40% 30%, rgba(255,255,255,1) 0%, transparent 20%), radial-gradient(circle at 50% 50%, rgba(6,182,212,0.9) 0%, rgba(8,145,178,0.7) 40%, transparent 70%)`,
           boxShadow: `
             inset 0 0 40px #ffffff,
             inset 0 0 60px #06b6d4,
@@ -283,7 +280,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
               background: `linear-gradient(180deg, transparent 0%, ${cfg.white}33 50%, transparent 100%)`,
               backgroundSize: "100% 8px",
               animation: "ai-core-scan 4s linear infinite",
-              mixBlendMode: "screen",
+              
             }}
           />
         )}
@@ -295,7 +292,7 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
             style={{
               background: `radial-gradient(circle at 30% 30%, ${cfg.white}22, transparent 40%)`,
               animation: `ai-core-breathe ${cfg.breatheSpeed} ease-in-out 0.5s infinite`,
-              mixBlendMode: "screen",
+              
             }}
           />
         )}

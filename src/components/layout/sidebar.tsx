@@ -7,18 +7,18 @@ import { cn } from "@/lib/utils";
 import {
   Home, LayoutDashboard, Upload, FolderGit2, Swords, Trello, Eye,
   ClipboardCheck, Tags, Mic, Settings, Wrench, Brain, Rocket,
-  UserCog, GitMerge, CheckSquare
+  UserCog, GitMerge, CheckSquare, Users
 } from "lucide-react";
 
 const ICONS = {
   Home, LayoutDashboard, Upload, FolderGit2, Swords, Trello, Eye,
   ClipboardCheck, Tags, Mic, Settings, Wrench, Brain, Rocket,
-  UserCog, GitMerge, CheckSquare
+  UserCog, GitMerge, CheckSquare, Users
 };
 
 const NAV_GROUPS = [
   { label: "Главное", items: ["/", "/dashboard", "/projects", "/memory"] },
-  { label: "Система Агентов", items: ["/agents", "/workflows", "/approvals"] },
+  { label: "Система Агентов", items: ["/agents", "/workflows", "/departments", "/approvals"] },
   { label: "Анализ", items: ["/upload", "/repos", "/compare", "/board"] },
   { label: "Управление", items: ["/watchlist", "/manual-review", "/categories"] },
   { label: "Настройки", items: ["/voice", "/settings", "/deploy"] },

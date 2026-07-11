@@ -111,6 +111,14 @@ export const SEED_REPOS = [
   "ubicloud/ubicloud",
 ];
 
+export const NAV_GROUPS = [
+  { label: "Главное", items: ["/", "/dashboard", "/projects", "/memory"] },
+  { label: "Система Агентов", items: ["/agents", "/workflows", "/departments", "/approvals"] },
+  { label: "Анализ", items: ["/upload", "/repos", "/compare", "/board"] },
+  { label: "Управление", items: ["/watchlist", "/manual-review", "/categories"] },
+  { label: "Настройки", items: ["/voice", "/settings", "/deploy"] },
+];
+
 export const NAV_ITEMS = [
   { href: "/", label: "Главная", icon: "Home" },
   { href: "/dashboard", label: "Панель", icon: "LayoutDashboard" },
@@ -129,6 +137,7 @@ export const NAV_ITEMS = [
   { href: "/voice", label: "Голос", icon: "Mic" },
   { href: "/settings", label: "Настройки", icon: "Settings" },
   { href: "/deploy", label: "Деплой", icon: "Rocket" },
+  { href: "/departments", label: "Департаменты", icon: "Users" },
 ];
 
 export const AI_PROVIDERS = [

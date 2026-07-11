@@ -54,7 +54,7 @@ export default function RootLayout({
               {/* Global AI Core Background Layer */}
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0 opacity-80 lg:mt-4 overflow-hidden">
                 <div className="relative flex items-center justify-center w-full max-w-[500px] lg:max-w-[700px] mx-auto">
-                  <div className="absolute inset-0 pointer-events-none animate-pulse" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(6,182,212,0.15) 0%, transparent 60%)' }} />
+                  
                   <JarwisyanAICore size="xl" active state="thinking" />
                 </div>
               </div>
