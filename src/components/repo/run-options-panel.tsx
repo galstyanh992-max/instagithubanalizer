@@ -29,17 +29,17 @@ export function RunOptionsPanel({ repoId }: { repoId: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-lime-300">
           <Terminal className="h-4 w-4" />
-          <h2 className="font-mono text-xs uppercase tracking-wider">Run Options</h2>
+          <h2 className="font-mono text-xs uppercase tracking-wider">Варианты запуска</h2>
         </div>
         <Button size="sm" variant="outline" onClick={load} disabled={loading}>
           {loading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <ListChecks className="mr-1 h-3 w-3" />}
-          Generate run options
+          Сгенерировать варианты
         </Button>
       </div>
 
       {!data && !loading && (
         <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4 text-center text-sm text-zinc-400">
-          Click <b>Generate run options</b> to see local / Docker / CPU-only / Ollama Cloud paths.
+          Нажмите <b>Сгенерировать варианты</b>, чтобы увидеть пути: локально / Docker / только CPU / Ollama Cloud.
         </div>
       )}
 
@@ -48,7 +48,7 @@ export function RunOptionsPanel({ repoId }: { repoId: string }) {
           {/* Local */}
           <OptionCard
             icon={Cpu}
-            title="Local"
+            title="Локально"
             accent="cyan"
             possible={data.localOption.possible}
             cost={data.localOption.estimatedCost}
@@ -69,7 +69,7 @@ export function RunOptionsPanel({ repoId }: { repoId: string }) {
           {/* CPU-only */}
           <OptionCard
             icon={Cpu}
-            title="CPU-only"
+            title="Только CPU"
             accent="amber"
             possible={data.cpuOnlyOption.possible}
             cost={data.cpuOnlyOption.estimatedCost}
@@ -94,7 +94,7 @@ export function RunOptionsPanel({ repoId }: { repoId: string }) {
 
           {/* Final recommendation */}
           <div className="rounded-md border border-cyan-400/30 bg-cyan-500/10 p-3 text-xs text-cyan-100">
-            <div className="text-[10px] uppercase text-cyan-300">Final recommendation</div>
+            <div className="text-[10px] uppercase text-cyan-300">Итоговая рекомендация</div>
             <div className="mt-1">{data.finalRecommendation}</div>
           </div>
         </div>
@@ -137,15 +137,15 @@ function OptionCard({ icon: Icon, title, accent, possible, cost, steps, limitati
         </div>
         <div className="flex items-center gap-2">
           {possible ? (
-            <span className="rounded-full border border-lime-400/60 bg-lime-500/15 px-2 py-0.5 text-[10px] font-mono text-lime-200">POSSIBLE</span>
+            <span className="rounded-full border border-lime-400/60 bg-lime-500/15 px-2 py-0.5 text-[10px] font-mono text-lime-200">ВОЗМОЖНО</span>
           ) : (
-            <span className="rounded-full border border-red-400/60 bg-red-500/15 px-2 py-0.5 text-[10px] font-mono text-red-200">NOT POSSIBLE</span>
+            <span className="rounded-full border border-red-400/60 bg-red-500/15 px-2 py-0.5 text-[10px] font-mono text-red-200">НЕВОЗМОЖНО</span>
           )}
-          <span className="text-[10px] text-zinc-500">cost: {cost}</span>
+          <span className="text-[10px] text-zinc-500">стоимость: {cost}</span>
         </div>
       </div>
-      {extraLabel && <div className="mt-1 text-[10px] text-zinc-400">Expected perf: {extraLabel}</div>}
-      {useCaseFit && <div className="mt-1 text-[10px] text-zinc-400">Fit: {useCaseFit}</div>}
+      {extraLabel && <div className="mt-1 text-[10px] text-zinc-400">Ожидаемая производительность: {extraLabel}</div>}
+      {useCaseFit && <div className="mt-1 text-[10px] text-zinc-400">Соответствие: {useCaseFit}</div>}
       {steps && steps.length > 0 && (
         <pre className="mt-2 overflow-x-auto rounded bg-zinc-900/80 p-2 text-[10px] text-zinc-300">
           {steps.join("\n")}
@@ -158,7 +158,7 @@ function OptionCard({ icon: Icon, title, accent, possible, cost, steps, limitati
       )}
       {pricingStatus && (
         <div className="mt-2 rounded border border-amber-400/30 bg-amber-500/10 p-1.5 text-[10px] text-amber-200">
-          Pricing status: <b>{pricingStatus}</b>
+          Статус ценообразования: <b>{pricingStatus}</b>
           <div className="mt-1 text-amber-300/80">{pricingNote}</div>
         </div>
       )}

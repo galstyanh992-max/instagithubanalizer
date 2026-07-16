@@ -11,7 +11,9 @@ import { agentCapabilityService } from './AgentCapabilityService';
 import { agentPermissionService } from './AgentPermissionService';
 import { agentModelConfigService } from './AgentModelConfigService';
 import { agentRuntimeService } from './AgentRuntimeService';
-import { getOpenRouterModelConfigForRole, resolveOpenRouterModelAlias } from '../ai-provider/model-registry';
+import { getModelConfigForRole, resolveOpenRouterModelAlias } from '../ai-provider/model-registry';
+import { resolveDefaultProviderId } from '../ai-provider/default-provider';
+import { getDefaultModelsForProvider } from '../ai-provider/default-models';
 
 // ─── Purpose → Proposal mapping ──────────────────────────────
 
@@ -258,7 +260,9 @@ class TemporaryAgentService {
     }
 
     const template = bestMatch ?? DEFAULT_TEMPLATE;
-    const modelConfig = getOpenRouterModelConfigForRole(template.role);
+    const defaultProvider = resolveDefaultProviderId();
+    const defaultModels = getDefaultModelsForProvider(defaultProvider);
+    const modelConfig = getModelConfigForRole(template.role, defaultProvider, defaultModels);
 
     const proposal: TemporaryAgentProposal = {
       name: template.name,
@@ -356,11 +360,12 @@ class TemporaryAgentService {
       });
     }
 
-    // 5. Create model configs
+    // 5. Create model configs using the default provider
+    const defaultProvider = resolveDefaultProviderId();
     await db.agentModelConfig.create({
       data: {
         agentId: agent.id,
-        provider: 'openrouter',
+        provider: defaultProvider,
         model: resolveOpenRouterModelAlias(approvedConfig.preferredModel.model),
         preferenceType: 'preferred',
         enabled: true,
@@ -371,7 +376,7 @@ class TemporaryAgentService {
       await db.agentModelConfig.create({
         data: {
           agentId: agent.id,
-          provider: 'openrouter',
+          provider: approvedConfig.fallbackModel.provider || defaultProvider,
           model: resolveOpenRouterModelAlias(approvedConfig.fallbackModel.model),
           preferenceType: 'fallback',
           enabled: true,

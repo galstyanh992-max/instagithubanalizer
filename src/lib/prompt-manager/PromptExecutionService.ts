@@ -1,7 +1,8 @@
-import { OpenRouterProvider } from '@/lib/ai-provider/openrouter/adapter';
+import { providerRegistry } from '@/lib/ai-provider/provider-registry';
 import type { CompletionRequest, ChatMessage } from '@/lib/ai-provider/types';
 import { resolveOpenRouterModelAlias } from '@/lib/ai-provider/model-registry';
 import { db } from '@/lib/db';
+import { initProviders } from '@/lib/ai-provider/server';
 
 export class PromptExecutionGovernanceError extends Error {
   constructor(message: string) {
@@ -11,7 +12,12 @@ export class PromptExecutionGovernanceError extends Error {
 }
 
 export class PromptExecutionService {
-  private provider = new OpenRouterProvider();
+  private async resolveProvider() {
+    await initProviders();
+    const preferred = providerRegistry.has('openrouter') ? 'openrouter' : providerRegistry.listIds()[0];
+    if (!preferred) throw new Error('No AI provider is configured');
+    return providerRegistry.getOrThrow(preferred);
+  }
 
   /**
    * Run a dry-run execution against a specific OpenRouter model for a prompt version
@@ -86,6 +92,8 @@ export class PromptExecutionService {
     }
 
     const resolvedModel = resolveOpenRouterModelAlias(modelId);
+    const provider = await this.resolveProvider();
+    const providerName = provider.name;
 
     const req: CompletionRequest = {
       model: resolvedModel,
@@ -96,7 +104,7 @@ export class PromptExecutionService {
 
     const startTime = Date.now();
     try {
-      const response = await this.provider.complete(req);
+      const response = await provider.complete(req);
       const latencyMs = Date.now() - startTime;
       
       // Calculate estimated cost (rough standard OpenRouter average logic if specific isn't available)
@@ -115,7 +123,7 @@ export class PromptExecutionService {
           data: {
             promptTemplateId: templateId,
             promptVersionId: versionId,
-            provider: 'OpenRouter',
+            provider: providerName,
             model: resolvedModel,
             tokensIn: response.usage?.promptTokens || 0,
             tokensOut: response.usage?.completionTokens || 0,
@@ -145,7 +153,7 @@ export class PromptExecutionService {
         latencyMs,
         usage: response.usage ? { ...response.usage, estimatedCostUsd } : null,
         model: response.model,
-        provider: 'OpenRouter',
+        provider: providerName,
       };
     } catch (error: any) {
       return {
@@ -153,7 +161,7 @@ export class PromptExecutionService {
         latencyMs: Date.now() - startTime,
         usage: null,
         model: resolvedModel,
-        provider: 'OpenRouter',
+        provider: providerName,
         error: error.message || 'Unknown error occurred during execution'
       };
     }

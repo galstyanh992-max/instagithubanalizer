@@ -51,10 +51,10 @@ export function RepoCard({ repo, compact = false, showCompare = true }: RepoCard
     },
     onSuccess: () => {
       setWatching((w) => !w)
-      toast.success(watching ? 'Removed from watchlist' : 'Added to watchlist')
+      toast.success(watching ? 'Удалено из вотчлиста' : 'Добавлено в вотчлист')
       qc.invalidateQueries({ queryKey: ['repos'] })
     },
-    onError: () => toast.error('Failed to update watchlist'),
+    onError: () => toast.error('Не удалось обновить вотчлист'),
   })
 
   return (
@@ -99,9 +99,9 @@ export function RepoCard({ repo, compact = false, showCompare = true }: RepoCard
         </div>
         <div className="flex items-center justify-between gap-3 pt-2 border-t border-cyan-400/10">
           <div className="flex items-center gap-2">
-            <ScoreRing value={repo.finalPriorityScore} size={48} label="FINAL" />
-            <ScoreRing value={repo.usefulnessScore} size={36} color="var(--neon-lime)" label="USE" />
-            <ScoreRing value={repo.healthScore} size={36} color="var(--neon-magenta)" label="HEA" />
+            <ScoreRing value={repo.finalPriorityScore} size={48} label="ИТОГ" />
+            <ScoreRing value={repo.usefulnessScore} size={36} color="var(--neon-lime)" label="ПОЛЬЗА" />
+            <ScoreRing value={repo.healthScore} size={36} color="var(--neon-magenta)" label="ЗДОР." />
           </div>
           <LicenseStatusBadge license={repo.license} />
         </div>

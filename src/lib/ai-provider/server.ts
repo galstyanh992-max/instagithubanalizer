@@ -1,42 +1,49 @@
 import 'server-only';
 
 import { logger } from '@/lib/logger';
+import { env } from '@/lib/env';
 import { providerRegistry } from './provider-registry';
-import { OpenRouterProvider } from './openrouter/adapter';
-import { isOpenRouterConfigured } from './openrouter/config';
-import { getOpenRouterStartupModelIds } from './model-registry';
+import { createConfiguredProviders } from './providers';
+import { MockProvider } from './mock-provider';
+import { resolveDefaultProviderId } from './default-provider';
 
 let initialized = false;
 
 /**
  * Initialize all AI providers at application startup.
  * Server-only by construction; do not import this from client components.
+ *
+ * Registers every provider that has an API key configured.
+ * If none are configured, registers a mock fallback when allowed.
  */
 export async function initProviders(): Promise<void> {
   if (initialized) return;
 
-  if (isOpenRouterConfigured()) {
-    const openRouter = new OpenRouterProvider();
-    providerRegistry.register(openRouter);
-    await validateStartupModels(openRouter);
-    logger.info('[AI Provider] OpenRouter registered');
+  const configured = createConfiguredProviders();
+
+  if (configured.length === 0) {
+    if (env.AI_ENABLE_MOCK_FALLBACK === 'true') {
+      providerRegistry.register(new MockProvider());
+      logger.warn('[AI Provider] No real AI providers configured. Mock provider registered as fallback.');
+    } else {
+      logger.warn('[AI Provider] No AI providers configured. Set at least one provider API key in .env');
+    }
   } else {
-    logger.warn('[AI Provider] OpenRouter not configured - set OPENROUTER_API_KEY in .env');
+    for (const provider of configured) {
+      providerRegistry.register(provider);
+      logger.info(`[AI Provider] Registered provider: ${provider.id}`);
+    }
+  }
+
+  const registeredIds = providerRegistry.listIds();
+  if (registeredIds.length > 0) {
+    const defaultId = resolveDefaultProviderId();
+    logger.info(`[AI Provider] Default provider resolved to: ${defaultId}`);
   }
 
   initialized = true;
 }
 
-async function validateStartupModels(provider: OpenRouterProvider): Promise<void> {
-  if (process.env.OPENROUTER_VALIDATE_MODELS === 'false') return;
-  const models = await provider.listModels();
-  const availableIds = new Set(models.map((model) => model.id));
-  const missing = getOpenRouterStartupModelIds().filter((modelId) => !availableIds.has(modelId));
-
-  if (missing.length > 0) {
-    throw new Error(`OpenRouter startup model validation failed. Missing models: ${missing.join(', ')}`);
-  }
-}
-
 export { providerRegistry };
-export { isOpenRouterConfigured };
+export { resolveDefaultProviderId, getDefaultProvider, resolveProviderId } from './default-provider';
+export { listConfiguredProviderIds, getProviderEntryById } from './providers';

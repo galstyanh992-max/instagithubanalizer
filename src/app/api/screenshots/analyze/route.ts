@@ -2,8 +2,8 @@ import { db } from "@/lib/db";
 import { ok, err, safe, parseJson } from "@/lib/api";
 import { extractTextFromImage } from "@/services/ocr.service";
 import { extractCandidatesFromText } from "@/services/github.service";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { downloadFromStorage, parseStorageUrl } from "@/lib/supabase-server";
+import { env } from "@/lib/env";
 
 export const POST = safe(async (req: Request) => {
   const { screenshotId } = await parseJson<{ screenshotId?: string }>(req);
@@ -12,11 +12,13 @@ export const POST = safe(async (req: Request) => {
   const screenshot = await db.screenshot.findUnique({ where: { id: screenshotId } });
   if (!screenshot) return err("Screenshot not found", 404);
 
-  // Read file from /public/uploads/...
-  const absPath = join(process.cwd(), "public", screenshot.filePath.replace(/^\//, ""));
+  // Read file from Supabase Storage instead of local disk
   let ocrResult;
   try {
-    const buffer = await readFile(absPath);
+    const parsed = parseStorageUrl(screenshot.filePath);
+    const buffer = parsed
+      ? await downloadFromStorage(parsed.key, parsed.bucket)
+      : await downloadFromStorage(screenshot.filePath, env.SUPABASE_STORAGE_BUCKET);
     ocrResult = await extractTextFromImage(buffer, screenshot.mimeType);
   } catch (e) {
     ocrResult = {

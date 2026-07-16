@@ -19,7 +19,7 @@ export function SandboxPanel({ repoId }: { repoId: string }) {
   return (
     <HolographicPanel accent="cyan" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-cyan-300">Sandbox Test Plan</h2>
+        <h2 className="font-mono text-xs uppercase text-cyan-300">План sandbox-тестирования</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}>
           {loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />} Создать план
         </Button>
@@ -62,7 +62,7 @@ export function PatchPlanPanel({ repoId }: { repoId: string }) {
   return (
     <HolographicPanel accent="lime" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-lime-300">Integration Patch Plan</h2>
+        <h2 className="font-mono text-xs uppercase text-lime-300">План интеграционного патча</h2>
         <Button size="sm" onClick={run} disabled={!projectId || loading}>{loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Сгенерировать"}</Button>
       </div>
       {data && (
@@ -89,7 +89,7 @@ export function RiskGatePanel({ repoId }: { repoId: string }) {
   return (
     <HolographicPanel accent={level === "HIGH" ? "magenta" : "lime"} className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-cyan-300">Risk Gate</h2>
+        <h2 className="font-mono text-xs uppercase text-cyan-300">Риск-гейт</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}>{loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />} Проверить</Button>
       </div>
       {data && (
@@ -114,7 +114,7 @@ export function HealthPanel({ repoId }: { repoId: string }) {
   }, [repoId]);
   return (
     <HolographicPanel accent="cyan" className="space-y-4 p-5">
-      <h2 className="font-mono text-xs uppercase text-cyan-300">Health Timeline</h2>
+      <h2 className="font-mono text-xs uppercase text-cyan-300">Хронология здоровья</h2>
       {loading ? <div className="text-cyan-300">Загрузка...</div> : snapshots.length === 0 ? <div className="text-sm text-zinc-500">Нет снимков</div> : (
         <div className="space-y-1.5">
           {snapshots.map((s, i) => (
@@ -137,7 +137,7 @@ export function CommunityPanel({ repoId }: { repoId: string }) {
   return (
     <HolographicPanel accent="magenta" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-fuchsia-300">Community Signals</h2>
+        <h2 className="font-mono text-xs uppercase text-fuchsia-300">Сигналы сообщества</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}>{loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />} Загрузить</Button>
       </div>
       {data && <div className="text-xs"><div className="text-cyan-300">Поддержка: {String(data.maintenanceSignal)}</div></div>}

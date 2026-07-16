@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useUiStore } from "@/lib/store";
 import { useMounted } from "@/lib/use-mounted";
 import { JarwisyanAICoreFallback } from "./JarwisyanAICoreFallback";
+import { useJarvisActivityContext } from "@/components/jarvis/jarvis-activity-provider";
 
 // ============================================================
 // Jarwisyan AI Core — Transparent Neural Hologram Core
@@ -51,74 +52,137 @@ const VIOLET_MUTED = "#a855f7";
 
 function NeuralGlobe({ active }: { active: boolean }) {
   const ref = useRef<THREE.Group>(null);
+  const coreRef = useRef<THREE.Mesh>(null);
+  const wireRef = useRef<THREE.Mesh>(null);
+  const nodesRef = useRef<THREE.Points>(null);
+  const highlightRef = useRef<THREE.Points>(null);
+  const flareRef = useRef<THREE.Mesh>(null);
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
+  const ring3Ref = useRef<THREE.Mesh>(null);
+  const energyShellRef = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.rotation.y = t * 0.15 * (active ? 1.5 : 1);
-    ref.current.rotation.x = Math.sin(t * 0.2) * 0.1;
+    const speed = active ? 2.2 : 1;
+    ref.current.rotation.y = t * 0.15 * speed;
+    ref.current.rotation.x = Math.sin(t * 0.3) * 0.1;
+
+    if (coreRef.current) {
+      const mat = coreRef.current.material as THREE.MeshPhysicalMaterial;
+      mat.emissiveIntensity = active ? 6 + Math.sin(t * 4) * 2 : 3 + Math.sin(t * 2) * 0.5;
+    }
+    
+    // Animate Rings
+    if (ring1Ref.current) {
+      ring1Ref.current.rotation.x = t * 0.5;
+      ring1Ref.current.rotation.z = t * 0.3;
+    }
+    if (ring2Ref.current) {
+      ring2Ref.current.rotation.x = -t * 0.4;
+      ring2Ref.current.rotation.y = t * 0.2;
+    }
+    if (ring3Ref.current) {
+      ring3Ref.current.rotation.y = t * 0.8;
+      ring3Ref.current.rotation.z = -t * 0.5;
+    }
+
+    if (energyShellRef.current) {
+      const s = 1 + Math.sin(t * 2) * 0.05;
+      energyShellRef.current.scale.set(s, s, s);
+      (energyShellRef.current.material as THREE.MeshBasicMaterial).opacity = 0.1 + Math.sin(t * 3) * 0.05;
+    }
+
+    if (wireRef.current) {
+      const mat = wireRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = active ? 0.6 + Math.sin(t * 6) * 0.2 : 0.4;
+    }
+    if (nodesRef.current) {
+      const mat = nodesRef.current.material as THREE.PointsMaterial;
+      mat.size = active ? 0.06 + Math.sin(t * 8) * 0.02 : 0.04;
+    }
   });
 
   return (
     <group ref={ref}>
-      {/* 1. Base Glowing Sphere (The blue glass core) */}
-      <mesh scale={0.98}>
-        <sphereGeometry args={[1, 32, 32]} />
+      {/* 1. Central Volumetric Core */}
+      <mesh ref={coreRef} scale={0.9}>
+        <sphereGeometry args={[1, 64, 64]} />
         <meshPhysicalMaterial
-          color="#06b6d4" // Cyan-500
-          emissive="#0891b2"
-          emissiveIntensity={3.0}
+          color="#06b6d4"
+          emissive="#06b6d4"
+          emissiveIntensity={4}
           transparent
-          opacity={0.8}
-          roughness={0.1}
+          opacity={0.85}
+          roughness={0.05}
           transmission={0.9}
-          thickness={1.5}
+          thickness={2}
+          clearcoat={1}
         />
       </mesh>
 
-      {/* 2. Inner Hot Core (To give volume) */}
-      <mesh scale={0.7}>
-        <sphereGeometry args={[1, 16, 16]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={1.0} blending={THREE.AdditiveBlending} />
+      {/* 2. Energy Shell (Translucent Volumetric Glow) */}
+      <mesh ref={energyShellRef} scale={1.3}>
+        <sphereGeometry args={[1, 64, 64]} />
+        <meshBasicMaterial
+          color="#22d3ee"
+          transparent
+          opacity={0.1}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
       </mesh>
 
-      {/* 3. Neural Wireframe (The connections) */}
-      <mesh>
-        <icosahedronGeometry args={[1, 4]} />
+      {/* 3. Orbital Rings - Multiple layers, thin, rotating */}
+      <group>
+        {/* Ring 1 - Cyan Horizontal */}
+        <mesh ref={ring1Ref}>
+          <torusGeometry args={[1.4, 0.015, 16, 100]} />
+          <meshBasicMaterial color="#22d3ee" transparent opacity={0.6} />
+        </mesh>
+        {/* Ring 2 - Ice Blue Oblique */}
+        <mesh ref={ring2Ref}>
+          <torusGeometry args={[1.6, 0.01, 16, 100]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.4} />
+        </mesh>
+        {/* Ring 3 - Lime Accent Vertical */}
+        <mesh ref={ring3Ref}>
+          <torusGeometry args={[1.8, 0.01, 16, 100]} />
+          <meshBasicMaterial color="#a3e635" transparent opacity={0.3} />
+        </mesh>
+      </group>
+
+      {/* 4. Neural Wireframe (Holographic Shell) */}
+      <mesh ref={wireRef}>
+        <sphereGeometry args={[1.1, 20, 20]} />
         <meshBasicMaterial
-          color="#a5f3fc" // Cyan-200
+          color="#a5f3fc"
           wireframe
           transparent
-          opacity={0.5}
+          opacity={0.4}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
 
-      {/* 4. Neural Nodes (The glowing dots at vertices) */}
-      <points>
-        <icosahedronGeometry args={[1, 4]} />
+      {/* 5. Neural Nodes (Floating Particles) */}
+      <points ref={nodesRef}>
+        <icosahedronGeometry args={[1.1, 3]} />
         <pointsMaterial
-          size={0.045}
+          size={0.05}
           color="#ffffff"
           transparent
-          opacity={1.0}
+          opacity={0.8}
           sizeAttenuation
           blending={THREE.AdditiveBlending}
         />
       </points>
       
-      {/* 5. Highlight Nodes (Larger, brighter dots for variety) */}
-      <points scale={1.01}>
-        <icosahedronGeometry args={[1, 1]} />
-        <pointsMaterial
-          size={0.08}
-          color="#cffafe"
-          transparent
-          opacity={1.0}
-          sizeAttenuation
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
+      {/* 6. Inner Energy Core (The "Seed") */}
+      <mesh scale={0.4}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={1.0} blending={THREE.AdditiveBlending} />
+      </mesh>
     </group>
   );
 }
@@ -187,6 +251,7 @@ function ThinRing({
   axis,
   color,
   opacity,
+  active,
 }: {
   radius: number;
   tube: number;
@@ -194,19 +259,22 @@ function ThinRing({
   axis: [number, number, number];
   color: string;
   opacity: number;
+  active?: boolean;
 }) {
   const ref = useRef<THREE.Mesh>(null);
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.rotation.x = axis[0] * t * speed + Math.PI / 2.4;
-    ref.current.rotation.y = axis[1] * t * speed;
-    ref.current.rotation.z = axis[2] * t * speed;
+    const s = active ? speed * 2.5 : speed;
+    ref.current.rotation.x = axis[0] * t * s + Math.PI / 2.4;
+    ref.current.rotation.y = axis[1] * t * s;
+    ref.current.rotation.z = axis[2] * t * s;
     
     // Electric flicker effect for current flow
     if (ref.current.material) {
       const mat = ref.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = opacity * (0.7 + Math.sin(t * 40 + radius) * 0.3);
+      const base = active ? 0.9 : opacity;
+      mat.opacity = base * (0.7 + Math.sin(t * (active ? 60 : 40) + radius) * 0.3);
     }
   });
   return (
@@ -493,23 +561,17 @@ function Scene({ active, compact, reducedMotion, selectedId, setSelectedId }: { 
       {!reducedMotion && (
         <>
           {/* Primary cyan ring — compact, close to core */}
-          <ThinRing radius={1.1} tube={0.005} speed={0.35} axis={[1, 0.2, 0.1]} color={CYAN} opacity={0.45} />
+          <ThinRing radius={1.1} tube={0.005} speed={0.35} axis={[1, 0.2, 0.1]} color={CYAN} opacity={0.5} active={active} />
           {/* Secondary ice blue ring */}
-          <ThinRing radius={1.25} tube={0.004} speed={-0.25} axis={[0.15, 1, 0.15]} color={ICE_BLUE} opacity={0.32} />
+          <ThinRing radius={1.25} tube={0.004} speed={-0.25} axis={[0.15, 1, 0.15]} color={ICE_BLUE} opacity={0.35} active={active} />
           {/* Lime accent ring — very subtle */}
-          <ThinRing radius={1.38} tube={0.003} speed={0.18} axis={[0.3, 0.4, 1]} color={LIME} opacity={0.25} />
+          <ThinRing radius={1.38} tube={0.003} speed={0.18} axis={[0.3, 0.4, 1]} color={LIME} opacity={0.28} active={active} />
         </>
       )}
 
       <GlassCore active={active} />
-      
-      
-      
-
-
+      <NeuralPulse active={active} />
       <OrbitDots count={dotCount} radius={1.2} active={active} />
-      
-      
     </>
   );
 }
@@ -536,11 +598,15 @@ function hasWebGL(): boolean {
 
 export function JarwisyanAICore(props: JarwisyanAICoreProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { size = "md", active = false, reducedMotion: reducedMotionProp, compact: compactProp, className, state = "idle" } = props;
+  const { size = "md", active: activeProp = false, reducedMotion: reducedMotionProp, compact: compactProp, className, state: stateProp = "idle" } = props;
   const mounted = useMounted();
   const enable3d = useUiStore((s) => s.enable3d);
   const storeReducedMotion = useUiStore((s) => s.reduceMotion);
   const storeCompact = useUiStore((s) => s.compactMode);
+
+  const activity = useJarvisActivityContext();
+  const active = activeProp || activity.active;
+  const state = stateProp !== "idle" ? stateProp : activity.state;
 
   const reducedMotion = reducedMotionProp ?? storeReducedMotion;
   const compact = compactProp ?? storeCompact;
@@ -567,6 +633,9 @@ export function JarwisyanAICore(props: JarwisyanAICoreProps) {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const finalReducedMotion = reducedMotion || prefersReduced;
 
+  // Map incoming state to active flare.
+  const isActive = active || state === "thinking" || state === "processing" || state === "speaking";
+
   const webglAvailable = hasWebGL();
   const useWebGL = webglAvailable; // Forced 3D, bypassing enable3d
 
@@ -574,7 +643,7 @@ export function JarwisyanAICore(props: JarwisyanAICoreProps) {
     return (
       <JarwisyanAICoreFallback
         size={size}
-        active={active}
+        active={isActive}
         reducedMotion={finalReducedMotion}
         compact={compact}
         className={className}
@@ -608,7 +677,7 @@ export function JarwisyanAICore(props: JarwisyanAICoreProps) {
         }}
       >
         <Suspense fallback={null}>
-          <Scene active={active} compact={compact} reducedMotion={finalReducedMotion} selectedId={selectedId} setSelectedId={setSelectedId} />
+          <Scene active={isActive} compact={compact} reducedMotion={finalReducedMotion} selectedId={selectedId} setSelectedId={setSelectedId} />
         </Suspense>
       </Canvas>
     </div>

@@ -14,6 +14,7 @@ import { Save, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { PcProfileSettings } from "@/components/settings/pc-profile-settings";
 import { CloudProviderPolicy } from "@/components/settings/cloud-provider-policy";
 import { AiProviderCenter } from "@/components/settings/ai-provider-center";
+import { ModelHierarchyPanel } from "@/components/settings/model-hierarchy-panel";
 
 interface Settings {
   githubToken: string;
@@ -108,7 +109,7 @@ export default function SettingsPage() {
       )}
 
       <Tabs defaultValue="keys">
-        <TabsList className="flex flex-wrap gap-1 bg-zinc-900/60">
+        <TabsList className="flex flex-wrap gap-1">
           <TabsTrigger value="keys">API Keys</TabsTrigger>
           <TabsTrigger value="pc">My PC Profile</TabsTrigger>
           <TabsTrigger value="provider">Cloud Provider</TabsTrigger>
@@ -118,19 +119,20 @@ export default function SettingsPage() {
 
         {/* API keys */}
         <TabsContent value="keys" className="space-y-4">
+          <ModelHierarchyPanel />
           <AiProviderCenter />
           
           <HolographicPanel accent="cyan" className="space-y-3 p-5">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <Label>GitHub Token</Label>
-                <Input type="password" value={s.githubToken === "***" ? "" : s.githubToken} onChange={(e) => update("githubToken", e.target.value)} placeholder="ghp_..." className="bg-zinc-900/60 border-cyan-400/20" />
+                <Input type="password" value={s.githubToken === "***" ? "" : s.githubToken} onChange={(e) => update("githubToken", e.target.value)} placeholder="ghp_..." />
                 <p className="mt-1 text-[10px] text-zinc-500">Required for higher GitHub API rate limits.</p>
               </div>
               <div>
                 <Label>OCR Provider</Label>
                 <Select value={s.ocrProvider} onValueChange={(v) => update("ocrProvider", v)}>
-                  <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="local">Local (Tesseract.js)</SelectItem>
                   </SelectContent>
@@ -139,7 +141,7 @@ export default function SettingsPage() {
               <div>
                 <Label>TTS Provider</Label>
                 <Select value={s.ttsProvider} onValueChange={(v) => update("ttsProvider", v)}>
-                  <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="browser">Browser SpeechSynthesis</SelectItem>
                   </SelectContent>
@@ -148,7 +150,7 @@ export default function SettingsPage() {
               <div>
                 <Label>STT Provider</Label>
                 <Select value={s.sttProvider} onValueChange={(v) => update("sttProvider", v)}>
-                  <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="browser">Browser SpeechRecognition</SelectItem>
                   </SelectContent>
@@ -210,7 +212,7 @@ export default function SettingsPage() {
               ["projectSaas", "SaaS / business automation"],
               ["projectTrading", "Trading / broker / finance"],
             ] as const).map(([k, label]) => (
-              <label key={k} className="flex items-center justify-between rounded border border-amber-400/20 bg-zinc-900/60 p-2">
+              <label key={k} className="flex items-center justify-between rounded border border-amber-400/20 bg-surface-inset p-2">
                 <span className="text-sm text-zinc-300">{label}</span>
                 <div className="flex items-center gap-2">
                   {s[k] && <CheckCircle2 className="h-3 w-3 text-lime-400" />}

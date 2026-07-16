@@ -2,9 +2,53 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { HolographicPanel } from "@/components/futuristic/holographic-panel";
+import { Bot, RefreshCw, Plus, AlertCircle, Cpu, Shield, Wrench } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Agent {
+  id: string;
+  name: string;
+  department: string;
+  status: string;
+  riskLevel: string;
+  tools: string[];
+  enabled: boolean;
+  load?: number;
+}
+
+const statusStyle = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case "active":
+    case "online":
+      return "bg-lime-400/15 text-lime-300 border-lime-400/30";
+    case "idle":
+      return "bg-cyan-400/10 text-cyan-300 border-cyan-400/25";
+    case "busy":
+      return "bg-amber-400/15 text-amber-300 border-amber-400/30";
+    case "offline":
+      return "bg-red-400/10 text-red-300 border-red-400/25";
+    default:
+      return "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  }
+};
+
+const riskStyle = (risk: string) => {
+  switch (risk?.toLowerCase()) {
+    case "high":
+      return "text-red-400";
+    case "medium":
+      return "text-amber-400";
+    case "low":
+      return "text-lime-400";
+    default:
+      return "text-zinc-400";
+  }
+};
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<any[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [fallback, setFallback] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -19,34 +63,107 @@ export default function AgentsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-cyan-400 animate-pulse">Загрузка агентов...</div>;
-
-  return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">Агенты</h2>
-        <div className="flex items-center space-x-2">
-          {fallback && <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-500 border border-yellow-500/50">Fallback режим</span>}
-          <Button disabled variant="outline" className="border-cyan-400/50 text-cyan-400 bg-transparent hover:bg-cyan-950/30">Создать агента</Button>
-          <Button variant="outline" onClick={() => window.location.reload()} className="border-cyan-400/50 text-cyan-400 bg-transparent hover:bg-cyan-950/30">Обновить</Button>
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-4">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-48 animate-pulse rounded-xl bg-muted" />
+          ))}
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-        {agents.map(agent => (
-          <div key={agent.id} className="p-4 rounded-xl border border-cyan-400/20 bg-zinc-950/50 relative overflow-hidden backdrop-blur-xl">
-            <h3 className="font-bold text-lg text-cyan-100">{agent.name}</h3>
-            <p className="text-sm text-zinc-400">Отдел: {agent.department}</p>
-            <p className="text-sm text-zinc-400">Статус: <span className="text-cyan-400">{agent.status}</span></p>
-            <p className="text-sm text-zinc-400">Риск: {agent.riskLevel}</p>
-            <div className="mt-2 text-xs text-zinc-500">
-              Инструменты: {agent.tools.join(", ")}
-            </div>
-            <div className="absolute top-2 right-2 flex items-center">
-              <span className={`h-2 w-2 rounded-full ${agent.enabled ? "bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.8)]" : "bg-red-500"} animate-pulse`} />
-            </div>
-          </div>
-        ))}
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-mono text-2xl font-bold neon-text">АГЕНТЫ</h1>
+          <p className="text-xs text-muted-foreground">Управление автономными агентами системы</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {fallback && (
+            <Badge variant="outline" className="border-amber-400/30 bg-amber-400/10 text-amber-300">
+              <AlertCircle className="mr-1 h-3 w-3" /> Fallback
+            </Badge>
+          )}
+          <Button disabled variant="outline" size="sm">
+            <Plus className="mr-1 h-4 w-4" /> Создать
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+            <RefreshCw className="mr-1 h-4 w-4" /> Обновить
+          </Button>
+        </div>
       </div>
+
+      {agents.length === 0 ? (
+        <HolographicPanel accent="amber" className="p-12 text-center">
+          <Bot className="mx-auto h-10 w-10 text-amber-300/60" />
+          <p className="mt-4 text-zinc-400">Агенты не найдены</p>
+          <p className="mt-1 text-[10px] text-zinc-500">Создайте первого агента или обновите список</p>
+        </HolographicPanel>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {agents.map((agent) => (
+            <HolographicPanel key={agent.id} accent="cyan" className="group relative p-4 transition hover:scale-[1.01]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-lg border",
+                    agent.enabled ? "border-cyan-400/30 bg-cyan-400/10" : "border-zinc-600/30 bg-zinc-800/50"
+                  )}>
+                    <Bot className={cn("h-5 w-5", agent.enabled ? "text-cyan-300" : "text-zinc-500")} />
+                  </div>
+                  <div>
+                    <h3 className="font-mono text-sm font-bold text-cyan-100">{agent.name}</h3>
+                    <p className="text-[10px] text-zinc-500">{agent.department}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={cn("h-2 w-2 rounded-full", agent.enabled ? "bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.8)]" : "bg-red-500/60")} />
+                  <span className="text-[10px] text-zinc-500">{agent.enabled ? "ON" : "OFF"}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="glass-panel-subtle rounded-md p-2">
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                    <Cpu className="h-3 w-3" /> Статус
+                  </div>
+                  <Badge variant="outline" className={cn("mt-1 text-[10px]", statusStyle(agent.status))}>
+                    {agent.status}
+                  </Badge>
+                </div>
+                <div className="glass-panel-subtle rounded-md p-2">
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                    <Shield className="h-3 w-3" /> Риск
+                  </div>
+                  <div className={cn("mt-1 text-xs font-mono font-bold", riskStyle(agent.riskLevel))}>
+                    {agent.riskLevel}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                  <Wrench className="h-3 w-3" /> Инструменты
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {agent.tools.map((tool) => (
+                    <span key={tool} className="rounded border border-cyan-400/15 bg-cyan-400/5 px-1.5 py-0.5 text-[10px] text-cyan-200/80">
+                      {tool}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+            </HolographicPanel>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,8 +5,10 @@
 
 import type { AgentConfig, AgentRole, ModelConfig, ResolvedModel, RegistryStats, AgentStatus } from './types';
 import { providerRegistry } from '../ai-provider/provider-registry';
+import { resolveDefaultProviderId } from '../ai-provider/default-provider';
+import { getDefaultModelsForProvider } from '../ai-provider/default-models';
+import { resolveOpenRouterModelAlias, getModelConfigForRole } from '../ai-provider/model-registry';
 import { loggers } from '@/lib/logger';
-import { resolveOpenRouterModelAlias } from '../ai-provider/model-registry';
 
 // ─── Agent Registry ─────────────────────────────────────────
 
@@ -120,16 +122,17 @@ class AgentRegistry {
 
   /**
    * Resolve the model for an agent.
-   * Priority: modelOverride > preferred > fallback
+   * Priority: modelOverride > preferred > fallback > default provider
    * Also checks that the provider is available.
    */
   resolveModel(agentId: string, modelOverride?: string): ResolvedModel {
     const config = this.getOrThrow(agentId);
 
-    // If model override is provided, use it
+    // If model override is provided, use the default provider with the override model
     if (modelOverride) {
+      const defaultProvider = resolveDefaultProviderId();
       return {
-        provider: 'openrouter',
+        provider: defaultProvider,
         model: resolveOpenRouterModelAlias(modelOverride),
         preferenceType: 'override',
       };
@@ -158,12 +161,21 @@ class AgentRegistry {
       };
     }
 
-    throw new Error(
-      `No available model for agent "${config.name}" (${config.id}). ` +
-      `Preferred: ${preferred.provider}/${preferred.model}` +
-      (config.model.fallback ? `, Fallback: ${config.model.fallback.provider}/${config.model.fallback.model}` : '') +
-      `. Check that providers are initialized.`
+    // Final fallback: default provider with role-appropriate default models
+    const defaultProvider = resolveDefaultProviderId();
+    const defaultModels = getDefaultModelsForProvider(defaultProvider);
+    const modelConfig = getModelConfigForRole(
+      config.role,
+      defaultProvider,
+      defaultModels,
+      config.model.preferred.maxTokens ?? 2048,
     );
+
+    return {
+      ...modelConfig.preferred,
+      preferenceType: 'fallback',
+      maxCostPerTask: config.model.preferred.maxCostPerTask,
+    };
   }
 
   /**

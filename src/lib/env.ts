@@ -9,30 +9,77 @@ const envSchema = z.object({
   // Provider Router configuration
   AI_PROVIDER: z.string().default("ollama-cloud"),
   DEFAULT_AI_PROVIDER: z.string().default("ollama-cloud"),
-  HEAVY_AI_PROVIDER: z.string().default("glm"),
+  HEAVY_AI_PROVIDER: z.string().default("ollama-cloud"),
   
   // Ollama Cloud Pro (Default fast)
   OLLAMA_CLOUD_API_KEY: z.string().default(""),
   OLLAMA_CLOUD_BASE_URL: z.string().default("https://api.ollama.com/v1"),
   OLLAMA_CLOUD_MODEL: z.string().default("llama3.1-70b"),
   
-  // GLM 5.2 (Heavy reasoning)
+  // Ollama Cloud model options
+  OLLAMA_CLOUD_GLM_MODEL: z.string().default("glm-5.2"),
+  OLLAMA_CLOUD_KIMI_MODEL: z.string().default("kimi-k2.7-code"),
+  OLLAMA_CLOUD_GEMMA_MODEL: z.string().default("gemma4:31b"),
+
+  // GLM 5.2 (Heavy reasoning alternative)
   GLM_API_KEY: z.string().default(""),
   GLM_BASE_URL: z.string().default("https://open.bigmodel.cn/api/paas/v4"),
   GLM_MODEL: z.string().default("glm-5.2"),
 
-  // OpenRouter (Fallback)
+  // OpenRouter (Fallback + media models)
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_BASE_URL: z.string().default("https://openrouter.ai/api/v1"),
   OPENROUTER_MODEL: z.string().default("anthropic/claude-3-5-sonnet-20240620"),
-  
+
+  // OpenRouter media models
+  OPENROUTER_IMAGE_MODEL: z.string().default("google/gemini-3.1-flash-lite-image"),
+  OPENROUTER_MUSIC_MODEL: z.string().default("google/lyria-3-pro-preview"),
+  OPENROUTER_VIDEO_MODEL: z.string().default("bytedance/seedance-1-5-pro"),
+  OPENROUTER_TRANSCRIPTION_MODEL: z.string().default("openai/whisper-large-v3"),
+  OPENROUTER_AUDIO_FORMAT: z.string().default("wav"),
+  OPENROUTER_AUDIO_VOICE: z.string().default("alloy"),
+  // OpenAI (Fallback + GPT-5.5 Thinking orchestrator)
+  OPENAI_API_KEY: z.string().default(""),
+  OPENAI_BASE_URL: z.string().default("https://api.openai.com/v1"),
+  OPENAI_MODEL: z.string().default("gpt-4o"),
+  // GPT-5.5 Thinking — Orchestrator / CEO brain
+  OPENAI_THINKING_API_KEY: z.string().default(""),
+  OPENAI_THINKING_BASE_URL: z.string().default("https://api.openai.com/v1"),
+  OPENAI_THINKING_MODEL: z.string().default("gpt-5.5-thinking"),
+
+  // Kimi K2.7 Code — Second developer / MCP / Tool Use
+  KIMI_API_KEY: z.string().default(""),
+  KIMI_BASE_URL: z.string().default("https://api.moonshot.cn/v1"),
+  KIMI_MODEL: z.string().default("kimi-k2.7-code"),
+
+  // Legal Armenia — isolated legal/RAG/PDF model
+  LEGAL_AI_API_KEY: z.string().default(""),
+  LEGAL_AI_BASE_URL: z.string().default("https://api.legal-armenia.ai/v1"),
+  LEGAL_AI_MODEL: z.string().default("legal-armenia-pro"),
+
+  // Model hierarchy role overrides (env-configurable)
+  JARVIS_ROLE_ORCHESTRATOR_PROVIDER: z.string().default("openai-thinking"),
+  JARVIS_ROLE_ORCHESTRATOR_MODEL: z.string().default(""),
+  JARVIS_ROLE_SENIOR_DEV_PROVIDER: z.string().default("glm"),
+  JARVIS_ROLE_SENIOR_DEV_MODEL: z.string().default(""),
+  JARVIS_ROLE_SECOND_DEV_PROVIDER: z.string().default("kimi"),
+  JARVIS_ROLE_SECOND_DEV_MODEL: z.string().default(""),
+  JARVIS_ROLE_DESIGNER_PROVIDER: z.string().default("glm"),
+  JARVIS_ROLE_DESIGNER_MODEL: z.string().default(""),
+  JARVIS_ROLE_DESIGN_CRITIC_PROVIDER: z.string().default("openai-thinking"),
+  JARVIS_ROLE_DESIGN_CRITIC_MODEL: z.string().default(""),
+  JARVIS_ROLE_RESEARCH_PROVIDER: z.string().default("openai-thinking"),
+  JARVIS_ROLE_RESEARCH_MODEL: z.string().default(""),
+  JARVIS_ROLE_BROWSER_PROVIDER: z.string().default("kimi"),
+  JARVIS_ROLE_BROWSER_MODEL: z.string().default(""),
+  JARVIS_ROLE_MEMORY_PROVIDER: z.string().default("ollama-cloud"),
+  JARVIS_ROLE_MEMORY_MODEL: z.string().default(""),
+  JARVIS_ROLE_LEGAL_PROVIDER: z.string().default("legal-ai"),
+  JARVIS_ROLE_LEGAL_MODEL: z.string().default(""),
+
   // Gemini (Fallback)
   GEMINI_API_KEY: z.string().default(""),
   GEMINI_MODEL: z.string().default("gemini-1.5-pro"),
-  
-  // OpenAI (Fallback)
-  OPENAI_API_KEY: z.string().default(""),
-  OPENAI_MODEL: z.string().default("gpt-4o"),
 
   // Groq (Fallback)
   GROQ_API_KEY: z.string().default(""),
@@ -54,6 +101,12 @@ const envSchema = z.object({
   STT_API_KEY: z.string().default(""),
   NEXT_PUBLIC_ENABLE_3D: z.string().default("true"),
   NEXT_PUBLIC_ENABLE_VOICE: z.string().default("true"),
+
+  // Supabase Storage (service role required for server-side bucket ops)
+  NEXT_PUBLIC_SUPABASE_URL: z.string().default(""),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().default(""),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().default(""),
+  SUPABASE_STORAGE_BUCKET: z.string().default("jarwisyan-files"),
 
   // PC profile defaults
   PC_PROFILE_NAME: z.string().default("Main Windows Workstation"),
@@ -96,11 +149,14 @@ export const env = loadEnv();
 export const isGitHubConfigured = () => Boolean(env.GITHUB_TOKEN);
 export const isAiConfigured = () =>
   env.AI_PROVIDER !== "mock" && (
-    Boolean(env.OLLAMA_CLOUD_API_KEY) || 
-    Boolean(env.GLM_API_KEY) || 
+    Boolean(env.OLLAMA_CLOUD_API_KEY) ||
+    Boolean(env.GLM_API_KEY) ||
     Boolean(env.OPENROUTER_API_KEY) ||
     Boolean(env.GEMINI_API_KEY) ||
     Boolean(env.OPENAI_API_KEY) ||
+    Boolean(env.OPENAI_THINKING_API_KEY) ||
+    Boolean(env.KIMI_API_KEY) ||
+    Boolean(env.LEGAL_AI_API_KEY) ||
     Boolean(env.GROQ_API_KEY) ||
     Boolean(env.CEREBRAS_API_KEY)
   );

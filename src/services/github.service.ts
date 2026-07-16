@@ -26,11 +26,11 @@ export function parseGithubUrl(input: string): { owner: string; repo: string } |
     return { owner: urlMatch[1], repo: urlMatch[2].replace(/\.git$/i, "") };
   }
 
-  // Shorthand: owner/repo
+  // Shorthand: owner/repo (allow owner === repo, e.g. "ollama/ollama", "cline/cline")
   const shortMatch = cleaned.match(
-    /\b([A-Za-z0-9][\w.-]{0,38}[A-Za-z0-9])\/([A-Za-z0-9_.-]{1,100})\b/
+    /^([A-Za-z0-9][\w.-]{0,38}[A-Za-z0-9])\/([A-Za-z0-9_.-]{1,100})(?:\.git)?$/i
   );
-  if (shortMatch && shortMatch[1].toLowerCase() !== shortMatch[2].toLowerCase()) {
+  if (shortMatch) {
     return { owner: shortMatch[1], repo: shortMatch[2].replace(/\.git$/i, "") };
   }
 

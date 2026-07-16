@@ -129,12 +129,12 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
   useEffect(() => { void load(); }, [id]);
 
   async function reanalyze() {
-    toast.info("Re-analyzing...");
+    toast.info("Повторный анализ…");
     try {
       const res = await fetch(`/api/repos/${id}/reanalyze`, { method: "POST" });
       if (!res.ok) throw new Error("Failed");
       const d = await res.json();
-      toast.success(`Verdict: ${d.verdict} (${d.finalPriorityScore})`);
+      toast.success(`Вердикт: ${d.verdict} (${d.finalPriorityScore})`);
       load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -147,7 +147,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
     try {
       const res = await fetch(`/api/repos/${id}/watch`, { method });
       if (!res.ok) throw new Error("Failed");
-      toast.success(data.repo.isWatchlisted ? "Removed from watchlist" : "Added to watchlist");
+      toast.success(data.repo.isWatchlisted ? "Удалено из вотчлиста" : "Добавлено в вотчлист");
       load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -159,7 +159,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
     try {
       const res = await fetch(`/api/repos/${id}/install-plan`, { method: "POST" });
       if (!res.ok) throw new Error("Failed");
-      toast.success("Install plan generated");
+      toast.success("План установки сгенерирован");
       load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -172,24 +172,42 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
     if (!data) return;
     const a = data.repo.analyses[0];
     if (!a) {
-      toast.error("No analysis to read");
+      toast.error("Нет анализа для озвучки");
       return;
     }
-    const text = `${data.repo.fullName}. Verdict: ${data.repo.verdict}. ${a.summary} ${a.finalRecommendation}`;
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1; u.pitch = 1;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+    const text = `${data.repo.fullName}. Вердикт: ${data.repo.verdict}. ${a.summary} ${a.finalRecommendation}`;
+    // Use Edge TTS via /api/tts (female voice ru-RU-SvetlanaNeural)
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice: 'ru-RU-SvetlanaNeural' }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`TTS error: ${res.status}`);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.onended = () => URL.revokeObjectURL(url);
+        return audio.play();
+      })
+      .catch((err) => {
+        console.warn('[speak] Edge TTS failed, fallback to browser TTS:', err);
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1; u.pitch = 1;
+        u.lang = "ru-RU";
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      });
   }
 
   function exportReport() {
     window.open(`/api/export/markdown`, "_blank");
   }
 
-  if (loading) return <div className="mx-auto max-w-6xl text-cyan-300">Loading...</div>;
+  if (loading) return <div className="mx-auto max-w-6xl text-cyan-300">Загрузка...</div>;
   if (error || !data) return (
     <div className="mx-auto max-w-6xl">
-      <HolographicPanel accent="magenta" className="p-6 text-red-300">{error}</HolographicPanel>
+      <HolographicPanel accent="magenta" className="p-6 text-red-300">{error || "Ошибка загрузки"}</HolographicPanel>
     </div>
   );
 
@@ -205,7 +223,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="mx-auto max-w-6xl space-y-4">
       <Link href="/repos" className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-cyan-300">
-        <ArrowLeft className="h-3 w-3" /> BACK TO REPOS
+        <ArrowLeft className="h-3 w-3" /> НАЗАД К РЕПОЗИТОРИЯМ
       </Link>
 
       {/* Header */}
@@ -216,7 +234,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
               <h1 className="font-mono text-2xl font-bold text-cyan-200">{r.fullName}</h1>
               <VerdictBadge verdict={r.verdict as "USE_NOW"} />
             </div>
-            <p className="mt-2 text-sm text-zinc-400">{r.description || "(no description)"}</p>
+            <p className="mt-2 text-sm text-zinc-400">{r.description || "(нет описания)"}</p>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
               <a href={r.githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-cyan-300 hover:underline">
                 <Github className="h-3 w-3" /> GitHub
@@ -224,10 +242,10 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
               <span className="flex items-center gap-1"><Star className="h-3 w-3" />{r.stars}</span>
               <span className="flex items-center gap-1"><GitFork className="h-3 w-3" />{r.forks}</span>
               <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{r.watchers}</span>
-              <span>License: {r.license}</span>
-              <span>Lang: {r.primaryLanguage || "—"}</span>
-              {r.gpuRequired && <span className="text-amber-400">GPU required</span>}
-              {r.archived && <span className="text-red-400">Archived</span>}
+              <span>Лицензия: {r.license}</span>
+              <span>Язык: {r.primaryLanguage || "—"}</span>
+              {r.gpuRequired && <span className="text-amber-400">Требуется GPU</span>}
+              {r.archived && <span className="text-red-400">Архивный</span>}
             </div>
             {topics.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
@@ -264,55 +282,55 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
       {/* Scores */}
       <div className="grid grid-cols-3 gap-3 md:grid-cols-5 lg:grid-cols-9">
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.usefulnessScore} label="Useful" size={70} color="#22d3ee" />
+          <ScoreRing value={r.usefulnessScore} label="Польза" size={70} color="#22d3ee" />
         </HolographicPanel>
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.healthScore} label="Health" size={70} color="#a3e635" />
+          <ScoreRing value={r.healthScore} label="Здоровье" size={70} color="#a3e635" />
         </HolographicPanel>
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.compatibilityScore} label="Compat" size={70} color="#e879f9" />
+          <ScoreRing value={r.compatibilityScore} label="Совмест." size={70} color="#e879f9" />
         </HolographicPanel>
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
           <ScoreRing value={r.agentOsScore} label="AgentOS" size={70} color="#22d3ee" />
         </HolographicPanel>
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.aiLegalScore} label="AiLegal" size={70} color="#fbbf24" />
+          <ScoreRing value={r.aiLegalScore} label="AI-legal" size={70} color="#fbbf24" />
         </HolographicPanel>
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.securityScore} label="Security" size={70} color="#a3e635" />
+          <ScoreRing value={r.securityScore} label="Безопасн." size={70} color="#a3e635" />
         </HolographicPanel>
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.costScore} label="Cost" size={70} color="#e879f9" />
+          <ScoreRing value={r.costScore} label="Стоим." size={70} color="#e879f9" />
         </HolographicPanel>
         <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.commercialRiskScore} label="Risk" size={70} color="#f87171" />
+          <ScoreRing value={r.commercialRiskScore} label="Риск" size={70} color="#f87171" />
         </HolographicPanel>
         <HolographicPanel accent="lime" className="flex flex-col items-center justify-center p-3">
           <div className="font-mono text-3xl text-lime-300">{r.finalPriorityScore}</div>
-          <div className="text-[10px] uppercase text-zinc-500">Final</div>
+          <div className="text-[10px] uppercase text-zinc-500">Итог</div>
         </HolographicPanel>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList className="flex flex-wrap gap-1 bg-zinc-900/60">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="overview">Обзор</TabsTrigger>
           <TabsTrigger value="integration">Интеграция</TabsTrigger>
           <TabsTrigger value="sandbox">Sandbox</TabsTrigger>
-          <TabsTrigger value="patch">Patch Plan</TabsTrigger>
-          <TabsTrigger value="risk">Risk Gate</TabsTrigger>
-          <TabsTrigger value="health">Health</TabsTrigger>
-          <TabsTrigger value="community">Community</TabsTrigger>
-          <TabsTrigger value="compat">My PC Compat</TabsTrigger>
-          <TabsTrigger value="run-options">Run Options</TabsTrigger>
+          <TabsTrigger value="patch">План патча</TabsTrigger>
+          <TabsTrigger value="risk">Риск-гейт</TabsTrigger>
+          <TabsTrigger value="health">Здоровье</TabsTrigger>
+          <TabsTrigger value="community">Сообщество</TabsTrigger>
+          <TabsTrigger value="compat">Совместимость с ПК</TabsTrigger>
+          <TabsTrigger value="run-options">Варианты запуска</TabsTrigger>
           <TabsTrigger value="ollama-cloud">Ollama Cloud</TabsTrigger>
-          <TabsTrigger value="alternatives">Alternatives</TabsTrigger>
-          <TabsTrigger value="analysis">Analysis</TabsTrigger>
-          <TabsTrigger value="install">Install</TabsTrigger>
-          <TabsTrigger value="test">Test Plan</TabsTrigger>
-          <TabsTrigger value="ideas">Ideas</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="cost">Cost</TabsTrigger>
+          <TabsTrigger value="alternatives">Альтернативы</TabsTrigger>
+          <TabsTrigger value="analysis">Анализ</TabsTrigger>
+          <TabsTrigger value="install">Установка</TabsTrigger>
+          <TabsTrigger value="test">Тест-план</TabsTrigger>
+          <TabsTrigger value="ideas">Идеи</TabsTrigger>
+          <TabsTrigger value="security">Безопасность</TabsTrigger>
+          <TabsTrigger value="cost">Стоимость</TabsTrigger>
           <TabsTrigger value="readme">README</TabsTrigger>
         </TabsList>
 
@@ -320,23 +338,23 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <HolographicPanel accent="cyan" className="p-5 space-y-3">
             <div className="flex items-center gap-2 text-cyan-300">
               <FileText className="h-4 w-4" />
-              <h2 className="font-mono text-xs uppercase">Overview</h2>
+              <h2 className="font-mono text-xs uppercase">Обзор</h2>
             </div>
             {a ? (
               <>
                 <p className="text-sm text-zinc-300">{a.summary}</p>
                 <div>
-                  <div className="text-[10px] uppercase text-zinc-500">Problem Solved</div>
+                  <div className="text-[10px] uppercase text-zinc-500">Решаемая проблема</div>
                   <p className="text-sm text-zinc-400">{a.problemSolved}</p>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase text-zinc-500">Final Recommendation</div>
+                  <div className="text-[10px] uppercase text-zinc-500">Итоговая рекомендация</div>
                   <p className="text-sm text-cyan-200">{a.finalRecommendation}</p>
-                  {a.mock && <span className="text-[10px] text-amber-400">(mock analysis — set GLM_API_KEY for live AI)</span>}
+                  {a.mock && <span className="text-[10px] text-amber-400">(анализ-заглушка — проверьте OLLAMA_CLOUD_API_KEY и HEAVY_AI_PROVIDER)</span>}
                 </div>
               </>
             ) : (
-              <p className="text-sm text-zinc-500">No analysis yet. Click Re-analyze.</p>
+              <p className="text-sm text-zinc-500">Анализ ещё не выполнен. Нажмите Re-analyze.</p>
             )}
             <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
               <div><span className="text-zinc-500">Docker:</span> {r.hasDocker ? "✓" : "—"}</div>
@@ -345,10 +363,10 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
               <div><span className="text-zinc-500">Requirements:</span> {r.hasRequirements ? "✓" : "—"}</div>
               <div><span className="text-zinc-500">Pyproject:</span> {r.hasPyproject ? "✓" : "—"}</div>
               <div><span className="text-zinc-500">.env.example:</span> {r.hasEnvExample ? "✓" : "—"}</div>
-              <div><span className="text-zinc-500">Difficulty:</span> {r.difficulty}</div>
-              <div><span className="text-zinc-500">Local run:</span> {r.localRunPossible ? "✓" : "—"}</div>
-              <div><span className="text-zinc-500">GPU required:</span> {r.gpuRequired ? <span className="text-amber-300">✓</span> : "—"}</div>
-              <div><span className="text-zinc-500">CUDA risk:</span> {r.gpuRequired ? <span className="text-red-300">HIGH (AMD GPU, no CUDA)</span> : <span className="text-lime-300">none</span>}</div>
+              <div><span className="text-zinc-500">Сложность:</span> {r.difficulty}</div>
+              <div><span className="text-zinc-500">Локальный запуск:</span> {r.localRunPossible ? "✓" : "—"}</div>
+              <div><span className="text-zinc-500">Требуется GPU:</span> {r.gpuRequired ? <span className="text-amber-300">✓</span> : "—"}</div>
+              <div><span className="text-zinc-500">Риск CUDA:</span> {r.gpuRequired ? <span className="text-red-300">ВЫСОКИЙ (AMD GPU, нет CUDA)</span> : <span className="text-lime-300">нет</span>}</div>
             </div>
           </HolographicPanel>
         </TabsContent>
@@ -397,16 +415,16 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <HolographicPanel accent="cyan" className="p-5">
             {a ? (
               <div className="space-y-3 text-sm text-zinc-300">
-                <div><span className="text-zinc-500">Usefulness:</span> {a.usefulness || a.summary}</div>
+                <div><span className="text-zinc-500">Польза:</span> {a.usefulness || a.summary}</div>
                 <div>
-                  <span className="text-zinc-500">Project Fit:</span>
+                  <span className="text-zinc-500">Соответствие проекту:</span>
                   <pre className="mt-1 overflow-x-auto rounded bg-zinc-900/60 p-2 text-[10px]">{a.projectFit}</pre>
                 </div>
-                <div><span className="text-zinc-500">Local run:</span> {a.localRunPlan}</div>
-                <div><span className="text-zinc-500">Commercial review:</span> {a.commercialReview}</div>
-                <div><span className="text-zinc-500">Cost review:</span> {a.costReview}</div>
+                <div><span className="text-zinc-500">Локальный запуск:</span> {a.localRunPlan}</div>
+                <div><span className="text-zinc-500">Коммерческий обзор:</span> {a.commercialReview}</div>
+                <div><span className="text-zinc-500">Стоимость:</span> {a.costReview}</div>
               </div>
-            ) : <p className="text-sm text-zinc-500">No analysis yet.</p>}
+            ) : <p className="text-sm text-zinc-500">Анализ ещё не выполнен.</p>}
           </HolographicPanel>
         </TabsContent>
 
@@ -415,18 +433,18 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-lime-300">
                 <Terminal className="h-4 w-4" />
-                <h2 className="font-mono text-xs uppercase">Install Plan</h2>
+                <h2 className="font-mono text-xs uppercase">План установки</h2>
               </div>
               {!plan && (
                 <Button size="sm" variant="outline" onClick={generateInstallPlan} disabled={generatingPlan}>
-                  Generate
+                  Сгенерировать
                 </Button>
               )}
             </div>
             {plan ? (
               <InstallPlanView raw={plan} />
             ) : (
-              <p className="text-sm text-zinc-500">No install plan yet. Click Generate.</p>
+              <p className="text-sm text-zinc-500">План установки ещё не создан. Нажмите Сгенерировать.</p>
             )}
           </HolographicPanel>
         </TabsContent>
@@ -435,30 +453,30 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <HolographicPanel accent="cyan" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-cyan-300">
               <FlaskConical className="h-4 w-4" />
-              <h2 className="font-mono text-xs uppercase">Test Plan</h2>
+              <h2 className="font-mono text-xs uppercase">Тест-план</h2>
             </div>
             {testPlan ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <div className="text-xs text-lime-300">15 minutes</div>
+                  <div className="text-xs text-lime-300">15 минут</div>
                   <ul className="mt-1 space-y-1 text-xs text-zinc-300">
                     {testPlan.fifteenMinutes.map((s, i) => <li key={i} className="flex gap-1"><span className="text-zinc-600">{i + 1}.</span> {s}</li>)}
                   </ul>
                 </div>
                 <div>
-                  <div className="text-xs text-cyan-300">30 minutes</div>
+                  <div className="text-xs text-cyan-300">30 минут</div>
                   <ul className="mt-1 space-y-1 text-xs text-zinc-300">
                     {testPlan.thirtyMinutes.map((s, i) => <li key={i} className="flex gap-1"><span className="text-zinc-600">{i + 1}.</span> {s}</li>)}
                   </ul>
                 </div>
                 <div>
-                  <div className="text-xs text-fuchsia-300">60 minutes</div>
+                  <div className="text-xs text-fuchsia-300">60 минут</div>
                   <ul className="mt-1 space-y-1 text-xs text-zinc-300">
                     {testPlan.sixtyMinutes.map((s, i) => <li key={i} className="flex gap-1"><span className="text-zinc-600">{i + 1}.</span> {s}</li>)}
                   </ul>
                 </div>
               </div>
-            ) : <p className="text-sm text-zinc-500">No test plan yet.</p>}
+            ) : <p className="text-sm text-zinc-500">Тест-план ещё не создан.</p>}
           </HolographicPanel>
         </TabsContent>
 
@@ -466,7 +484,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <HolographicPanel accent="magenta" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-fuchsia-300">
               <Lightbulb className="h-4 w-4" />
-              <h2 className="font-mono text-xs uppercase">Extracted Ideas</h2>
+              <h2 className="font-mono text-xs uppercase">Извлечённые идеи</h2>
             </div>
             {ideas.length > 0 ? (
               <ul className="space-y-2 text-sm text-zinc-300">
@@ -477,7 +495,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
                   </li>
                 ))}
               </ul>
-            ) : <p className="text-sm text-zinc-500">No ideas extracted.</p>}
+            ) : <p className="text-sm text-zinc-500">Идеи не извлечены.</p>}
           </HolographicPanel>
         </TabsContent>
 
@@ -485,15 +503,15 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <HolographicPanel accent={r.securityStatus === "RISK" ? "magenta" : "lime"} className="p-5">
             <div className="mb-3 flex items-center gap-2">
               {r.securityStatus === "SAFE" ? <ShieldCheck className="h-4 w-4 text-lime-300" /> : <AlertTriangle className="h-4 w-4 text-amber-300" />}
-              <h2 className="font-mono text-xs uppercase">Security Scan</h2>
+              <h2 className="font-mono text-xs uppercase">Скан безопасности</h2>
               <span className="ml-auto"><CommercialBadge status={r.securityStatus === "SAFE" ? "SAFE" : r.securityStatus === "REVIEW" ? "WARNING" : "HIGH_RISK"} /></span>
             </div>
             <ul className="space-y-1 text-sm text-zinc-300">
-              {secNotes.length > 0 ? secNotes.map((n, i) => <li key={i} className="flex gap-2">• {n}</li>) : <li className="text-zinc-500">No security notes.</li>}
+              {secNotes.length > 0 ? secNotes.map((n, i) => <li key={i} className="flex gap-2">• {n}</li>) : <li className="text-zinc-500">Нет заметок по безопасности.</li>}
             </ul>
             {risks.length > 0 && (
               <div className="mt-3">
-                <div className="text-[10px] uppercase text-zinc-500">Risks</div>
+                <div className="text-[10px] uppercase text-zinc-500">Риски</div>
                 <ul className="space-y-1 text-xs text-zinc-400">
                   {risks.map((r2, i) => <li key={i}>• {r2}</li>)}
                 </ul>
@@ -506,11 +524,11 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <HolographicPanel accent="amber" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-amber-300">
               <DollarSign className="h-4 w-4" />
-              <h2 className="font-mono text-xs uppercase">Cost Awareness</h2>
+              <h2 className="font-mono text-xs uppercase">Стоимость и риски</h2>
             </div>
-            <p className="text-sm text-zinc-300">{r.costNotes || "No cost analysis."}</p>
+            <p className="text-sm text-zinc-300">{r.costNotes || "Анализ стоимости не проведён."}</p>
             <div className="mt-3 text-xs">
-              <span className="text-zinc-500">Commercial use:</span> <CommercialBadge status={r.commercialUseStatus as "SAFE"} />
+              <span className="text-zinc-500">Коммерческое использование:</span> <CommercialBadge status={r.commercialUseStatus as "SAFE"} />
             </div>
             <div className="mt-2 text-xs text-zinc-400">{r.commercialNotes}</div>
           </HolographicPanel>
@@ -520,10 +538,10 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <HolographicPanel accent="cyan" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-cyan-300">
               <BookOpen className="h-4 w-4" />
-              <h2 className="font-mono text-xs uppercase">README (raw)</h2>
+              <h2 className="font-mono text-xs uppercase">README (исходник)</h2>
             </div>
             <div className="max-h-96 overflow-y-auto rounded bg-zinc-900/60 p-3">
-              <pre className="whitespace-pre-wrap text-[11px] text-zinc-300">{r.readmeText || "(no readme fetched)"}</pre>
+              <pre className="whitespace-pre-wrap text-[11px] text-zinc-300">{r.readmeText || "(readme не загружен)"}</pre>
             </div>
           </HolographicPanel>
         </TabsContent>
@@ -581,9 +599,18 @@ function InstallPlanView({ raw }: { raw: RepoDetail["repo"]["installPlans"][numb
 
 function Section({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
+  const titleRu: Record<string, string> = {
+    Prerequisites: "Требования",
+    "Docker commands": "Команды Docker",
+    "Manual commands": "Ручные команды",
+    "Env vars": "Переменные окружения",
+    Verification: "Проверка",
+    "Common errors": "Частые ошибки",
+    Cleanup: "Очистка",
+  };
   return (
     <div>
-      <div className="text-xs text-cyan-300">{title}</div>
+      <div className="text-xs text-cyan-300">{titleRu[title] ?? title}</div>
       <ul className="mt-1 space-y-1 text-xs text-zinc-300">
         {items.map((s, i) => <li key={i} className="flex gap-1"><span className="text-zinc-600">{i + 1}.</span> {s}</li>)}
       </ul>

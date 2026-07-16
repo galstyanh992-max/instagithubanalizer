@@ -5,6 +5,7 @@ import { analyzeTerminalCommand } from "@/lib/safety/terminal-guard";
 const BASE_RISK: Record<CommandIntent, RiskLevel> = {
   conversation: "LOW",
   open_page: "LOW",
+  ui_control: "LOW",
   memory_task: "LOW",
   github_analysis: "LOW",
   browser_task: "MEDIUM",

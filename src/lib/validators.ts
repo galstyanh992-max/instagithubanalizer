@@ -12,6 +12,11 @@ export const analyzeRepoSchema = z.object({
   "Provide either fullName or owner+repo"
 );
 
+export const batchImportUploadSchema = z.object({
+  storageUrl: z.string().min(1),
+  originalName: z.string().min(1),
+});
+
 export const compareSchema = z.object({
   ids: z.array(z.string().min(1)).min(2).max(5),
 });

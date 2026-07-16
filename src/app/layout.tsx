@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { GlobalCommandDock } from "@/components/chat/GlobalCommandDock";
 import { TopBar } from "@/components/layout/topbar";
 import { CosmicBackground } from "@/components/futuristic/CosmicBackground";
 import { SettingsHydrator } from "@/components/layout/settings-hydrator";
-import { JarwisyanAICore } from "@/components/three/JarwisyanAICore";
+import { MacDock } from "@/components/layout/mac-dock";
+import { GlobalTerminal } from "@/components/os/GlobalTerminal";
+import { GlobalFileExplorer } from "@/components/os/GlobalFileExplorer";
+import { MiniBrowser } from "@/components/os/MiniBrowser";
+import { JarvisActivityProvider } from "@/components/jarvis/jarvis-activity-provider";
+import { JarvisToggleButton } from "@/components/jarvis/jarvis-toggle-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,11 +23,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ДЖАРВИС — персональный AI-оператор",
+  title: "ДЖАРВИС OS — AI Command Center",
   description:
-    "Voice-first AI-оператор для управления задачами, анализа проектов, автоматизации рабочих процессов и взаимодействия с интеллектуальными модулями.",
+    "Premium AI operating system for autonomous agents, code analysis, and workflow automation.",
   keywords: [
     "ДЖАРВИС",
+    "AI OS",
     "AI оператор",
     "голосовой ассистент",
     "автоматизация",
@@ -34,38 +39,42 @@ export const metadata: Metadata = {
 };
 
 import { Providers } from "@/components/providers/providers";
+import { initProviders } from "@/lib/ai-provider/server";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await initProviders();
+
   return (
     <html lang="ru" className="dark" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#020617] text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        suppressHydrationWarning
       >
         <Providers>
-          <CosmicBackground />
-          <SettingsHydrator />
-          <div className="relative flex min-h-screen p-2 gap-2">
-            <div className="cosmic-main-frame flex min-h-[calc(100vh-16px)] flex-1 flex-col w-full relative">
-              
-              {/* Global AI Core Background Layer */}
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0 opacity-80 lg:mt-4 overflow-hidden">
-                <div className="relative flex items-center justify-center w-full max-w-[500px] lg:max-w-[700px] mx-auto">
-                  
-                  <JarwisyanAICore size="xl" active state="thinking" />
-                </div>
+          <JarvisActivityProvider>
+            <CosmicBackground />
+            <SettingsHydrator />
+            <div className="relative flex min-h-screen p-3 gap-3">
+              <div className="cosmic-main-frame flex min-h-[calc(100vh-24px)] flex-1 flex-col w-full relative glass-panel overflow-hidden">
+                <TopBar />
+                <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-5 lg:px-8 lg:py-6 pb-28 relative z-10">
+                  {children}
+                </main>
               </div>
-
-              <TopBar />
-              <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 lg:px-10 lg:py-8 pb-24 relative z-10">
-                {children}
-              </main>
             </div>
-          </div>
-          <Toaster />
+            {/* System Dock — global command launcher */}
+            <MacDock />
+            {/* Global overlay layers */}
+            <GlobalTerminal />
+            <GlobalFileExplorer />
+            <MiniBrowser />
+            <Toaster />
+            <JarvisToggleButton />
+          </JarvisActivityProvider>
         </Providers>
       </body>
     </html>

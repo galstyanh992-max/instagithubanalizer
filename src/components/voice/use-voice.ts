@@ -15,7 +15,7 @@ interface UseVoiceReturn {
   start: () => void
   stop: () => void
   reset: () => void
-  speak: (text: string) => void
+  speak: (text: string, force?: boolean) => void
   stopSpeaking: () => void
   speaking: boolean
 }
@@ -115,8 +115,51 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
     setAiResponse('')
   }, [])
 
-  const speak = useCallback((text: string) => {
-    if (opts.autoSpeak === false) return
+  const speak = useCallback((text: string, force = false) => {
+    if (!force && opts.autoSpeak === false) return
+    if (typeof window === 'undefined' || !text) return
+
+    const useEdge = true // Microsoft Edge TTS (free, female ru-RU-SvetlanaNeural)
+
+    if (useEdge) {
+      // Stop any currently playing audio
+      stopSpeaking()
+
+      setSpeaking(true)
+      fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: 'ru-RU-SvetlanaNeural' }),
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`TTS error: ${res.status}`)
+          const { url } = await res.json()
+          if (!url || typeof url !== 'string') throw new Error('TTS returned no url')
+          const audio = new Audio(url)
+          audioRef.current = audio
+          audio.onended = () => {
+            setSpeaking(false)
+            audioRef.current = null
+          }
+          audio.onerror = () => {
+            setSpeaking(false)
+            audioRef.current = null
+          }
+          return audio.play()
+        })
+        .catch((err) => {
+          console.warn('[useVoice] Edge TTS failed, fallback to browser TTS:', err)
+          speakBrowser(text)
+        })
+      return
+    }
+
+    speakBrowser(text)
+  }, [opts.autoSpeak])
+
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const speakBrowser = useCallback((text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
     window.speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
@@ -127,11 +170,17 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
     u.onend = () => setSpeaking(false)
     u.onerror = () => setSpeaking(false)
     window.speechSynthesis.speak(u)
-  }, [opts.autoSpeak])
+  }, [])
 
   const stopSpeaking = useCallback(() => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      audioRef.current = null
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
     setSpeaking(false)
   }, [])
 

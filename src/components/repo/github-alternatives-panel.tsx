@@ -29,17 +29,17 @@ export function GithubAlternativesPanel({ repoId }: { repoId: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-amber-300">
           <Search className="h-4 w-4" />
-          <h2 className="font-mono text-xs uppercase tracking-wider">GitHub Alternatives</h2>
+          <h2 className="font-mono text-xs uppercase tracking-wider">Альтернативы на GitHub</h2>
         </div>
         <Button size="sm" variant="outline" onClick={load} disabled={loading}>
           {loading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Search className="mr-1 h-3 w-3" />}
-          Find alternatives
+          Найти альтернативы
         </Button>
       </div>
 
       {!data && !loading && (
         <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4 text-center text-sm text-zinc-400">
-          Click <b>Find alternatives</b> to search GitHub for CPU-only / no-CUDA / Ollama-compatible alternatives.
+          Нажмите <b>Найти альтернативы</b> для поиска на GitHub CPU-only / no-CUDA / Ollama-совместимых альтернатив.
         </div>
       )}
 
@@ -48,7 +48,7 @@ export function GithubAlternativesPanel({ repoId }: { repoId: string }) {
           <div className="rounded-md border border-zinc-700 bg-zinc-900/40 p-2 text-[11px] text-zinc-400">
             {data.note}
             {!data.liveSearchPerformed && (
-              <span className="ml-1 text-amber-300">(GITHUB_TOKEN not configured — fallback queries only.)</span>
+              <span className="ml-1 text-amber-300">(GITHUB_TOKEN не настроен — только fallback-запросы.)</span>
             )}
           </div>
 
@@ -74,9 +74,9 @@ export function GithubAlternativesPanel({ repoId }: { repoId: string }) {
                   </div>
                   <p className="mt-1 text-zinc-400">{a.description}</p>
                   <div className="mt-2 text-[10px] text-zinc-500">
-                    <div><span className="text-zinc-400">Why better for my PC:</span> {a.whyBetterForMyPc}</div>
-                    <div className="mt-0.5"><span className="text-zinc-400">Lang:</span> {a.language} · <span className="text-zinc-400">License:</span> {a.license}</div>
-                    <div className="mt-0.5"><span className="text-zinc-400">Est. compat score:</span> <span className="font-mono text-amber-300">{a.estimatedCompatibilityScore}/100</span></div>
+                    <div><span className="text-zinc-400">Почему лучше для моего ПК:</span> {a.whyBetterForMyPc}</div>
+                    <div className="mt-0.5"><span className="text-zinc-400">Язык:</span> {a.language} · <span className="text-zinc-400">Лицензия:</span> {a.license}</div>
+                    <div className="mt-0.5"><span className="text-zinc-400">Оценка совместимости:</span> <span className="font-mono text-amber-300">{a.estimatedCompatibilityScore}/100</span></div>
                   </div>
                 </div>
               ))}
@@ -84,7 +84,7 @@ export function GithubAlternativesPanel({ repoId }: { repoId: string }) {
           )}
 
           <div>
-            <div className="text-[10px] uppercase text-zinc-500 mb-1">Fallback search queries</div>
+            <div className="text-[10px] uppercase text-zinc-500 mb-1">Запасные поисковые запросы</div>
             <div className="flex flex-wrap gap-1">
               {data.fallbackQueries.map((q) => (
                 <a

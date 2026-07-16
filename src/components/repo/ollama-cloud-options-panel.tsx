@@ -31,20 +31,20 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-fuchsia-300">
           <Cloud className="h-4 w-4" />
-          <h2 className="font-mono text-xs uppercase tracking-wider">Ollama Cloud Option</h2>
+          <h2 className="font-mono text-xs uppercase tracking-wider">Вариант Ollama Cloud</h2>
           <span className="inline-flex items-center gap-1 rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 px-2 py-0.5 text-[9px] text-fuchsia-200">
-            <Lock className="h-2.5 w-2.5" /> ONLY ALLOWED
+            <Lock className="h-2.5 w-2.5" /> ЕДИНСТВЕННЫЙ РАЗРЕШЁННЫЙ
           </span>
         </div>
         <Button size="sm" variant="outline" onClick={load} disabled={loading}>
           {loading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Cloud className="mr-1 h-3 w-3" />}
-          Show option
+          Показать вариант
         </Button>
       </div>
 
       {!opt && !loading && (
         <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4 text-center text-sm text-zinc-400">
-          Click <b>Show option</b> to evaluate Ollama Cloud as a fallback for this repo.
+          Нажмите <b>Показать вариант</b>, чтобы оценить Ollama Cloud как запасной вариант для этого репозитория.
         </div>
       )}
 
@@ -54,9 +54,9 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
             <div className="flex items-center justify-between">
               <span className="font-mono text-sm text-fuchsia-200">{opt.providerName}</span>
               {opt.possible ? (
-                <span className="rounded-full border border-lime-400/60 bg-lime-500/15 px-2 py-0.5 text-[10px] font-mono text-lime-200">POSSIBLE</span>
+                <span className="rounded-full border border-lime-400/60 bg-lime-500/15 px-2 py-0.5 text-[10px] font-mono text-lime-200">ВОЗМОЖНО</span>
               ) : (
-                <span className="rounded-full border border-red-400/60 bg-red-500/15 px-2 py-0.5 text-[10px] font-mono text-red-200">NOT SUITABLE</span>
+                <span className="rounded-full border border-red-400/60 bg-red-500/15 px-2 py-0.5 text-[10px] font-mono text-red-200">НЕ ПОДХОДИТ</span>
               )}
             </div>
             <p className="mt-2 text-xs text-zinc-400">{opt.useCaseFit}</p>
@@ -64,7 +64,7 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
 
           {opt.possible && opt.steps.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase text-zinc-500">Steps</div>
+              <div className="text-[10px] uppercase text-zinc-500">Шаги</div>
               <pre className="mt-1 overflow-x-auto rounded bg-zinc-900/80 p-2 text-[10px] text-zinc-300">
                 {opt.steps.join("\n")}
               </pre>
@@ -73,7 +73,7 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
 
           {opt.limitations.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase text-zinc-500">Limitations</div>
+              <div className="text-[10px] uppercase text-zinc-500">Ограничения</div>
               <ul className="mt-1 space-y-0.5 text-[10px] text-zinc-400">
                 {opt.limitations.map((l, i) => <li key={i}>• {l}</li>)}
               </ul>
@@ -81,10 +81,10 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
           )}
 
           <div className="rounded border border-amber-400/30 bg-amber-500/10 p-3 text-xs">
-            <div className="text-[10px] uppercase text-amber-300">Pricing</div>
-            <div className="mt-1 text-amber-200">Status: <b>{opt.pricingStatus}</b></div>
+            <div className="text-[10px] uppercase text-amber-300">Ценообразование</div>
+            <div className="mt-1 text-amber-200">Статус: <b>{opt.pricingStatus}</b></div>
             <div className="mt-1 text-amber-100/80">{opt.pricingNote}</div>
-            <div className="mt-1 text-zinc-400">Estimated cost: {opt.estimatedCostUsd}</div>
+            <div className="mt-1 text-zinc-400">Оценочная стоимость: {opt.estimatedCostUsd}</div>
           </div>
 
           {opt.linksToCheck.length > 0 && (
@@ -105,8 +105,8 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
 
           {!opt.possible && (
             <div className="rounded border border-red-400/30 bg-red-500/10 p-3 text-xs text-red-200">
-              No allowed cloud provider is suitable for this repo. Provider policy allows only Ollama Cloud.
-              Other providers (RunPod, Vast.ai, AWS, GCP, Azure, etc.) are disabled by policy.
+              Ни один разрешённый облачный провайдер не подходит для этого репозитория. По политике разрешён только Ollama Cloud.
+              Другие провайдеры (RunPod, Vast.ai, AWS, GCP, Azure и др.) отключены политикой.
             </div>
           )}
         </>

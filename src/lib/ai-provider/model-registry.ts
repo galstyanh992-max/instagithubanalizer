@@ -65,46 +65,55 @@ const FAST_UTILITY_ROLES = new Set<string>([
   'custom',
 ]);
 
-function assignment(model: string, maxTokens?: number) {
+export function resolveOpenRouterModelAlias(model: string): string {
+  return MODEL_ALIASES[model] ?? model;
+}
+
+function assignment(providerId: string, model: string, maxTokens?: number) {
   return {
-    provider: OPENROUTER_PROVIDER_ID,
+    provider: providerId,
     model: resolveOpenRouterModelAlias(model),
     ...(maxTokens ? { maxTokens } : {}),
   };
 }
 
-export function resolveOpenRouterModelAlias(model: string): string {
-  return MODEL_ALIASES[model] ?? model;
-}
-
-export function getOpenRouterModelConfigForRole(role: string, maxTokens = 2048): ModelConfig {
+export function getModelConfigForRole(
+  role: string,
+  providerId: string,
+  models: { reasoning: string; fast: string; coding: string; codingFallback: string },
+  maxTokens = 2048,
+): ModelConfig {
   const normalized = role.toLowerCase().replace(/[-\s]/g, '_');
 
   if (REASONING_ROLES.has(normalized)) {
     return {
-      preferred: assignment(OPENROUTER_MODELS.reasoning, maxTokens),
-      fallback: assignment(OPENROUTER_MODELS.fast, maxTokens),
+      preferred: assignment(providerId, models.reasoning, maxTokens),
+      fallback: assignment(providerId, models.fast, maxTokens),
     };
   }
 
   if (CODING_ROLES.has(normalized)) {
     return {
-      preferred: assignment(OPENROUTER_MODELS.coding, maxTokens),
-      fallback: assignment(OPENROUTER_MODELS.codingFallback, maxTokens),
+      preferred: assignment(providerId, models.coding, maxTokens),
+      fallback: assignment(providerId, models.codingFallback, maxTokens),
     };
   }
 
   if (FAST_UTILITY_ROLES.has(normalized)) {
     return {
-      preferred: assignment(OPENROUTER_MODELS.fast, maxTokens),
-      fallback: assignment(OPENROUTER_MODELS.reasoning, maxTokens),
+      preferred: assignment(providerId, models.fast, maxTokens),
+      fallback: assignment(providerId, models.reasoning, maxTokens),
     };
   }
 
   return {
-    preferred: assignment(OPENROUTER_MODELS.fast, maxTokens),
-    fallback: assignment(OPENROUTER_MODELS.reasoning, maxTokens),
+    preferred: assignment(providerId, models.fast, maxTokens),
+    fallback: assignment(providerId, models.reasoning, maxTokens),
   };
+}
+
+export function getOpenRouterModelConfigForRole(role: string, maxTokens = 2048): ModelConfig {
+  return getModelConfigForRole(role, OPENROUTER_PROVIDER_ID, OPENROUTER_MODELS, maxTokens);
 }
 
 export function normalizeOpenRouterModelConfig(role: AgentRole | string, model: ModelConfig): ModelConfig {

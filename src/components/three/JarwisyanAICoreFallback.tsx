@@ -66,57 +66,57 @@ const NEURAL_LINKS = [
 const STATE_CONFIG = {
   calm: {
     primary: "#22d3ee", secondary: "#38bdf8", inner: "#67e8f9",
-    accent: "#a3e635", white: "#ECFEFF", violet: "rgba(139, 92, 246, 0.12)",
-    breatheSpeed: "7s", pulseOpacity: 0.8, glowSize: 100, ringOpacity: 0.55,
-    label: "Спокойствие",
+    accent: "#a3e635", white: "#ECFEFF", violet: "rgba(34, 211, 238, 0.18)",
+    breatheSpeed: "6s", pulseOpacity: 0.85, glowSize: 120, ringOpacity: 0.55,
+    label: "Спокойствие", intense: false,
   },
   thinking: {
-    primary: "#38bdf8", secondary: "#818cf8", inner: "#a5b4fc",
-    accent: "#a3e635", white: "#ECFEFF", violet: "rgba(139, 92, 246, 0.18)",
-    breatheSpeed: "5s", pulseOpacity: 0.9, glowSize: 120, ringOpacity: 0.7,
-    label: "Анализ",
+    primary: "#22d3ee", secondary: "#38bdf8", inner: "#67e8f9",
+    accent: "#a3e635", white: "#ffffff", violet: "rgba(34, 211, 238, 0.35)",
+    breatheSpeed: "1.4s", pulseOpacity: 1, glowSize: 180, ringOpacity: 0.95,
+    label: "Анализ", intense: true,
   },
   processing: {
     primary: "#22d3ee", secondary: "#67e8f9", inner: "#ECFEFF",
-    accent: "#a3e635", white: "#ffffff", violet: "rgba(139, 92, 246, 0.10)",
-    breatheSpeed: "3s", pulseOpacity: 0.95, glowSize: 140, ringOpacity: 0.85,
-    label: "Обработка",
+    accent: "#a3e635", white: "#ffffff", violet: "rgba(34, 211, 238, 0.40)",
+    breatheSpeed: "1.2s", pulseOpacity: 1, glowSize: 200, ringOpacity: 1,
+    label: "Обработка", intense: true,
   },
   speaking: {
-    primary: "#c084fc", secondary: "#e879f9", inner: "#fbcfe8",
-    accent: "#a3e635", white: "#ffffff", violet: "rgba(139, 92, 246, 0.20)",
-    breatheSpeed: "2s", pulseOpacity: 0.95, glowSize: 130, ringOpacity: 0.8,
-    label: "Синтез",
+    primary: "#22d3ee", secondary: "#67e8f9", inner: "#ECFEFF",
+    accent: "#a3e635", white: "#ffffff", violet: "rgba(34, 211, 238, 0.30)",
+    breatheSpeed: "1.6s", pulseOpacity: 1, glowSize: 170, ringOpacity: 0.9,
+    label: "Синтез", intense: true,
   },
   active: {
     primary: "#22d3ee", secondary: "#67e8f9", inner: "#ECFEFF",
-    accent: "#a3e635", white: "#ffffff", violet: "rgba(139, 92, 246, 0.10)",
-    breatheSpeed: "4s", pulseOpacity: 0.9, glowSize: 130, ringOpacity: 0.8,
-    label: "Активен",
+    accent: "#a3e635", white: "#ffffff", violet: "rgba(34, 211, 238, 0.35)",
+    breatheSpeed: "1.5s", pulseOpacity: 1, glowSize: 190, ringOpacity: 0.95,
+    label: "Активен", intense: true,
   },
   warning: {
     primary: "#fbbf24", secondary: "#f59e0b", inner: "#fde68a",
-    accent: "#f97316", white: "#FFFBEB", violet: "rgba(139, 92, 246, 0.08)",
-    breatheSpeed: "2s", pulseOpacity: 0.85, glowSize: 110, ringOpacity: 0.75,
-    label: "Внимание",
+    accent: "#f97316", white: "#FFFBEB", violet: "rgba(251, 191, 36, 0.25)",
+    breatheSpeed: "2s", pulseOpacity: 0.9, glowSize: 130, ringOpacity: 0.8,
+    label: "Внимание", intense: false,
   },
   error: {
     primary: "#f97316", secondary: "#ea580c", inner: "#fdba74",
-    accent: "#fbbf24", white: "#FFFBEB", violet: "rgba(234, 88, 12, 0.08)",
-    breatheSpeed: "1.5s", pulseOpacity: 0.9, glowSize: 120, ringOpacity: 0.8,
-    label: "Ошибка",
+    accent: "#fbbf24", white: "#FFFBEB", violet: "rgba(234, 88, 12, 0.20)",
+    breatheSpeed: "1.5s", pulseOpacity: 0.95, glowSize: 140, ringOpacity: 0.85,
+    label: "Ошибка", intense: false,
   },
   critical: {
     primary: "#f87171", secondary: "#ef4444", inner: "#fca5a5",
-    accent: "#fbbf24", white: "#FEF2F2", violet: "rgba(139, 92, 246, 0.05)",
-    breatheSpeed: "0.8s", pulseOpacity: 1, glowSize: 130, ringOpacity: 0.9,
-    label: "Критическая ошибка",
+    accent: "#fbbf24", white: "#FEF2F2", violet: "rgba(239, 68, 68, 0.25)",
+    breatheSpeed: "0.8s", pulseOpacity: 1, glowSize: 150, ringOpacity: 0.9,
+    label: "Критическая ошибка", intense: false,
   },
   offline: {
     primary: "#475569", secondary: "#334155", inner: "#64748b",
     accent: "#94a3b8", white: "#f1f5f9", violet: "transparent",
-    breatheSpeed: "10s", pulseOpacity: 0.3, glowSize: 40, ringOpacity: 0.2,
-    label: "Оффлайн",
+    breatheSpeed: "10s", pulseOpacity: 0.35, glowSize: 50, ringOpacity: 0.25,
+    label: "Оффлайн", intense: false,
   },
 } as const;
 
@@ -169,21 +169,35 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
       {/* === Outer aura — soft volumetric glow === */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-[-10%] rounded-full"
+        className="pointer-events-none absolute inset-[-15%] rounded-full"
         style={{
-          background: `radial-gradient(circle at 50% 50%, rgba(6,182,212,0.8) 0%, rgba(6,182,212,0.3) 20%, transparent 60%)`,
-          opacity: cfg.pulseOpacity * 0.9,
-          animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
+          background: `radial-gradient(circle at 50% 50%, ${cfg.primary}E6 0%, ${cfg.secondary}80 20%, transparent 65%)`,
+          opacity: cfg.pulseOpacity,
+          animation: motionOff ? "none" : (cfg.intense ? `ai-core-flare ${cfg.breatheSpeed} ease-in-out infinite` : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`),
         }}
       />
+
+      {/* === Energy wake — rotating slow plasma shell === */}
+      {!motionOff && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{
+            background: `radial-gradient(circle at 50% 50%, transparent 20%, ${cfg.primary}40 40%, ${cfg.secondary}20 60%, transparent 80%)`,
+            animation: `ai-core-spin-slow 18s linear infinite`,
+            mixBlendMode: "screen",
+          }}
+        />
+      )}
+
       {/* === Hot Core Center === */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-[35%] rounded-full"
+        className="pointer-events-none absolute inset-[30%] rounded-full"
         style={{
           background: "radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 80%)",
           opacity: cfg.pulseOpacity,
-          animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
+          animation: motionOff ? "none" : (cfg.intense ? `ai-core-breathe-intense ${cfg.breatheSpeed} ease-in-out infinite` : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`),
         }}
       />
 
@@ -194,19 +208,21 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         style={{
           width: dim.core * 1.4,
           height: dim.core * 1.4,
-          background: `radial-gradient(circle at 40% 30%, rgba(255,255,255,1) 0%, transparent 20%), radial-gradient(circle at 50% 50%, rgba(6,182,212,0.9) 0%, rgba(8,145,178,0.7) 40%, transparent 70%)`,
+          background: `radial-gradient(circle at 40% 30%, rgba(255,255,255,1) 0%, transparent 18%), radial-gradient(circle at 50% 50%, rgba(103,232,249,0.95) 0%, rgba(6,182,212,0.8) 35%, rgba(8,145,178,0.55) 60%, transparent 75%)`,
           boxShadow: `
             inset 0 0 40px #ffffff,
-            inset 0 0 60px #06b6d4,
-            0 0 80px rgba(6,182,212,0.6),
-            0 0 30px rgba(255,255,255,0.4)
+            inset 0 0 80px ${cfg.primary},
+            inset 0 0 140px ${cfg.secondary},
+            0 0 ${cfg.glowSize}px ${cfg.violet},
+            0 0 ${Math.round(cfg.glowSize * 0.75)}px ${cfg.primary},
+            0 0 ${Math.round(cfg.glowSize * 0.4)}px ${cfg.white}
           `,
-          border: `1px solid rgba(255,255,255,0.3)`,
-          animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
+          border: `1px solid rgba(255,255,255,0.55)`,
+          animation: motionOff ? "none" : (cfg.intense ? `ai-core-breathe-intense ${cfg.breatheSpeed} ease-in-out infinite` : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`),
         }}
       >
         {/* === Neural Network Lattice Overlay === */}
-        <svg viewBox="0 0 100 100" className={`absolute inset-0 h-full w-full ${motionOff ? "" : active ? "ai-core-spin-reverse" : "ai-core-spin-slow"}`} style={{ filter: 'drop-shadow(0 0 4px #ffffff)' }}>
+        <svg viewBox="0 0 100 100" className={`absolute inset-0 h-full w-full ${motionOff ? "" : active ? "ai-core-spin-fast" : "ai-core-spin-slow"}`} style={{ filter: 'drop-shadow(0 0 6px #ffffff)' }}>
           {/* Connection lines */}
           <g stroke="#ffffff" strokeWidth="0.3" opacity="0.6" fill="none">
             {NEURAL_LINKS.map(([a, b], i) => (
@@ -218,10 +234,10 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
             {NEURAL_NODES.map((node, i) => (
               <circle
                 key={i}
-                cx={node.x} cy={node.y} r={node.r * 1.2}
+                cx={node.x} cy={node.y} r={node.r * (active ? 1.6 : 1.2)}
                 fill="#ffffff"
-                opacity={node.bright ? 1 : 0.8}
-                style={motionOff ? undefined : { animation: `ai-core-breathe ${1.5 + (i % 5) * 0.2}s ease-in-out ${i * 0.08}s infinite` }}
+                opacity={node.bright ? 1 : 0.85}
+                style={motionOff ? undefined : { animation: `ai-core-breathe ${1.2 + (i % 5) * 0.15}s ease-in-out ${i * 0.06}s infinite` }}
               />
             ))}
           </g>
@@ -264,10 +280,10 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
           style={{
-            width: dim.core * 0.25,
-            height: dim.core * 0.25,
-            background: `radial-gradient(circle, rgba(255,255,255,1) 0%, ${cfg.white}B3 40%, transparent 80%)`,
-            filter: "blur(3px)",
+            width: dim.core * 0.28,
+            height: dim.core * 0.28,
+            background: `radial-gradient(circle, rgba(255,255,255,1) 0%, ${cfg.white}D9 35%, ${cfg.white}66 55%, transparent 80%)`,
+            filter: `blur(${active ? 2 : 4}px)`,
             animation: motionOff ? "none" : `ai-core-breathe ${cfg.breatheSpeed} ease-in-out infinite`,
           }}
         />
@@ -277,10 +293,10 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
           <div
             className="absolute inset-0 overflow-hidden rounded-full"
             style={{
-              background: `linear-gradient(180deg, transparent 0%, ${cfg.white}33 50%, transparent 100%)`,
-              backgroundSize: "100% 8px",
-              animation: "ai-core-scan 4s linear infinite",
-              
+              background: `linear-gradient(180deg, transparent 0%, ${cfg.white}55 48%, ${cfg.white}88 50%, ${cfg.white}55 52%, transparent 100%)`,
+              backgroundSize: "100% 6px",
+              animation: active ? "ai-core-scan 1.1s linear infinite" : "ai-core-scan 3.5s linear infinite",
+              mixBlendMode: "screen",
             }}
           />
         )}
@@ -290,9 +306,9 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
           <div
             className="absolute inset-0 rounded-full"
             style={{
-              background: `radial-gradient(circle at 30% 30%, ${cfg.white}22, transparent 40%)`,
+              background: `radial-gradient(circle at 30% 30%, ${cfg.white}44 0%, transparent 45%)`,
               animation: `ai-core-breathe ${cfg.breatheSpeed} ease-in-out 0.5s infinite`,
-              
+              mixBlendMode: "screen",
             }}
           />
         )}
@@ -302,30 +318,30 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
       <svg
         aria-hidden viewBox="0 0 100 100"
         className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : active ? "ai-core-spin-fast" : "ai-core-spin-slow"}`}
-        style={{ filter: `drop-shadow(0 0 8px ${cfg.white}) drop-shadow(0 0 2px ${cfg.white})`, opacity: cfg.ringOpacity }}
+        style={{ filter: `drop-shadow(0 0 16px ${cfg.white}) drop-shadow(0 0 8px ${cfg.white})`, opacity: cfg.ringOpacity }}
       >
-        <ellipse cx="50" cy="50" rx="46" ry="12" fill="none" stroke={cfg.white} strokeWidth="0.25" strokeDasharray="4 4" transform="rotate(25 50 50)">
-          {!motionOff && <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite" calcMode="linear" />}
+        <ellipse cx="50" cy="50" rx="46" ry="12" fill="none" stroke={cfg.white} strokeWidth="0.35" strokeDasharray="4 4" transform="rotate(25 50 50)">
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="8;0" dur={active ? "0.6s" : "1.2s"} repeatCount="indefinite" calcMode="linear" />}
         </ellipse>
       </svg>
       
       <svg
         aria-hidden viewBox="0 0 100 100"
         className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : "ai-core-spin-reverse"}`}
-        style={{ filter: `drop-shadow(0 0 6px ${cfg.primary}) drop-shadow(0 0 3px ${cfg.primary})`, opacity: cfg.ringOpacity * 0.9 }}
+        style={{ filter: `drop-shadow(0 0 14px ${cfg.primary}) drop-shadow(0 0 7px ${cfg.primary})`, opacity: cfg.ringOpacity * 0.95 }}
       >
-        <ellipse cx="50" cy="50" rx="48" ry="18" fill="none" stroke={cfg.primary} strokeWidth="0.2" strokeDasharray="8 6 2 6" transform="rotate(-35 50 50)">
-          {!motionOff && <animate attributeName="stroke-dashoffset" values="22;0" dur="2s" repeatCount="indefinite" calcMode="linear" />}
+        <ellipse cx="50" cy="50" rx="48" ry="18" fill="none" stroke={cfg.primary} strokeWidth="0.3" strokeDasharray="8 6 2 6" transform="rotate(-35 50 50)">
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="22;0" dur={active ? "0.8s" : "1.6s"} repeatCount="indefinite" calcMode="linear" />}
         </ellipse>
       </svg>
 
       <svg
         aria-hidden viewBox="0 0 100 100"
         className={`pointer-events-none absolute inset-0 h-full w-full ${motionOff ? "" : active ? "ai-core-spin-reverse" : "ai-core-spin-fast"}`}
-        style={{ filter: `drop-shadow(0 0 10px ${cfg.inner}) drop-shadow(0 0 4px ${cfg.inner})`, opacity: cfg.ringOpacity }}
+        style={{ filter: `drop-shadow(0 0 18px ${cfg.inner}) drop-shadow(0 0 8px ${cfg.inner})`, opacity: cfg.ringOpacity }}
       >
-        <ellipse cx="50" cy="50" rx="45" ry="8" fill="none" stroke={cfg.inner} strokeWidth="0.3" strokeDasharray="12 4 4 4" transform="rotate(75 50 50)">
-          {!motionOff && <animate attributeName="stroke-dashoffset" values="24;0" dur="2.5s" repeatCount="indefinite" calcMode="linear" />}
+        <ellipse cx="50" cy="50" rx="45" ry="8" fill="none" stroke={cfg.inner} strokeWidth="0.4" strokeDasharray="12 4 4 4" transform="rotate(75 50 50)">
+          {!motionOff && <animate attributeName="stroke-dashoffset" values="24;0" dur={active ? "1s" : "2s"} repeatCount="indefinite" calcMode="linear" />}
         </ellipse>
       </svg>
 
@@ -337,8 +353,8 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
             className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full"
             style={{
               background: cfg.inner,
-              boxShadow: `0 0 10px ${cfg.inner}, 0 0 20px ${cfg.primary}`,
-              animation: "ai-core-orbit-1 7s linear infinite",
+              boxShadow: `0 0 14px ${cfg.inner}, 0 0 28px ${cfg.primary}`,
+              animation: active ? "ai-core-orbit-1 2.5s linear infinite" : "ai-core-orbit-1 7s linear infinite",
               transformOrigin: "0 0",
             }}
           />
@@ -347,8 +363,8 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
             className="pointer-events-none absolute left-1/2 top-1/2 h-1 w-1 rounded-full"
             style={{
               background: cfg.accent,
-              boxShadow: `0 0 8px ${cfg.accent}`,
-              animation: "ai-core-orbit-2 9s linear infinite reverse",
+              boxShadow: `0 0 12px ${cfg.accent}`,
+              animation: active ? "ai-core-orbit-2 3.5s linear infinite reverse" : "ai-core-orbit-2 9s linear infinite reverse",
               transformOrigin: "0 0",
             }}
           />
@@ -357,8 +373,8 @@ export function JarwisyanAICoreFallback(props: JarwisyanAICoreFallbackProps) {
             className="pointer-events-none absolute left-1/2 top-1/2 h-1 w-1 rounded-full"
             style={{
               background: cfg.white,
-              boxShadow: `0 0 8px ${cfg.white}`,
-              animation: "ai-core-orbit-3 11s linear infinite",
+              boxShadow: `0 0 12px ${cfg.white}`,
+              animation: active ? "ai-core-orbit-3 4.5s linear infinite" : "ai-core-orbit-3 11s linear infinite",
               transformOrigin: "0 0",
             }}
           />

@@ -6,6 +6,7 @@ import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { StatCard } from "@/components/futuristic/stat-card";
 import { VerdictBadge } from "@/components/futuristic/neon-badge";
 import { JarwisyanAICore } from "@/components/three/JarwisyanAICore";
+import { Button } from "@/components/ui/button";
 import {
   FolderGit2, Rocket, FlaskConical, Bookmark, XCircle, Eye,
   ShieldAlert, Cpu,
@@ -57,10 +58,10 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="h-8 w-48 animate-pulse rounded bg-zinc-800" />
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-zinc-900/60" />
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
       </div>
@@ -69,8 +70,8 @@ export default function DashboardPage() {
 
   if (error || !data) {
     return (
-      <div className="cosmic-page-shell mx-auto flex max-w-2xl items-center justify-center p-6">
-        <div className="signal-console w-full p-8 text-center">
+      <div className="mx-auto flex max-w-2xl items-center justify-center p-6">
+        <div className="glass-panel w-full p-8 text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
             <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-amber-400">Fallback-режим</span>
@@ -83,12 +84,13 @@ export default function DashboardPage() {
           {error && (
             <p className="mt-2 text-[10px] text-zinc-600 font-mono">{error}</p>
           )}
-          <button
+          <Button
+            variant="outline"
             onClick={() => window.location.reload()}
-            className="mt-5 rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-xs font-mono uppercase tracking-wider text-cyan-200 transition hover:bg-cyan-500/20"
+            className="mt-5"
           >
             Повторить загрузку
-          </button>
+          </Button>
         </div>
       </div>
     );

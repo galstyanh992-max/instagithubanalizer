@@ -90,4 +90,21 @@ describe("command router", () => {
     expect(p.intent).toBe("terminal_task");
     expect(p.reason).toBe("test reason");
   });
+
+  it("ui_control toggle chat is allowed", async () => {
+    const r = await run("открой чат");
+    expect(r.intent).toBe("ui_control");
+    expect(r.allowed).toBe(true);
+    expect(r.nextAction).toBe("execute_safe_action");
+    expect(r.data?.uiAction).toBe("toggle_chat");
+    expect(r.data?.params).toEqual({ open: true });
+  });
+
+  it("ui_control switches hub tab", async () => {
+    const r = await run("вкладка агенты");
+    expect(r.intent).toBe("ui_control");
+    expect(r.nextAction).toBe("execute_safe_action");
+    expect(r.data?.uiAction).toBe("set_hub_tab");
+    expect(r.data?.params).toEqual({ tab: "agents" });
+  });
 });

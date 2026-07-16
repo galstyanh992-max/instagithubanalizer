@@ -29,6 +29,9 @@ import { isMarketingAgent, getAgentDepartment, Departments } from '../types/depa
 import { loggers } from '@/lib/logger';
 import { z } from 'zod';
 import { OPENROUTER_MODELS } from '../ai-provider/model-registry';
+import { resolveDefaultProviderId, getDefaultProvider } from '../ai-provider/default-provider';
+import { getDefaultModelsForProvider } from '../ai-provider/default-models';
+import { getProviderEntryById } from '../ai-provider/providers';
 import { initializeMcpTools } from '../mcp/init';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -92,10 +95,24 @@ const delegationResponseSchema = z.object({
 
 // ─── Constants ───────────────────────────────────────────────
 
-const DEFAULT_MODEL = OPENROUTER_MODELS.reasoning;
-const DELEGATION_ANALYSIS_MODEL = OPENROUTER_MODELS.fast;
-const SYNTHESIS_MODEL = OPENROUTER_MODELS.reasoning;
 const MAX_DELEGATION_AGENTS = 5;
+
+function resolveOrchestratorModels(): { default: string; fast: string } {
+  const defaultProvider = resolveDefaultProviderId();
+
+  if (defaultProvider === 'openrouter') {
+    return {
+      default: OPENROUTER_MODELS.reasoning,
+      fast: OPENROUTER_MODELS.fast,
+    };
+  }
+
+  const models = getDefaultModelsForProvider(defaultProvider);
+  return {
+    default: models.reasoning || models.coding,
+    fast: models.fast || models.reasoning,
+  };
+}
 
 // ─── Orchestrator Chat Engine ────────────────────────────────
 
@@ -380,7 +397,9 @@ class OrchestratorChatEngine {
     history?: Array<{ role: string; content: string }>
   ): Promise<{ success: boolean; decisions?: DelegationDecision[]; error?: string }> {
     try {
-      const provider = providerRegistry.getOrThrow('openrouter');
+      const defaultProvider = resolveDefaultProviderId();
+      const provider = providerRegistry.getOrThrow(defaultProvider);
+      const models = resolveOrchestratorModels();
 
       // Build the agent catalog for the prompt
       const agentCatalog = availableAgents
@@ -409,13 +428,13 @@ JSON only: {"delegations":[{"agentId":"id","task":"subtask","reason":"why"}]}`;
       messages.push({ role: 'user', content: message });
 
       const request: CompletionRequest = {
-        model: DELEGATION_ANALYSIS_MODEL,
+        model: models.fast,
         messages,
         temperature: 0.3,
         maxTokens: 768,
       };
 
-      const response = await this.completeWithFallback(provider, request, DEFAULT_MODEL);
+      const response = await this.completeWithFallback(provider, request, models.default);
 
       if (!response.content) {
         return {
@@ -532,7 +551,9 @@ JSON only: {"delegations":[{"agentId":"id","task":"subtask","reason":"why"}]}`;
     history?: Array<{ role: string; content: string }>
   ): Promise<{ content: string; model: string; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
     try {
-      const provider = providerRegistry.getOrThrow('openrouter');
+      const defaultProvider = resolveDefaultProviderId();
+      const provider = providerRegistry.getOrThrow(defaultProvider);
+      const models = resolveOrchestratorModels();
 
       const messages: ChatMessage[] = [
         {
@@ -549,7 +570,7 @@ JSON only: {"delegations":[{"agentId":"id","task":"subtask","reason":"why"}]}`;
       messages.push({ role: 'user', content: message });
 
       const response = await provider.complete({
-        model: DEFAULT_MODEL,
+        model: models.default,
         messages,
         temperature: 0.7,
         maxTokens: 1024,
@@ -582,7 +603,9 @@ JSON only: {"delegations":[{"agentId":"id","task":"subtask","reason":"why"}]}`;
     history?: Array<{ role: string; content: string }>
   ): Promise<{ content: string; model: string; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
     try {
-      const provider = providerRegistry.getOrThrow('openrouter');
+      const defaultProvider = resolveDefaultProviderId();
+      const provider = providerRegistry.getOrThrow(defaultProvider);
+      const models = resolveOrchestratorModels();
 
       // Build a summary of what each agent contributed
       const agentSummaries = delegationSteps
@@ -620,11 +643,11 @@ ${agentSummaries}`;
       });
 
       const response = await this.completeWithFallback(provider, {
-        model: SYNTHESIS_MODEL,
+        model: models.default,
         messages,
         temperature: 0.5,
         maxTokens: 1024,
-      }, DEFAULT_MODEL);
+      }, models.fast);
 
       return {
         content: response.content ?? 'Unable to synthesize response.',
@@ -746,11 +769,12 @@ ${agentSummaries}`;
    * Check that the AI provider is available and configured.
    */
   private ensureProviderAvailable(): { available: boolean; errorMessage?: string } {
-    if (!providerRegistry.has('openrouter')) {
+    const defaultProvider = resolveDefaultProviderId();
+    if (!providerRegistry.has(defaultProvider)) {
       return {
         available: false,
         errorMessage:
-          'The AI provider is not configured. Please set the OPENROUTER_API_KEY environment variable to enable the orchestrator chat engine.',
+          `The AI provider "${defaultProvider}" is not configured. Please set a provider API key environment variable to enable the orchestrator chat engine.`,
       };
     }
     return { available: true };

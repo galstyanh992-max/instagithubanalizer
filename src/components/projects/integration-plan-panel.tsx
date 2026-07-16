@@ -72,7 +72,7 @@ export function IntegrationPlanPanel({ repoId }: { repoId: string }) {
         <AlertTriangle className="mx-auto h-8 w-8 text-amber-400/60" />
         <p className="mt-2 text-sm text-zinc-300">Нет подключённых проектов</p>
         <p className="text-xs text-zinc-500">
-          Перейдите на <a href="/projects" className="text-cyan-300 underline">/projects</a> чтобы подключить проект для integration plan.
+          Перейдите на <a href="/projects" className="text-cyan-300 underline">/projects</a>, чтобы подключить проект для плана интеграции.
         </p>
       </HolographicPanel>
     );
@@ -82,7 +82,7 @@ export function IntegrationPlanPanel({ repoId }: { repoId: string }) {
     <HolographicPanel accent="lime" className="space-y-4 p-5">
       <div className="flex items-center gap-2 text-lime-300">
         <Wrench className="h-4 w-4" />
-        <h2 className="font-mono text-xs uppercase tracking-wider">Integration Plan для моего проекта</h2>
+        <h2 className="font-mono text-xs uppercase tracking-wider">План интеграции с моим проектом</h2>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -106,7 +106,7 @@ export function IntegrationPlanPanel({ repoId }: { repoId: string }) {
         <div className="space-y-3">
           {plan.mock && (
             <div className="rounded border border-amber-400/30 bg-amber-500/10 p-2 text-[10px] text-amber-300">
-              Mock-режим — добавьте GLM_API_KEY для real AI plan
+              Mock-режим — проверьте OLLAMA_CLOUD_API_KEY и HEAVY_AI_PROVIDER для реального AI-плана
             </div>
           )}
 
@@ -117,21 +117,21 @@ export function IntegrationPlanPanel({ repoId }: { repoId: string }) {
 
           <div className="flex items-center gap-2">
             <Clock className="h-3 w-3 text-cyan-300" />
-            <span className="text-xs text-zinc-400">Estimated effort:</span>
+            <span className="text-xs text-zinc-400">Оценка трудоёмкости:</span>
             <span className="font-mono text-xs text-cyan-300">{plan.estimatedEffort}</span>
           </div>
 
           <PlanSection title="Полезные части" items={plan.usefulParts} accent="text-cyan-300" />
           <PlanSection title="Файлы для изучения" items={plan.filesToInspect} accent="text-lime-300" />
-          <PlanSection title="Reusable components" items={plan.reusableComponents} accent="text-cyan-300" />
-          <PlanSection title="API patterns" items={plan.apiPatterns} accent="text-fuchsia-300" />
-          <PlanSection title="Agent workflow ideas" items={plan.agentWorkflowIdeas} accent="text-cyan-300" />
-          <PlanSection title="Database patterns" items={plan.databasePatterns} accent="text-lime-300" />
-          <PlanSection title="UI/UX ideas" items={plan.uiUxIdeas} accent="text-fuchsia-300" />
-          <PlanSection title="Required dependencies" items={plan.requiredDeps} accent="text-amber-300" />
-          <PlanSection title="Compatibility concerns" items={plan.compatibilityConcerns} accent="text-amber-300" />
-          <PlanSection title="Risks" items={plan.risks} accent="text-red-300" />
-          <PlanSection title="Implementation steps" items={plan.implementationSteps} accent="text-cyan-300" numbered />
+          <PlanSection title="Переиспользуемые компоненты" items={plan.reusableComponents} accent="text-cyan-300" />
+          <PlanSection title="Паттерны API" items={plan.apiPatterns} accent="text-fuchsia-300" />
+          <PlanSection title="Идеи для агентских workflow" items={plan.agentWorkflowIdeas} accent="text-cyan-300" />
+          <PlanSection title="Паттерны базы данных" items={plan.databasePatterns} accent="text-lime-300" />
+          <PlanSection title="UI/UX идеи" items={plan.uiUxIdeas} accent="text-fuchsia-300" />
+          <PlanSection title="Требуемые зависимости" items={plan.requiredDeps} accent="text-amber-300" />
+          <PlanSection title="Проблемы совместимости" items={plan.compatibilityConcerns} accent="text-amber-300" />
+          <PlanSection title="Риски" items={plan.risks} accent="text-red-300" />
+          <PlanSection title="Шаги внедрения" items={plan.implementationSteps} accent="text-cyan-300" numbered />
           <PlanSection title="Не интегрировать" items={plan.doNotIntegrate} accent="text-red-300" />
 
           <div className="rounded-md border border-cyan-400/30 bg-cyan-500/10 p-3 text-xs text-cyan-100">

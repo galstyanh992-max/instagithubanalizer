@@ -17,6 +17,7 @@ export type CommandIntent =
   | "content_task"
   | "local_operator"
   | "local_agent_runtime"
+  | "ui_control"
   | "unknown";
 
 export type CommandSource = "web" | "voice" | "api" | "system" | "agent" | "telegram";

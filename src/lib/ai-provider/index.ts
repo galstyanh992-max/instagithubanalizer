@@ -3,3 +3,7 @@
 // env-only provider code cannot be pulled into a client bundle by accident.
 
 export type * from './types';
+export { providerRegistry } from './provider-registry';
+export { resolveDefaultProviderId, resolveProviderId, getDefaultProvider } from './default-provider';
+export { getModelConfigForRole, getOpenRouterModelConfigForRole, OPENROUTER_MODELS, OPENROUTER_PROVIDER_ID } from './model-registry';
+export { getDefaultModelsForProvider } from './default-models';

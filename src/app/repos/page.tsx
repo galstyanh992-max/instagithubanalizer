@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Search, Grid3x3, List, Box, Star, GitFork, Eye, Cpu, Loader2 } from "lucide-react";
 import RepoCube from "@/components/three/repo-cube";
+import { RepoImportPanel } from "@/components/repo/repo-import-panel";
 
 interface Repo {
   id: string;
@@ -75,8 +76,8 @@ export default function ReposPage() {
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-mono text-2xl font-bold neon-text">REPOSITORIES</h1>
-          <p className="text-xs text-zinc-500">{repos.length} tracked</p>
+          <h1 className="font-mono text-2xl font-bold neon-text">РЕПОЗИТОРИИ</h1>
+          <p className="text-xs text-zinc-500">{repos.length} отслеживается</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setView(view === "grid" ? "list" : "grid")}>
@@ -88,22 +89,25 @@ export default function ReposPage() {
         </div>
       </div>
 
+      {/* Import panel — Git URL or JSON/JSONL upload */}
+      <RepoImportPanel />
+
       {/* Filters */}
       <HolographicPanel accent="cyan" className="p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
           <div className="relative md:col-span-2 lg:col-span-2">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <Input
-              placeholder="Search name or description..."
+              placeholder="Поиск по имени или описанию..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 bg-zinc-900/60 border-cyan-400/20"
+              className="pl-8"
             />
           </div>
           <Select value={verdict} onValueChange={setVerdict}>
-            <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue placeholder="Verdict" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Вердикт" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All verdicts</SelectItem>
+              <SelectItem value="all">Все вердикты</SelectItem>
               <SelectItem value="USE_NOW">USE NOW</SelectItem>
               <SelectItem value="TEST">TEST</SelectItem>
               <SelectItem value="SAVE">SAVE</SelectItem>
@@ -111,18 +115,18 @@ export default function ReposPage() {
             </SelectContent>
           </Select>
           <Select value={difficulty} onValueChange={setDifficulty}>
-            <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue placeholder="Difficulty" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Сложность" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All difficulties</SelectItem>
+              <SelectItem value="all">Все сложности</SelectItem>
               <SelectItem value="LOW">LOW</SelectItem>
               <SelectItem value="MEDIUM">MEDIUM</SelectItem>
               <SelectItem value="HIGH">HIGH</SelectItem>
             </SelectContent>
           </Select>
           <Select value={commercialRisk} onValueChange={setCommercialRisk}>
-            <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue placeholder="Risk" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Риск" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All risks</SelectItem>
+              <SelectItem value="all">Все риски</SelectItem>
               <SelectItem value="SAFE">SAFE</SelectItem>
               <SelectItem value="WARNING">WARNING</SelectItem>
               <SelectItem value="HIGH_RISK">HIGH_RISK</SelectItem>
@@ -130,27 +134,27 @@ export default function ReposPage() {
             </SelectContent>
           </Select>
           <Select value={sort} onValueChange={setSort}>
-            <SelectTrigger className="bg-zinc-900/60 border-cyan-400/20"><SelectValue placeholder="Sort" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Сортировка" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="finalPriorityScore">Final Priority</SelectItem>
-              <SelectItem value="stars">Stars</SelectItem>
-              <SelectItem value="usefulnessScore">Usefulness</SelectItem>
-              <SelectItem value="healthScore">Health</SelectItem>
-              <SelectItem value="updatedAtGithub">Last Update</SelectItem>
+              <SelectItem value="finalPriorityScore">Итоговый приоритет</SelectItem>
+              <SelectItem value="stars">Звёзды</SelectItem>
+              <SelectItem value="usefulnessScore">Польза</SelectItem>
+              <SelectItem value="healthScore">Здоровье</SelectItem>
+              <SelectItem value="updatedAtGithub">Последнее обновление</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="mt-3 flex items-center gap-4">
           <label className="flex items-center gap-2 text-xs text-zinc-400">
             <Switch checked={gpuOnly} onCheckedChange={setGpuOnly} />
-            GPU required only
+            Только с GPU
           </label>
         </div>
       </HolographicPanel>
 
       {loading && (
         <div className="flex items-center justify-center py-12 text-cyan-300">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading...
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Загрузка...
         </div>
       )}
       {error && (
@@ -158,8 +162,8 @@ export default function ReposPage() {
       )}
       {!loading && repos.length === 0 && (
         <HolographicPanel accent="amber" className="p-12 text-center">
-          <p className="text-zinc-400">No repositories match your filters.</p>
-          <Link href="/upload" className="mt-2 inline-block text-xs text-cyan-300 underline">Analyze a new repo →</Link>
+          <p className="text-zinc-400">Нет репозиториев, соответствующих фильтрам.</p>
+          <Link href="/upload" className="mt-2 inline-block text-xs text-cyan-300 underline">Анализировать новый репозиторий →</Link>
         </HolographicPanel>
       )}
 
@@ -181,7 +185,7 @@ export default function ReposPage() {
                   </div>
                   <VerdictBadge verdict={r.verdict as "USE_NOW"} size="sm" />
                 </div>
-                <p className="mt-2 line-clamp-2 text-xs text-zinc-400">{r.description || "(no description)"}</p>
+                <p className="mt-2 line-clamp-2 text-xs text-zinc-400">{r.description || "(нет описания)"}</p>
                 <div className="mt-3 flex items-center justify-between text-[10px] text-zinc-500">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1"><Star className="h-3 w-3" />{r.stars}</span>
@@ -206,13 +210,13 @@ export default function ReposPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-cyan-400/20 text-[10px] uppercase text-zinc-500">
               <tr>
-                <th className="px-3 py-2 text-left">Repo</th>
-                <th className="px-3 py-2 text-left">Verdict</th>
-                <th className="px-3 py-2 text-right">Stars</th>
-                <th className="px-3 py-2 text-right">Useful</th>
-                <th className="px-3 py-2 text-right">Health</th>
-                <th className="px-3 py-2 text-right">Final</th>
-                <th className="px-3 py-2 text-left">Risk</th>
+                <th className="px-3 py-2 text-left">Репозиторий</th>
+                <th className="px-3 py-2 text-left">Вердикт</th>
+                <th className="px-3 py-2 text-right">Звёзды</th>
+                <th className="px-3 py-2 text-right">Польза</th>
+                <th className="px-3 py-2 text-right">Здоровье</th>
+                <th className="px-3 py-2 text-right">Итог</th>
+                <th className="px-3 py-2 text-left">Риск</th>
               </tr>
             </thead>
             <tbody>

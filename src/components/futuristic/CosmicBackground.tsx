@@ -19,10 +19,19 @@ export function CosmicBackground() {
         className="absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse at 20% 0%, rgba(34, 211, 238, 0.10) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 0.6) 0%, #020617 100%)
+            radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.8) 0%, #020617 100%),
+            radial-gradient(ellipse at 20% 0%, rgba(34, 211, 238, 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.10) 0%, transparent 60%)
           `,
+        }}
+      />
+
+      {/* Center Atmospheric Glow (Volume Light) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.07) 0%, transparent 70%)",
+          filter: "blur(60px)",
         }}
       />
 
@@ -83,24 +92,24 @@ export function CosmicBackground() {
 
       {/* Holographic grid (Foreground depth 0.8) */}
       <div
-        className="absolute inset-0 opacity-[0.04]"
+        className="absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(34, 211, 238, 0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(34, 211, 238, 0.5) 1px, transparent 1px)
+            linear-gradient(rgba(34, 211, 238, 0.6) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(34, 211, 238, 0.6) 1px, transparent 1px)
           `,
-          backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%)",
-          WebkitMaskImage: "radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%)",
+          backgroundSize: "60px 60px",
+          maskImage: "radial-gradient(ellipse at 50% 50%, black 40%, transparent 90%)",
+          WebkitMaskImage: "radial-gradient(ellipse at 50% 50%, black 40%, transparent 90%)",
           transform: `translate3d(${parallax.x * 0.8}px, ${parallax.y * 0.8}px, 0)`,
         }}
       />
 
       {/* Orbit lines — thin curved cosmic paths (Max depth 1.2) */}
-      <svg className="absolute inset-0 h-full w-full" aria-hidden style={{ opacity: 0.08, transform: `translate3d(${parallax.x * 1.2}px, ${parallax.y * 1.2}px, 0)` }}>
-        <ellipse cx="50%" cy="50%" rx="40%" ry="15%" fill="none" stroke="#22d3ee" strokeWidth="0.5" transform="rotate(15 50% 50%)" />
-        <ellipse cx="50%" cy="50%" rx="35%" ry="12%" fill="none" stroke="#38bdf8" strokeWidth="0.5" transform="rotate(-25 50% 50%)" />
-        <ellipse cx="50%" cy="50%" rx="45%" ry="18%" fill="none" stroke="#8b5cf6" strokeWidth="0.3" transform="rotate(45 50% 50%)" />
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden style={{ opacity: 0.08, transform: `translate3d(${parallax.x * 1.2}px, ${parallax.y * 1.2}px, 0)` }}>
+        <ellipse cx="50" cy="50" rx="40" ry="15" fill="none" stroke="#22d3ee" strokeWidth="0.5" transform="rotate(15 50 50)" />
+        <ellipse cx="50" cy="50" rx="35" ry="12" fill="none" stroke="#38bdf8" strokeWidth="0.5" transform="rotate(-25 50 50)" />
+        <ellipse cx="50" cy="50" rx="45" ry="18" fill="none" stroke="#8b5cf6" strokeWidth="0.3" transform="rotate(45 50 50)" />
       </svg>
 
       {/* Vignette — radial depth */}

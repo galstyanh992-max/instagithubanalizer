@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { FolderKanban, Cog, Users, HardDrive, Bell } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { FolderKanban, Cog, Users, HardDrive, Bell, MessageSquare, Archive, Music } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { JarvisChatList } from "@/components/jarvis/jarvis-chat-list";
+import { JarvisArchiveList } from "@/components/jarvis/jarvis-archive";
+import { useJarvisStore } from "@/components/jarvis/jarvis-store";
 
 const projects = [
-  { name: "ДЖАРВИС AI Core", progress: 85, status: "deploying" },
-  { name: "Next.js Admin Template", progress: 100, status: "completed" },
-  { name: "Supabase Migration", progress: 45, status: "syncing" },
+  { name: "ДЖАРВИС AI Core", progress: 85, status: "deploying", desc: "Версия: v2.4.1 · Сборка: 5732 · Узлы: 12" },
+  { name: "Next.js Admin Template", progress: 100, status: "completed", desc: "Готово · Развернуто на 12 узлах" },
+  { name: "Database Migration", progress: 45, status: "syncing", desc: "Синхронизация данных · Этап 2 из 4" },
+  { name: "Neural Data Pipeline", progress: 72, status: "running", desc: "Обработка потоков · Задержка: 68ms" },
 ];
 
 const tasks = [
@@ -34,24 +39,41 @@ const notifications = [
   { msg: "Build completed successfully.", type: "info" },
 ];
 
-type TabId = 'projects' | 'tasks' | 'agents' | 'memory' | 'notifications';
+type TabId = 'projects' | 'tasks' | 'agents' | 'memory' | 'notifications' | 'chats' | 'archive' | 'music';
+
+const tabs: { id: TabId; label: string; icon: typeof FolderKanban }[] = [
+  { id: 'projects', label: 'Проекты', icon: FolderKanban },
+  { id: 'tasks', label: 'Задачи', icon: Cog },
+  { id: 'agents', label: 'Агенты', icon: Users },
+  { id: 'memory', label: 'Память', icon: HardDrive },
+  { id: 'chats', label: 'Чаты', icon: MessageSquare },
+  { id: 'archive', label: 'Файлы', icon: Archive },
+  { id: 'music', label: 'Музыка', icon: Music },
+  { id: 'notifications', label: 'Алерты', icon: Bell },
+];
 
 export function OsOperationsHub() {
   const [activeTab, setActiveTab] = useState<TabId>('projects');
+  const archivedFiles = useJarvisStore((s) => s.archivedFiles);
+  const musicFiles = useMemo(
+    () => archivedFiles.filter((f) => f.folder === "music" || f.type === "music"),
+    [archivedFiles]
+  );
 
-  const tabs: { id: TabId; label: string; icon: any }[] = [
-    { id: 'projects', label: 'Projects', icon: FolderKanban },
-    { id: 'tasks', label: 'Tasks', icon: Cog },
-    { id: 'agents', label: 'Agents', icon: Users },
-    { id: 'memory', label: 'Memory', icon: HardDrive },
-    { id: 'notifications', label: 'Alerts', icon: Bell },
-  ];
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { tab?: TabId } | undefined;
+      const tab = detail?.tab;
+      if (tab && tabs.some((t) => t.id === tab)) setActiveTab(tab);
+    };
+    window.addEventListener('jarvis:set-hub-tab', handler);
+    return () => window.removeEventListener('jarvis:set-hub-tab', handler);
+  }, []);
 
   return (
-    <div className="border border-cyan-500/30 bg-gradient-to-br from-zinc-950/90 to-zinc-900/90 rounded-2xl p-4 space-y-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_10px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(34,211,238,0.1)] backdrop-blur-xl transition-all duration-500 relative overflow-hidden group">
-      
+    <div className="h-full flex flex-col glass-panel-strong p-4 space-y-4 relative overflow-hidden border-r-2 border-r-cyan-400">
       {/* Tabs Row */}
-      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-2 border-b border-cyan-400/20">
+      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-2 border-b border-cyan-400/10">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -59,13 +81,14 @@ export function OsOperationsHub() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-mono uppercase tracking-wider transition-all duration-300 ${
-                isActive 
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[inset_0_1px_rgba(255,255,255,0.2),0_0_10px_rgba(34,211,238,0.3)]' 
-                  : 'text-zinc-500 hover:text-cyan-400 hover:bg-zinc-800/50 border border-transparent'
-              }`}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-200 shrink-0",
+                isActive
+                  ? "bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_10px_rgba(34,211,238,0.15)]"
+                  : "text-zinc-500 hover:text-cyan-300 hover:bg-white/[0.03] border border-transparent"
+              )}
             >
-              <Icon className={`h-3 w-3 ${isActive ? 'drop-shadow-[0_0_5px_currentColor] animate-pulse' : ''} ${tab.id === 'tasks' && isActive ? 'animate-spin-slow' : ''}`} />
+              <Icon className={cn("h-3 w-3", isActive && "text-cyan-300")} />
               <span className="whitespace-nowrap">{tab.label}</span>
             </button>
           );
@@ -73,7 +96,7 @@ export function OsOperationsHub() {
       </div>
 
       {/* Content Area */}
-      <div className="min-h-[250px] relative">
+      <div className="min-h-[250px] h-[calc(100%-3rem)] relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -81,10 +104,10 @@ export function OsOperationsHub() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="space-y-2 absolute inset-0"
+            className="space-y-2 absolute inset-0 flex flex-col"
           >
             {activeTab === 'projects' && projects.map((p, i) => (
-              <div key={i} className="flex flex-col gap-1 p-2 rounded bg-zinc-900/50 border border-cyan-400/10 shadow-[inset_0_1px_rgba(255,255,255,0.05),0_2px_5px_rgba(0,0,0,0.2)]">
+              <div key={i} className="flex flex-col gap-1 p-2 rounded bg-zinc-900/50 border border-cyan-400/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_2px_5px_rgba(0,0,0,0.2)]">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono text-cyan-100">{p.name}</span>
                   <span className={`text-[8px] uppercase tracking-wider ${p.progress === 100 ? 'text-lime-400' : 'text-cyan-400'}`}>
@@ -137,6 +160,38 @@ export function OsOperationsHub() {
                 {n.msg}
               </div>
             ))}
+
+            {activeTab === 'chats' && (
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
+                <JarvisChatList />
+              </div>
+            )}
+
+            {activeTab === 'archive' && (
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
+                <JarvisArchiveList />
+              </div>
+            )}
+
+            {activeTab === 'music' && (
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 space-y-2">
+                {musicFiles.length === 0 ? (
+                  <div className="text-[10px] text-zinc-500 font-mono text-center py-6">
+                    Папка «Музыка» пуста. Скажите «сгенерируй музыку ...» или перетащите файлы сюда.
+                  </div>
+                ) : (
+                  musicFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="rounded bg-zinc-900/50 border border-cyan-400/10 p-2 flex flex-col gap-1"
+                    >
+                      <span className="text-[10px] text-zinc-300 font-mono truncate">{file.prompt || file.url.split("/").pop() || "Трек"}</span>
+                      <audio controls src={file.url} className="w-full h-8 opacity-80" />
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

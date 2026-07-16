@@ -2,6 +2,7 @@ import { ok, err, safe, parseJson } from "@/lib/api";
 import { chatService } from "@/services/chat.service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { detectPromptInjection, runSafeAction } from "@/lib/safety";
+import { initProviders } from "@/lib/ai-provider/server";
 import { z } from "zod";
 
 const chatSchema = z.object({
@@ -15,6 +16,8 @@ const chatSchema = z.object({
 });
 
 export const POST = safe(async (req: Request) => {
+  await initProviders();
+
   // Rate limit
   const rl = checkRateLimit(req);
   if (!rl.allowed) {

@@ -1,0 +1,2602 @@
+[
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 87,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "REPOSITORIES",
+    "context": "<h1 className=\"font-mono text-2xl font-bold neon-text\">REPOSITORIES</h1>\n<p className=\"text-xs text-zinc-500\">{repos.length} tracked</p>",
+    "ru": "РЕПОЗИТОРИИ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 88,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "tracked",
+    "context": "<h1 className=\"font-mono text-2xl font-bold neon-text\">REPOSITORIES</h1>\n<p className=\"text-xs text-zinc-500\">{repos.length} tracked</p>",
+    "ru": "отслеживается"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 129,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Search name or description...",
+    "context": "<Input\n  placeholder=\"Search name or description...\"\n  value={search}\n  onChange={(e) => setSearch(e.target.value)}",
+    "ru": "Поиск по имени или описанию..."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 130,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "All verdicts",
+    "context": "<SelectItem value=\"all\">All verdicts</SelectItem>\n<SelectItem value=\"USE_NOW\">USE NOW</SelectItem>",
+    "ru": "Все вердикты"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 135,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "All difficulties",
+    "context": "<SelectItem value=\"all\">All difficulties</SelectItem>\n<SelectItem value=\"LOW\">LOW</SelectItem>",
+    "ru": "Все уровни сложности"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 141,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "All risks",
+    "context": "<SelectItem value=\"all\">All risks</SelectItem>\n<SelectItem value=\"SAFE\">SAFE</SelectItem>",
+    "ru": "Все риски"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 148,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Final Priority",
+    "context": "<SelectItem value=\"finalPriorityScore\">Final Priority</SelectItem>\n<SelectItem value=\"stars\">Stars</SelectItem>",
+    "ru": "Финальный приоритет"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 149,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Stars",
+    "context": "<SelectItem value=\"finalPriorityScore\">Final Priority</SelectItem>\n<SelectItem value=\"stars\">Stars</SelectItem>",
+    "ru": "Звёзды"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 150,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Usefulness",
+    "context": "<SelectItem value=\"usefulnessScore\">Usefulness</SelectItem>\n<SelectItem value=\"healthScore\">Health</SelectItem>",
+    "ru": "Польза"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 151,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Health",
+    "context": "<SelectItem value=\"usefulnessScore\">Usefulness</SelectItem>\n<SelectItem value=\"healthScore\">Health</SelectItem>",
+    "ru": "Здоровье"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 152,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Last Update",
+    "context": "<SelectItem value=\"updatedAtGithub\">Last Update</SelectItem>\n</SelectContent>",
+    "ru": "Последнее обновление"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 158,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GPU required only",
+    "context": "<label className=\"flex items-center gap-2 text-xs text-zinc-400\">\n  <Switch checked={gpuOnly} onCheckedChange={setGpuOnly} />\n  GPU required only\n</label>",
+    "ru": "Только требующие GPU"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 165,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Loading...",
+    "context": "<div className=\"flex items-center justify-center py-12 text-cyan-300\">\n  <Loader2 className=\"mr-2 h-5 w-5 animate-spin\" /> Loading...\n</div>",
+    "ru": "Загрузка..."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 171,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No repositories match your filters.",
+    "context": "<p className=\"text-zinc-400\">No repositories match your filters.</p>\n<Link href=\"/upload\" className=\"mt-2 inline-block text-xs text-cyan-300 underline\">Analyze a new repo →</Link>",
+    "ru": "Нет репозиториев, соответствующих фильтрам."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 172,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Analyze a new repo →",
+    "context": "<Link href=\"/upload\" className=\"mt-2 inline-block text-xs text-cyan-300 underline\">Analyze a new repo →</Link>",
+    "ru": "Анализировать новое репо →"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 190,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "(no description)",
+    "context": "<p className=\"mt-2 line-clamp-2 text-xs text-zinc-400\">{r.description || \"(no description)\"}</p>",
+    "ru": "(нет описания)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 214,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Repo",
+    "context": "<th className=\"px-3 py-2 text-left\">Repo</th>\n<th className=\"px-3 py-2 text-left\">Verdict</th>",
+    "ru": "Репо"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 215,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Verdict",
+    "context": "<th className=\"px-3 py-2 text-left\">Verdict</th>\n<th className=\"px-3 py-2 text-right\">Stars</th>",
+    "ru": "Вердикт"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 217,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Useful",
+    "context": "<th className=\"px-3 py-2 text-right\">Useful</th>\n<th className=\"px-3 py-2 text-right\">Health</th>",
+    "ru": "Польза"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 219,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Final",
+    "context": "<th className=\"px-3 py-2 text-right\">Final</th>\n<th className=\"px-3 py-2 text-left\">Risk</th>",
+    "ru": "Финал"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\page.tsx",
+    "line": 220,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Risk",
+    "context": "<th className=\"px-3 py-2 text-right\">Final</th>\n<th className=\"px-3 py-2 text-left\">Risk</th>",
+    "ru": "Риск"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\analyze\\page.tsx",
+    "line": 36,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Analyze Repository",
+    "context": "<PageHeader\n  title=\"Analyze Repository\"\n  subtitle=\"Enter a GitHub repository (owner/repo or full URL). Pipeline: resolve → fetch → analyze → score → verdict.\"\n/>",
+    "ru": "Анализировать репозиторий"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\analyze\\page.tsx",
+    "line": 37,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Enter a GitHub repository (owner/repo or full URL). Pipeline: resolve → fetch → analyze → score → verdict.",
+    "context": "<PageHeader\n  title=\"Analyze Repository\"\n  subtitle=\"Enter a GitHub repository (owner/repo or full URL). Pipeline: resolve → fetch → analyze → score → verdict.\"\n/>",
+    "ru": "Введите GitHub-репозиторий (owner/repo или полный URL). Конвейер: разрешение → загрузка → анализ → оценка → вердикт."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\analyze\\page.tsx",
+    "line": 42,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "INPUT",
+    "context": "<div className=\"mb-3 text-xs font-bold tracking-widest text-cyan-400/80 uppercase\">INPUT</div>",
+    "ru": "ВВОД"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\analyze\\page.tsx",
+    "line": 47,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "e.g. docling-project/docling",
+    "context": "<Input\n  value={input}\n  onChange={(e) => setInput(e.target.value)}\n  placeholder=\"e.g. docling-project/docling\"",
+    "ru": "например, docling-project/docling"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\analyze\\page.tsx",
+    "line": 62,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "QUICK PICKS",
+    "context": "<div className=\"mb-3 text-xs font-bold tracking-widest text-fuchsia-400/80 uppercase\">QUICK PICKS</div>",
+    "ru": "БЫСТРЫЙ ВЫБОР"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 188,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "BACK TO REPOS",
+    "context": "<Link href=\"/repos\" className=\"inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-cyan-300\">\n  <ArrowLeft className=\"h-3 w-3\" /> BACK TO REPOS\n</Link>",
+    "ru": "НАЗАД К РЕПОЗИТОРИЯМ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 200,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "License: ",
+    "context": "<span className=\"flex items-center gap-1\"><Eye className=\"h-3 w-3\" />{r.watchers}</span>\n<span>License: {r.license}</span>",
+    "ru": "Лицензия: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 201,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Lang: ",
+    "context": "<span>License: {r.license}</span>\n<span>Lang: {r.primaryLanguage || \"—\"}</span>",
+    "ru": "Язык: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 203,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GPU required",
+    "context": "{r.gpuRequired && <span className=\"text-amber-400\">GPU required</span>}\n{r.archived && <span className=\"text-red-400\">Archived</span>}",
+    "ru": "Требуется GPU"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 204,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Archived",
+    "context": "{r.gpuRequired && <span className=\"text-amber-400\">GPU required</span>}\n{r.archived && <span className=\"text-red-400\">Archived</span>}",
+    "ru": "Архивирован"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 241,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Useful",
+    "context": "<ScoreRing value={r.usefulnessScore} label=\"Useful\" size={70} color=\"#22d3ee\" />",
+    "ru": "Польза"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 242,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Health",
+    "context": "<ScoreRing value={r.healthScore} label=\"Health\" size={70} color=\"#a3e635\" />",
+    "ru": "Здоровье"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 243,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Compat",
+    "context": "<ScoreRing value={r.compatibilityScore} label=\"Compat\" size={70} color=\"#e879f9\" />",
+    "ru": "Совместимость"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 244,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "AgentOS",
+    "context": "<ScoreRing value={r.agentOsScore} label=\"AgentOS\" size={70} color=\"#22d3ee\" />",
+    "ru": "AgentOS"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 245,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "AiLegal",
+    "context": "<ScoreRing value={r.aiLegalScore} label=\"AiLegal\" size={70} color=\"#fbbf24\" />",
+    "ru": "AiLegal"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 246,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Security",
+    "context": "<ScoreRing value={r.securityScore} label=\"Security\" size={70} color=\"#a3e635\" />",
+    "ru": "Безопасность"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 247,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Cost",
+    "context": "<ScoreRing value={r.costScore} label=\"Cost\" size={70} color=\"#e879f9\" />",
+    "ru": "Стоимость"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 248,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Risk",
+    "context": "<ScoreRing value={r.commercialRiskScore} label=\"Risk\" size={70} color=\"#f87171\" />",
+    "ru": "Риск"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 252,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Final",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500\">Final</div>\n</HolographicPanel>",
+    "ru": "Финал"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 270,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Patch Plan",
+    "context": "<TabsTrigger value=\"patch\">Patch Plan</TabsTrigger>\n<TabsTrigger value=\"risk\">Risk Gate</TabsTrigger>",
+    "ru": "План патча"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 271,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Risk Gate",
+    "context": "<TabsTrigger value=\"risk\">Risk Gate</TabsTrigger>\n<TabsTrigger value=\"health\">Health</TabsTrigger>",
+    "ru": "Ворота рисков"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 272,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Health",
+    "context": "<TabsTrigger value=\"health\">Health</TabsTrigger>\n<TabsTrigger value=\"community\">Community</TabsTrigger>",
+    "ru": "Здоровье"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 273,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Community",
+    "context": "<TabsTrigger value=\"community\">Community</TabsTrigger>\n<TabsTrigger value=\"compat\">My PC Compat</TabsTrigger>",
+    "ru": "Сообщество"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 274,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "My PC Compat",
+    "context": "<TabsTrigger value=\"compat\">My PC Compat</TabsTrigger>\n<TabsTrigger value=\"run-options\">Run Options</TabsTrigger>",
+    "ru": "Совместимость с ПК"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 275,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Run Options",
+    "context": "<TabsTrigger value=\"run-options\">Run Options</TabsTrigger>\n<TabsTrigger value=\"ollama-cloud\">Ollama Cloud</TabsTrigger>",
+    "ru": "Варианты запуска"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 276,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Ollama Cloud",
+    "context": "<TabsTrigger value=\"ollama-cloud\">Ollama Cloud</TabsTrigger>\n<TabsTrigger value=\"alternatives\">Alternatives</TabsTrigger>",
+    "ru": "Ollama Cloud"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 277,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Alternatives",
+    "context": "<TabsTrigger value=\"alternatives\">Alternatives</TabsTrigger>\n<TabsTrigger value=\"analysis\">Analysis</TabsTrigger>",
+    "ru": "Альтернативы"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 281,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Test Plan",
+    "context": "<TabsTrigger value=\"test\">Test Plan</TabsTrigger>\n<TabsTrigger value=\"ideas\">Ideas</TabsTrigger>",
+    "ru": "План тестирования"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 283,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Cost",
+    "context": "<TabsTrigger value=\"cost\">Cost</TabsTrigger>\n<TabsTrigger value=\"readme\">README</TabsTrigger>",
+    "ru": "Стоимость"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 286,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Overview",
+    "context": "<div className=\"flex items-center gap-2 text-cyan-300\">\n  <FileText className=\"h-4 w-4\" />\n  <h2 className=\"font-mono text-xs uppercase\">Overview</h2>\n</div>",
+    "ru": "Обзор"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 292,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Problem Solved",
+    "context": "<div>\n  <div className=\"text-[10px] uppercase text-zinc-500\">Problem Solved</div>\n  <p className=\"text-sm text-zinc-400\">{a.problemSolved}</p>\n</div>",
+    "ru": "Решаемая проблема"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 296,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Final Recommendation",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500\">Final Recommendation</div>\n<p className=\"text-sm text-cyan-200\">{a.finalRecommendation}</p>",
+    "ru": "Финальная рекомендация"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 304,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No analysis yet. Click Re-analyze.",
+    "context": "<p className=\"text-sm text-zinc-500\">No analysis yet. Click Re-analyze.</p>",
+    "ru": "Анализ ещё не выполнен. Нажмите «Переанализировать»."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 309,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Docker:",
+    "context": "<div><span className=\"text-zinc-500\">Docker:</span> {r.hasDocker ? \"✓\" : \"—\"}</div>",
+    "ru": "Docker:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 310,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Compose:",
+    "context": "<div><span className=\"text-zinc-500\">Compose:</span> {r.hasDockerCompose ? \"✓\" : \"—\"}</div>",
+    "ru": "Compose:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 311,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Package.json:",
+    "context": "<div><span className=\"text-zinc-500\">Package.json:</span> {r.hasPackageJson ? \"✓\" : \"—\"}</div>",
+    "ru": "Package.json:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 312,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Requirements:",
+    "context": "<div><span className=\"text-zinc-500\">Requirements:</span> {r.hasRequirements ? \"✓\" : \"—\"}</div>",
+    "ru": "Requirements:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 313,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Pyproject:",
+    "context": "<div><span className=\"text-zinc-500\">Pyproject:</span> {r.hasPyproject ? \"✓\" : \"—\"}</div>",
+    "ru": "Pyproject:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 314,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": ".env.example:",
+    "context": "<div><span className=\"text-zinc-500\">.env.example:</span> {r.hasEnvExample ? \"✓\" : \"—\"}</div>",
+    "ru": ".env.example:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 315,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Difficulty:",
+    "context": "<div><span className=\"text-zinc-500\">Difficulty:</span> {r.difficulty}</div>",
+    "ru": "Сложность:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 316,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Local run:",
+    "context": "<div><span className=\"text-zinc-500\">Local run:</span> {r.localRunPossible ? \"✓\" : \"—\"}</div>",
+    "ru": "Локальный запуск:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 317,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GPU required:",
+    "context": "<div><span className=\"text-zinc-500\">GPU required:</span> {r.gpuRequired ? <span className=\"text-amber-300\">✓</span> : \"—\"}</div>",
+    "ru": "Требуется GPU:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 318,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "CUDA risk:",
+    "context": "<div><span className=\"text-zinc-500\">CUDA risk:</span> {r.gpuRequired ? <span className=\"text-red-300\">HIGH (AMD GPU, no CUDA)</span> : <span className=\"text-lime-300\">none</span>}</div>",
+    "ru": "Риск CUDA:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 318,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "HIGH (AMD GPU, no CUDA)",
+    "context": "<div><span className=\"text-zinc-500\">CUDA risk:</span> {r.gpuRequired ? <span className=\"text-red-300\">HIGH (AMD GPU, no CUDA)</span> : <span className=\"text-lime-300\">none</span>}</div>",
+    "ru": "ВЫСОКИЙ (AMD GPU, без CUDA)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 318,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "none",
+    "context": "<div><span className=\"text-zinc-500\">CUDA risk:</span> {r.gpuRequired ? <span className=\"text-red-300\">HIGH (AMD GPU, no CUDA)</span> : <span className=\"text-lime-300\">none</span>}</div>",
+    "ru": "нет"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 360,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Install Plan",
+    "context": "<div className=\"mb-3 flex items-center justify-between\">\n  <div className=\"flex items-center gap-2 text-lime-300\">\n    <Terminal className=\"h-4 w-4\" />\n    <h2 className=\"font-mono text-xs uppercase\">Install Plan</h2>\n  </div>",
+    "ru": "План установки"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 375,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No install plan yet. Click Generate.",
+    "context": "<p className=\"text-sm text-zinc-500\">No install plan yet. Click Generate.</p>",
+    "ru": "План установки ещё не создан. Нажмите «Сгенерировать»."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 381,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Test Plan",
+    "context": "<div className=\"mb-3 flex items-center gap-2 text-cyan-300\">\n  <FlaskConical className=\"h-4 w-4\" />\n  <h2 className=\"font-mono text-xs uppercase\">Test Plan</h2>\n</div>",
+    "ru": "План тестирования"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 383,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "15 minutes",
+    "context": "<div>\n  <div className=\"text-xs text-lime-300\">15 minutes</div>\n  <ul className=\"mt-1 space-y-1 text-xs text-zinc-300\">",
+    "ru": "15 минут"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 389,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "30 minutes",
+    "context": "<div>\n  <div className=\"text-xs text-cyan-300\">30 minutes</div>\n  <ul className=\"mt-1 space-y-1 text-xs text-zinc-300\">",
+    "ru": "30 минут"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 395,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "60 minutes",
+    "context": "<div>\n  <div className=\"text-xs text-fuchsia-300\">60 minutes</div>\n  <ul className=\"mt-1 space-y-1 text-xs text-zinc-300\">",
+    "ru": "60 минут"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 405,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Extracted Ideas",
+    "context": "<div className=\"mb-3 flex items-center gap-2 text-fuchsia-300\">\n  <Lightbulb className=\"h-4 w-4\" />\n  <h2 className=\"font-mono text-xs uppercase\">Extracted Ideas</h2>\n</div>",
+    "ru": "Извлечённые идеи"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 416,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No ideas extracted.",
+    "context": "<p className=\"text-sm text-zinc-500\">No ideas extracted.</p>",
+    "ru": "Идеи не извлечены."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 422,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Security Scan",
+    "context": "<h2 className=\"font-mono text-xs uppercase\">Security Scan</h2>\n<span className=\"ml-auto\"><CommercialBadge status={r.securityStatus === \"SAFE\" ? \"SAFE\" : r.securityStatus === \"REVIEW\" ? \"WARNING\" : \"HIGH_RISK\"} /></span>",
+    "ru": "Сканирование безопасности"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 426,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No security notes.",
+    "context": "<ul className=\"space-y-1 text-sm text-zinc-300\">\n  {secNotes.length > 0 ? secNotes.map((n, i) => <li key={i} className=\"flex gap-2\">• {n}</li>) : <li className=\"text-zinc-500\">No security notes.</li>}\n</ul>",
+    "ru": "Нет заметок по безопасности."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 432,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Risks",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500\">Risks</div>\n<ul className=\"space-y-1 text-xs text-zinc-400\">",
+    "ru": "Риски"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 443,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Cost Awareness",
+    "context": "<div className=\"mb-3 flex items-center gap-2 text-amber-300\">\n  <DollarSign className=\"h-4 w-4\" />\n  <h2 className=\"font-mono text-xs uppercase\">Cost Awareness</h2>\n</div>",
+    "ru": "Оценка стоимости"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 446,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Commercial use:",
+    "context": "<div className=\"mt-3 text-xs\">\n  <span className=\"text-zinc-500\">Commercial use:</span> <CommercialBadge status={r.commercialUseStatus as \"SAFE\"} />\n</div>",
+    "ru": "Коммерческое использование:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 452,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No cost analysis.",
+    "context": "<p className=\"text-sm text-zinc-300\">{r.costNotes || \"No cost analysis.\"}</p>",
+    "ru": "Нет анализа стоимости."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 458,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "README (raw)",
+    "context": "<div className=\"mb-3 flex items-center gap-2 text-cyan-300\">\n  <BookOpen className=\"h-4 w-4\" />\n  <h2 className=\"font-mono text-xs uppercase\">README (raw)</h2>\n</div>",
+    "ru": "README (исходник)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\app\\repos\\[id]\\page.tsx",
+    "line": 462,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "(no readme fetched)",
+    "context": "<pre className=\"whitespace-pre-wrap text-[11px] text-zinc-300\">{r.readmeText || \"(no readme fetched)\"}</pre>",
+    "ru": "(readme не загружен)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 183,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GIT URL",
+    "context": "<Github className=\"h-3.5 w-3.5\" /> GIT URL\n</button>",
+    "ru": "GIT URL"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 195,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "JSON / JSONL",
+    "context": "<FileJson className=\"h-3.5 w-3.5\" /> JSON / JSONL\n</button>",
+    "ru": "JSON / JSONL"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 214,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "owner/repo  ·  https://github.com/owner/repo  ·  git@github.com:owner/repo.git",
+    "context": "placeholder=\"owner/repo  ·  https://github.com/owner/repo  ·  git@github.com:owner/repo.git\"",
+    "ru": "owner/repo  ·  https://github.com/owner/repo  ·  git@github.com:owner/repo.git"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 237,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "DROP JSON / JSONL HERE",
+    "context": "<div className=\"font-mono text-xs text-cyan-200\">DROP JSON / JSONL HERE</div>",
+    "ru": "ПЕРЕТАЩИТЕ JSON / JSONL СЮДА"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 276,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Аудит",
+    "context": "<span>Аудит</span>\n<span>{jobs.filter((j) => j.status === \"done\").length}/{jobs.length} готово</span>",
+    "ru": "Аудит"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 310,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "verdict:",
+    "context": "<div className=\"text-[10px] text-zinc-500\">\n  verdict: <span className=\"text-lime-300\">{job.verdict}</span>",
+    "ru": "вердикт:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 313,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "score:",
+    "context": "{typeof job.finalPriorityScore === \"number\" && (\n  <span className=\"ml-2\">score: {job.finalPriorityScore}</span>\n)}",
+    "ru": "оценка:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-import-panel.tsx",
+    "line": 351,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "VPS / Docker / Cloud",
+    "context": "<Cloud className=\"h-3 w-3 text-cyan-400\" /> VPS / Docker / Cloud\n</div>",
+    "ru": "VPS / Docker / Cloud"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 44,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Run Options",
+    "context": "<Terminal className=\"h-4 w-4\" />\n<h2 className=\"font-mono text-xs uppercase tracking-wider\">Run Options</h2>",
+    "ru": "Варианты запуска"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 57,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Click <b>Generate run options</b> to see local / Docker / CPU-only / Ollama Cloud paths.",
+    "context": "<div className=\"rounded border border-zinc-700 bg-zinc-900/40 p-4 text-center text-sm text-zinc-400\">\n  Click <b>Generate run options</b> to see local / Docker / CPU-only / Ollama Cloud paths.\n</div>",
+    "ru": "Нажмите «Сгенерировать варианты запуска», чтобы увидеть пути локального / Docker / CPU-only / Ollama Cloud."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 67,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Local",
+    "context": "<OptionCard\n  icon={Cpu}\n  title=\"Local\"\n  accent=\"cyan\"",
+    "ru": "Локально"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 75,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Docker",
+    "context": "<OptionCard\n  icon={Container}\n  title=\"Docker\"\n  accent=\"lime\"",
+    "ru": "Docker"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 83,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "CPU-only",
+    "context": "<OptionCard\n  icon={Cpu}\n  title=\"CPU-only\"\n  accent=\"amber\"",
+    "ru": "Только CPU"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 93,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Ollama Cloud",
+    "context": "<OptionCard\n  icon={Cloud}\n  title=\"Ollama Cloud\"\n  accent=\"magenta\"",
+    "ru": "Ollama Cloud"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 110,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Final recommendation",
+    "context": "<div className=\"text-[10px] uppercase text-cyan-300\">Final recommendation</div>\n<div className=\"mt-1\">{data.finalRecommendation}</div>",
+    "ru": "Финальная рекомендация"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 133,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "POSSIBLE",
+    "context": "<span className=\"rounded-full border border-lime-400/60 bg-lime-500/15 px-2 py-0.5 text-[10px] font-mono text-lime-200\">POSSIBLE</span>",
+    "ru": "ВОЗМОЖЕН"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 135,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "NOT POSSIBLE",
+    "context": "<span className=\"rounded-full border border-red-400/60 bg-red-500/15 px-2 py-0.5 text-[10px] font-mono text-red-200\">NOT POSSIBLE</span>",
+    "ru": "НЕВОЗМОЖЕН"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 139,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "cost: ",
+    "context": "<span className=\"text-[10px] text-zinc-500\">cost: {cost}</span>",
+    "ru": "стоимость: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 142,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Expected perf: ",
+    "context": "{extraLabel && <div className=\"mt-1 text-[10px] text-zinc-400\">Expected perf: {extraLabel}</div>}",
+    "ru": "Ожидаемая производительность: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 143,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Fit: ",
+    "context": "{useCaseFit && <div className=\"mt-1 text-[10px] text-zinc-400\">Fit: {useCaseFit}</div>}",
+    "ru": "Совместимость: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\run-options-panel.tsx",
+    "line": 159,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Pricing status: ",
+    "context": "<div className=\"mt-2 rounded border border-amber-400/30 bg-amber-500/10 p-1.5 text-[10px] text-amber-200\">\n  Pricing status: <b>{pricingStatus}</b>",
+    "ru": "Статус ценообразования: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 29,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GitHub Alternatives",
+    "context": "<Search className=\"h-4 w-4\" />\n<h2 className=\"font-mono text-xs uppercase tracking-wider\">GitHub Alternatives</h2>",
+    "ru": "Альтернативы на GitHub"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 51,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Click <b>Find alternatives</b> to search GitHub for CPU-only / no-CUDA / Ollama-compatible alternatives.",
+    "context": "<div className=\"rounded border border-zinc-700 bg-zinc-900/40 p-4 text-center text-sm text-zinc-400\">\n  Click <b>Find alternatives</b> to search GitHub for CPU-only / no-CUDA / Ollama-compatible alternatives.\n</div>",
+    "ru": "Нажмите «Найти альтернативы», чтобы искать на GitHub CPU-only / no-CUDA / Ollama-совместимые альтернативы."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 58,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "(GITHUB_TOKEN not configured — fallback queries only.)",
+    "context": "{!data.liveSearchPerformed && (\n  <span className=\"ml-1 text-amber-300\">(GITHUB_TOKEN not configured — fallback queries only.)</span>\n)}",
+    "ru": "(GITHUB_TOKEN не настроен — только fallback-запросы.)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 78,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Why better for my PC:",
+    "context": "<div><span className=\"text-zinc-400\">Why better for my PC:</span> {a.whyBetterForMyPc}</div>",
+    "ru": "Почему лучше для моего ПК:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 79,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Lang:",
+    "context": "<div className=\"mt-0.5\"><span className=\"text-zinc-400\">Lang:</span> {a.language} · <span className=\"text-zinc-400\">License:</span> {a.license}</div>",
+    "ru": "Язык:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 79,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "License:",
+    "context": "<div className=\"mt-0.5\"><span className=\"text-zinc-400\">Lang:</span> {a.language} · <span className=\"text-zinc-400\">License:</span> {a.license}</div>",
+    "ru": "Лицензия:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 80,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Est. compat score:",
+    "context": "<div className=\"mt-0.5\"><span className=\"text-zinc-400\">Est. compat score:</span> <span className=\"font-mono text-amber-300\">{a.estimatedCompatibilityScore}/100</span></div>",
+    "ru": "Оценка совместимости:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\github-alternatives-panel.tsx",
+    "line": 89,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Fallback search queries",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500 mb-1\">Fallback search queries</div>",
+    "ru": "Резервные поисковые запросы"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 36,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "My PC Compatibility",
+    "context": "<Cpu className=\"h-4 w-4\" />\n<h2 className=\"font-mono text-xs uppercase tracking-wider\">My PC Compatibility</h2>",
+    "ru": "Совместимость с моим ПК"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 53,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Click <b>Re-check</b> to compute compatibility against your PC profile.",
+    "context": "<div className=\"rounded border border-zinc-700 bg-zinc-900/40 p-4 text-center text-sm text-zinc-400\">\n  Click <b>Re-check</b> to compute compatibility against your PC profile.\n</div>",
+    "ru": "Нажмите «Перепроверить», чтобы вычислить совместимость с профилем вашего ПК."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 67,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Score",
+    "context": "<ScoreRing value={data.compatibilityScore} label=\"Score\" size={90} color=\"#22d3ee\" />",
+    "ru": "Оценка"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 74,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Can run locally",
+    "context": "<span className=\"text-zinc-300\">{data.canRunLocally ? \"Can run locally\" : \"Cannot run locally\"}</span>",
+    "ru": "Можно запустить локально"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 74,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Cannot run locally",
+    "context": "<span className=\"text-zinc-300\">{data.canRunLocally ? \"Can run locally\" : \"Cannot run locally\"}</span>",
+    "ru": "Нельзя запустить локально"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 80,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Recommended:",
+    "context": "<span className=\"text-zinc-500\">Recommended:</span>{\" \"}\n<span className=\"font-mono text-cyan-300\">{RUN_MODE_LABELS[data.recommendedRunMode] ?? data.recommendedRunMode}</span>",
+    "ru": "Рекомендуется:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 85,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Est. performance:",
+    "context": "<span className=\"text-zinc-500\">Est. performance:</span>{\" \"}\n<span className=\"font-mono text-lime-300\">{PERF_LABELS[data.estimatedLocalPerformance] ?? data.estimatedLocalPerformance}</span>",
+    "ru": "Оценка производительности:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 91,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Bottlenecks",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500\">Bottlenecks</div>\n{data.bottlenecks.length === 0 ? (",
+    "ru": "Узкие места"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 93,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No bottlenecks detected.",
+    "context": "<div className=\"text-lime-300\">No bottlenecks detected.</div>",
+    "ru": "Узких мест не обнаружено."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 110,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Missing dependencies",
+    "context": "<div className=\"text-[10px] uppercase text-amber-300\">Missing dependencies</div>",
+    "ru": "Отсутствующие зависимости"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 120,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Hardware risks",
+    "context": "<div className=\"text-[10px] uppercase text-red-300\">Hardware risks</div>",
+    "ru": "Аппаратные риски"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 130,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Software risks",
+    "context": "<div className=\"text-[10px] uppercase text-fuchsia-300\">Software risks</div>",
+    "ru": "Программные риски"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 140,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Provider policy",
+    "context": "<div className=\"text-[10px] uppercase text-cyan-300\">Provider policy</div>",
+    "ru": "Политика провайдеров"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 143,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Allowed: ",
+    "context": "Allowed: {data.providerPolicy.allowedProviders.join(\", \")} ·",\n    "ru": "Разрешено: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 144,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Other providers: ",
+    "context": "Other providers: disabled",
+    "ru": "Другие провайдеры: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 144,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "disabled",
+    "context": "Other providers: disabled",
+    "ru": "отключены"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\my-pc-compatibility-panel.tsx",
+    "line": 150,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Explanation",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500\">Explanation</div>\n<div className=\"mt-1\">{data.explanation}</div>",
+    "ru": "Пояснение"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 40,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Ollama Cloud Option",
+    "context": "<Cloud className=\"h-4 w-4\" />\n<h2 className=\"font-mono text-xs uppercase tracking-wider\">Ollama Cloud Option</h2>",
+    "ru": "Вариант Ollama Cloud"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 43,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "ONLY ALLOWED",
+    "context": "<Lock className=\"h-2.5 w-2.5\" /> ONLY ALLOWED\n</span>",
+    "ru": "ЕДИНСТВЕННЫЙ РАЗРЕШЁННЫЙ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 57,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Click <b>Show option</b> to evaluate Ollama Cloud as a fallback for this repo.",
+    "context": "<div className=\"rounded border border-zinc-700 bg-zinc-900/40 p-4 text-center text-sm text-zinc-400\">\n  Click <b>Show option</b> to evaluate Ollama Cloud as a fallback for this repo.\n</div>",
+    "ru": "Нажмите «Показать вариант», чтобы оценить Ollama Cloud как fallback для этого репо."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 68,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "POSSIBLE",
+    "context": "<span className=\"rounded-full border border-lime-400/60 bg-lime-500/15 px-2 py-0.5 text-[10px] font-mono text-lime-200\">POSSIBLE</span>",
+    "ru": "ВОЗМОЖЕН"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 70,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "NOT SUITABLE",
+    "context": "<span className=\"rounded-full border border-red-400/60 bg-red-500/15 px-2 py-0.5 text-[10px] font-mono text-red-200\">NOT SUITABLE</span>",
+    "ru": "НЕ ПОДХОДИТ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 79,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Steps",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500\">Steps</div>",
+    "ru": "Шаги"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 87,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Limitations",
+    "context": "<div className=\"text-[10px] uppercase text-zinc-500\">Limitations</div>",
+    "ru": "Ограничения"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 96,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Pricing",
+    "context": "<div className=\"text-[10px] uppercase text-amber-300\">Pricing</div>",
+    "ru": "Ценообразование"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 98,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Status: ",
+    "context": "<div className=\"mt-1 text-amber-200\">Status: <b>{opt.pricingStatus}</b></div>",
+    "ru": "Статус: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 100,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Estimated cost: ",
+    "context": "<div className=\"mt-1 text-zinc-400\">Estimated cost: {opt.estimatedCostUsd}</div>",
+    "ru": "Ориентировочная стоимость: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 116,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No allowed cloud provider is suitable for this repo. Provider policy allows only Ollama Cloud.",
+    "context": "<div className=\"rounded border border-red-400/30 bg-red-500/10 p-3 text-xs text-red-200\">\n  No allowed cloud provider is suitable for this repo. Provider policy allows only Ollama Cloud.",
+    "ru": "Ни один разрешённый облачный провайдер не подходит для этого репо. Политика разрешает только Ollama Cloud."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\ollama-cloud-options-panel.tsx",
+    "line": 117,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Other providers (RunPod, Vast.ai, AWS, GCP, Azure, etc.) are disabled by policy.",
+    "context": "Other providers (RunPod, Vast.ai, AWS, GCP, Azure, etc.) are disabled by policy.\n</div>",
+    "ru": "Другие провайдеры (RunPod, Vast.ai, AWS, GCP, Azure и др.) отключены политикой."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\panels\\repo-panels.tsx",
+    "line": 16,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Sandbox Test Plan",
+    "context": "<h2 className=\"font-mono text-xs uppercase text-cyan-300\">Sandbox Test Plan</h2>",
+    "ru": "План песочного тестирования"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\panels\\repo-panels.tsx",
+    "line": 41,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Integration Patch Plan",
+    "context": "<h2 className=\"font-mono text-xs uppercase text-lime-300\">Integration Patch Plan</h2>",
+    "ru": "План интеграционного патча"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\panels\\repo-panels.tsx",
+    "line": 67,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Risk Gate",
+    "context": "<h2 className=\"font-mono text-xs uppercase text-cyan-300\">Risk Gate</h2>",
+    "ru": "Ворота рисков"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\panels\\repo-panels.tsx",
+    "line": 91,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Health Timeline",
+    "context": "<h2 className=\"font-mono text-xs uppercase text-cyan-300\">Health Timeline</h2>",
+    "ru": "Хронология здоровья"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\panels\\repo-panels.tsx",
+    "line": 112,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Community Signals",
+    "context": "<h2 className=\"font-mono text-xs uppercase text-fuchsia-300\">Community Signals</h2>",
+    "ru": "Сигналы сообщества"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 60,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "FINAL",
+    "context": "<ScoreRing value={repo.finalPriorityScore} size={48} label=\"FINAL\" />",
+    "ru": "ФИНАЛ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 61,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "USE",
+    "context": "<ScoreRing value={repo.usefulnessScore} size={36} color=\"var(--neon-lime)\" label=\"USE\" />",
+    "ru": "ПОЛЬЗА"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 62,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "HEA",
+    "context": "<ScoreRing value={repo.healthScore} size={36} color=\"var(--neon-magenta)\" label=\"HEA\" />",
+    "ru": "ЗДР"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 75,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Watching",
+    "context": "{watching ? <BookmarkMinus className=\"w-3 h-3\" /> : <BookmarkPlus className=\"w-3 h-3\" />}\n{watching ? 'Watching' : 'Watch'}",
+    "ru": "Отслеживается"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 75,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Watch",
+    "context": "{watching ? <BookmarkMinus className=\"w-3 h-3\" /> : <BookmarkPlus className=\"w-3 h-3\" />}\n{watching ? 'Watching' : 'Watch'}",
+    "ru": "Отслеживать"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 80,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Compare",
+    "context": "<Button asChild size=\"sm\" variant=\"ghost\" className=\"h-7 text-xs gap-1\">\n  <Link href={`/compare?ids=${repo.id}`} onClick={(e) => e.stopPropagation()}>\n    Compare\n  </Link>\n</Button>",
+    "ru": "Сравнить"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 97,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Refresh",
+    "context": "<RefreshCw className=\"w-3 h-3\" />\nRefresh\n</Button>",
+    "ru": "Обновить"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 103,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "watching",
+    "context": "{watching ? 'watching' : 'idle'}",
+    "ru": "отслеживается"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\repo-card.tsx",
+    "line": 103,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "idle",
+    "context": "{watching ? 'watching' : 'idle'}",
+    "ru": "бездействует"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\repo\\license-badge.tsx",
+    "line": 12,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "no license",
+    "context": "{license || 'no license'} · {meta.label}",
+    "ru": "нет лицензии"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 13,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "USE NOW",
+    "context": "USE_NOW: {\n    label: \"USE NOW\",",
+    "ru": "ИСПОЛЬЗОВАТЬ СЕЙЧАС"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 18,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "TEST",
+    "context": "TEST: {\n    label: \"TEST\",",
+    "ru": "ТЕСТИРОВАТЬ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 25,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "SAVE",
+    "context": "SAVE: {\n    label: \"SAVE\",",
+    "ru": "СОХРАНИТЬ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 32,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "SKIP",
+    "context": "SKIP: {\n    label: \"SKIP\",",
+    "ru": "ПРОПУСТИТЬ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 48,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "SAFE",
+    "context": "SAFE: { label: \"SAFE\", color: \"text-lime-300\", bg: \"bg-lime-500/10\" },",
+    "ru": "БЕЗОПАСНО"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 49,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "WARNING",
+    "context": "WARNING: { label: \"WARNING\", color: \"text-amber-300\", bg: \"bg-amber-500/10\" },",
+    "ru": "ПРЕДУПРЕЖДЕНИЕ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 50,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "HIGH RISK",
+    "context": "HIGH_RISK: { label: \"HIGH RISK\", color: \"text-red-300\", bg: \"bg-red-500/10\" },",
+    "ru": "ВЫСОКИЙ РИСК"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\neon-badge.tsx",
+    "line": 51,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "UNKNOWN",
+    "context": "UNKNOWN: { label: \"UNKNOWN\", color: \"text-zinc-300\", bg: \"bg-zinc-500/10\" },",
+    "ru": "НЕИЗВЕСТНО"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\score-ring.tsx",
+    "line": 55,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Score",
+    "context": "<span className=\"text-[10px] uppercase tracking-wider text-zinc-400\">{label}</span>",
+    "ru": "Оценка"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsConsole.tsx",
+    "line": 31,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Voice",
+    "context": "<Mic className=\"h-3 w-3 drop-shadow-[0_0_5px_currentColor] group-hover:animate-pulse\" /> Voice\n</button>",
+    "ru": "Голос"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsConsole.tsx",
+    "line": 38,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Attach",
+    "context": "{ icon: Paperclip, label: \"Attach\" },",
+    "ru": "Вложение"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsConsole.tsx",
+    "line": 38,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Camera",
+    "context": "{ icon: Camera, label: \"Camera\" },",
+    "ru": "Камера"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsConsole.tsx",
+    "line": 38,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Browser",
+    "context": "{ icon: Globe, label: \"Browser\" },",
+    "ru": "Браузер"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsConsole.tsx",
+    "line": 38,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Terminal",
+    "context": "{ icon: TerminalSquare, label: \"Terminal\" },",
+    "ru": "Терминал"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsConsole.tsx",
+    "line": 38,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Share",
+    "context": "{ icon: MonitorUp, label: \"Share\" },",
+    "ru": "Поделиться"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsConsole.tsx",
+    "line": 63,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Awaiting command...",
+    "context": "placeholder=\"Awaiting command...\"",
+    "ru": "Ожидание команды..."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\TerminalPanel.tsx",
+    "line": 56,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "ДЖАРВИС Terminal — локальный shell (PowerShell/cmd/bash). Esc или клик вне панели — закрыть.",
+    "context": "{ id: 0, kind: \"info\", text: \"ДЖАРВИС Terminal — локальный shell (PowerShell/cmd/bash). Esc или клик вне панели — закрыть.\" }",
+    "ru": "ДЖАРВИС Terminal — локальный shell (PowerShell/cmd/bash). Esc или клик вне панели — закрыть."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsSystemStatus.tsx",
+    "line": 95,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "System Core (Live)",
+    "context": "<Database className=\"h-3 w-3 drop-shadow-[0_0_5px_currentColor]\" />\nSystem Core (Live)",
+    "ru": "Ядро системы (Live)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\OsSystemStatus.tsx",
+    "line": 137,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Neural Models",
+    "context": "<Brain className=\"h-3 w-3 drop-shadow-[0_0_5px_currentColor]\" />\nNeural Models",
+    "ru": "Нейромодели"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\GlobalFileExplorer.tsx",
+    "line": 48,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Files",
+    "context": "<FolderOpen className=\"h-3.5 w-3.5 drop-shadow-[0_0_5px_currentColor]\" />\nFiles",
+    "ru": "Файлы"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\GlobalTerminal.tsx",
+    "line": 48,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Terminal",
+    "context": "<TerminalSquare className=\"h-3.5 w-3.5 drop-shadow-[0_0_5px_currentColor]\" />\nTerminal",
+    "ru": "Терминал"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\os\\FileExplorer.tsx",
+    "line": 127,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Workspace root",
+    "context": "aria-label=\"Home\"\ntitle=\"Workspace root\"",
+    "ru": "Корень рабочего пространства"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 95,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Dashboard",
+    "context": "{ label: \"Dashboard\", href: \"/\" },",
+    "ru": "Панель"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 96,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Projects",
+    "context": "{ label: \"Projects\", href: \"/projects\" },",
+    "ru": "Проекты"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 97,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Agents",
+    "context": "{ label: \"Agents\", href: \"/agents\" },",
+    "ru": "Агенты"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 98,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Memory",
+    "context": "{ label: \"Memory\", href: \"/memory\" },",
+    "ru": "Память"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 99,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Analysis",
+    "context": "{ label: \"Analysis\", href: \"/upload\" },",
+    "ru": "Анализ"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 100,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "System",
+    "context": "{ label: \"System\", href: \"/system\" },",
+    "ru": "Система"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 101,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Settings",
+    "context": "{ label: \"Settings\", href: \"/settings\" },",
+    "ru": "Настройки"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 140,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GPU",
+    "context": "<span className=\"text-zinc-500\">GPU</span>",
+    "ru": "GPU"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 144,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "RAM",
+    "context": "<span className=\"text-zinc-500\">RAM</span>",
+    "ru": "RAM"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 148,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Model",
+    "context": "<span className=\"text-zinc-500\">Model</span>",
+    "ru": "Модель"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 149,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "OpenRouter (Primary)",
+    "context": "<span className=\"text-lime-400\">OpenRouter (Primary)</span>",
+    "ru": "OpenRouter (Primary)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 152,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Tokens",
+    "context": "<span className=\"text-zinc-500\">Tokens</span>",
+    "ru": "Токены"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 156,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Lat",
+    "context": "<span className=\"text-zinc-500\">Lat</span>",
+    "ru": "Lat"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 160,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Queue",
+    "context": "<span className=\"text-zinc-500\">Queue</span>",
+    "ru": "Очередь"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\topbar.tsx",
+    "line": 166,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "SYSTEM ONLINE",
+    "context": "<span className=\"text-lime-400 hidden sm:block\">SYSTEM ONLINE</span>",
+    "ru": "СИСТЕМА ОНЛАЙН"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 39,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Projects",
+    "context": "{ icon: FolderKanban, label: \"Projects\", color: \"text-blue-400\",   action: { kind: \"route\", href: \"/projects\" } },",
+    "ru": "Проекты"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 40,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "GitHub",
+    "context": "{ icon: Github,       label: \"GitHub\",   color: \"text-zinc-200\",  action: { kind: \"route\", href: \"/repos\" } },",
+    "ru": "GitHub"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 41,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Terminal",
+    "context": "{ icon: Terminal,     label: \"Terminal\", color: \"text-green-400\",  action: { kind: \"terminal\" } },",
+    "ru": "Терминал"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 42,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Browser",
+    "context": "{ icon: Globe,        label: \"Browser\",  color: \"text-cyan-400\",   action: { kind: \"external\", href: \"http://localhost:3000\" } },",
+    "ru": "Браузер"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 43,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Files",
+    "context": "{ icon: Folder,       label: \"Files\",    color: \"text-amber-400\",  action: { kind: \"files\" } },",
+    "ru": "Файлы"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 44,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Memory",
+    "context": "{ icon: HardDrive,    label: \"Memory\",   color: \"text-purple-400\", action: { kind: \"route\", href: \"/memory\" } },",
+    "ru": "Память"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 45,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Calendar",
+    "context": "{ icon: Calendar,     label: \"Calendar\", color: \"text-red-400\",    action: { kind: \"toast\", title: \"Calendar\", description: \"Календарь задач скоро будет доступен.\" } },",
+    "ru": "Календарь"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 46,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Settings",
+    "context": "{ icon: Settings,     label: \"Settings\", color: \"text-zinc-400\",   action: { kind: \"route\", href: \"/settings\" } },",
+    "ru": "Настройки"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 47,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Docker",
+    "context": "{ icon: Server,       label: \"Docker\",   color: \"text-blue-500\",   action: { kind: \"route\", href: \"/deploy\" } },",
+    "ru": "Docker"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\mac-dock.tsx",
+    "line": 48,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "VSCode",
+    "context": "{ icon: Code2,        label: \"VSCode\",   color: \"text-sky-400\",    action: { kind: \"protocol\", href: \"vscode://file/D:/АГЕНТ/ДЖАРВИС\" } },",
+    "ru": "VSCode"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\chat-bar.tsx",
+    "line": 33,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Ask JARVIS...",
+    "context": "placeholder=\"Ask JARVIS...\"",
+    "ru": "Спросите ДЖАРВИС..."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\page-utils.tsx",
+    "line": 62,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Something went wrong",
+    "context": "<h3 className=\"text-lg font-bold text-red-300\">Something went wrong</h3>\n<p className=\"text-sm text-muted-foreground max-w-md\">{message}</p>",
+    "ru": "Что-то пошло не так"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\page-utils.tsx",
+    "line": 67,
+    "type": "UI_BUTTON",
+    "marker": "BUTTON_LABEL",
+    "text": "Retry",
+    "context": "<button\n  onClick={onRetry}\n  className=\"px-4 py-2 rounded-lg border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/10 transition\"\n>\n  Retry\n</button>",
+    "ru": "Повторить"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 23,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Home",
+    "context": "{ href: '/', label: 'Home', icon: Home },",
+    "ru": "Главная"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 24,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Dashboard",
+    "context": "{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },",
+    "ru": "Панель"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 25,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Upload Screenshot",
+    "context": "{ href: '/upload', label: 'Upload Screenshot', icon: Upload },",
+    "ru": "Загрузить скриншот"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 26,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Repositories",
+    "context": "{ href: '/repos', label: 'Repositories', icon: Boxes },",
+    "ru": "Репозитории"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 27,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Compare",
+    "context": "{ href: '/compare', label: 'Compare', icon: GitCompareArrows },",
+    "ru": "Сравнить"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 28,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Verdict Board",
+    "context": "{ href: '/board', label: 'Verdict Board', icon: Columns3 },",
+    "ru": "Доска вердиктов"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 29,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Watchlist",
+    "context": "{ href: '/watchlist', label: 'Watchlist', icon: Eye },",
+    "ru": "Избранное"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 30,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Manual Review",
+    "context": "{ href: '/manual-review', label: 'Manual Review', icon: ClipboardCheck },",
+    "ru": "Ручная проверка"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 31,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Categories",
+    "context": "{ href: '/categories', label: 'Categories', icon: FolderTree },",
+    "ru": "Категории"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 32,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Settings",
+    "context": "{ href: '/settings', label: 'Settings', icon: Settings },",
+    "ru": "Настройки"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 33,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Voice Assistant",
+    "context": "{ href: '/voice', label: 'Voice Assistant', icon: Mic },",
+    "ru": "Голосовой помощник"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 64,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Command Palette",
+    "context": "<DialogPrimitive.Title className=\"sr-only\">Command Palette</DialogPrimitive.Title>",
+    "ru": "Командная палитра"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 72,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Search commands, pages, actions…",
+    "context": "placeholder=\"Search commands, pages, actions…\"",
+    "ru": "Поиск команд, страниц, действий…"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 80,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "No results found.",
+    "context": "<Command.Empty className=\"text-center text-xs text-muted-foreground py-6\">\n  No results found.\n</Command.Empty>",
+    "ru": "Ничего не найдено."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\layout\\command-palette.tsx",
+    "line": 82,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Navigate",
+    "context": "<Command.Group heading=\"Navigate\" className=\"text-xs text-muted-foreground px-1 pb-1\">",
+    "ru": "Навигация"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 62,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Integration Plan для моего проекта",
+    "context": "<Wrench className=\"h-4 w-4\" />\n<h2 className=\"font-mono text-xs uppercase tracking-wider\">Integration Plan для моего проекта</h2>",
+    "ru": "План интеграции для моего проекта"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 86,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Mock-режим — добавьте GLM_API_KEY для real AI plan",
+    "context": "<div className=\"rounded border border-amber-400/30 bg-amber-500/10 p-2 text-[10px] text-amber-300\">\n  Mock-режим — добавьте GLM_API_KEY для real AI plan\n</div>",
+    "ru": "Mock-режим — добавьте GLM_API_KEY для настоящего AI-плана"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 95,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Estimated effort:",
+    "context": "<Clock className=\"h-3 w-3 text-cyan-300\" />\n<span className=\"text-xs text-zinc-400\">Estimated effort:</span>",
+    "ru": "Оценка усилий:"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 108,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Reusable components",
+    "context": "<PlanSection title=\"Reusable components\" items={plan.reusableComponents} accent=\"text-cyan-300\" />",
+    "ru": "Повторно используемые компоненты"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 109,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "API patterns",
+    "context": "<PlanSection title=\"API patterns\" items={plan.apiPatterns} accent=\"text-fuchsia-300\" />",
+    "ru": "Паттерны API"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 110,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Agent workflow ideas",
+    "context": "<PlanSection title=\"Agent workflow ideas\" items={plan.agentWorkflowIdeas} accent=\"text-cyan-300\" />",
+    "ru": "Идеи workflow агентов"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 112,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Required dependencies",
+    "context": "<PlanSection title=\"Required dependencies\" items={plan.requiredDeps} accent=\"text-amber-300\" />",
+    "ru": "Необходимые зависимости"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 113,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Compatibility concerns",
+    "context": "<PlanSection title=\"Compatibility concerns\" items={plan.compatibilityConcerns} accent=\"text-amber-300\" />",
+    "ru": "Проблемы совместимости"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 114,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Risks",
+    "context": "<PlanSection title=\"Risks\" items={plan.risks} accent=\"text-red-300\" />",
+    "ru": "Риски"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 115,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Implementation steps",
+    "context": "<PlanSection title=\"Implementation steps\" items={plan.implementationSteps} accent=\"text-cyan-300\" numbered />",
+    "ru": "Шаги внедрения"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\projects\\integration-plan-panel.tsx",
+    "line": 121,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Финальная рекомендация",
+    "context": "<div className=\"text-[10px] uppercase text-cyan-300\">Финальная рекомендация</div>",
+    "ru": "Финальная рекомендация"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 46,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "My PC Profile",
+    "context": "<Cpu className=\"h-4 w-4\" />\n<h2 className=\"font-mono text-xs uppercase tracking-wider\">My PC Profile</h2>",
+    "ru": "Профиль моего ПК"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 50,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Compatibility scoring uses this profile. CUDA-only repos will be flagged because your GPU is AMD Radeon RX 580.",
+    "context": "<p className=\"text-[11px] text-zinc-500\">\n  Compatibility scoring uses this profile. CUDA-only repos will be flagged because your GPU is AMD Radeon RX 580.\n</p>",
+    "ru": "Подсчёт совместимости использует этот профиль. Репозитории только с CUDA будут помечены, потому что ваша GPU — AMD Radeon RX 580."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 54,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Profile name",
+    "context": "<Label>Profile name</Label>",
+    "ru": "Имя профиля"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 58,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "OS",
+    "context": "<Label>OS</Label>",
+    "ru": "ОС"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 62,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "System type",
+    "context": "<Label>System type</Label>",
+    "ru": "Тип системы"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 66,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "CPU",
+    "context": "<Label>CPU</Label>",
+    "ru": "CPU"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 70,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "CPU cores hint",
+    "context": "<Label>CPU cores hint</Label>",
+    "ru": "Подсказка по ядрам CPU"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 74,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "RAM (GB)",
+    "context": "<Label>RAM (GB) <MemoryStick className=\"inline h-3 w-3\" /></Label>",
+    "ru": "RAM (ГБ)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 80,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GPU",
+    "context": "<Label>GPU</Label>",
+    "ru": "GPU"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 84,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "VRAM (GB)",
+    "context": "<Label>VRAM (GB)</Label>",
+    "ru": "VRAM (ГБ)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 88,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Storage total (GB)",
+    "context": "<Label>Storage total (GB) <HardDrive className=\"inline h-3 w-3\" /></Label>",
+    "ru": "Общий объём хранилища (ГБ)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 92,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Storage used (GB)",
+    "context": "<Label>Storage used (GB)</Label>",
+    "ru": "Использовано хранилища (ГБ)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 96,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Storage free (GB)",
+    "context": "<Label>Storage free (GB)</Label>",
+    "ru": "Свободно хранилища (ГБ)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 100,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Python version",
+    "context": "<Label>Python version</Label>",
+    "ru": "Версия Python"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 109,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Node.js version",
+    "context": "<Label>Node.js version</Label>",
+    "ru": "Версия Node.js"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 119,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Git",
+    "context": "<span className=\"text-xs text-zinc-300\">Git</span>",
+    "ru": "Git"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 124,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "CUDA (locked)",
+    "context": "<span className=\"text-xs text-amber-300 flex items-center gap-1\">\n  <AlertTriangle className=\"h-3 w-3\" /> CUDA (locked)\n</span>",
+    "ru": "CUDA (заблокировано)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 128,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "ROCm",
+    "context": "<span className=\"text-xs text-zinc-300\">ROCm</span>",
+    "ru": "ROCm"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 132,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "CUDA is locked to <b>false</b> — your GPU is AMD Radeon RX 580 2048SP, not NVIDIA.",
+    "context": "<AlertTriangle className=\"inline h-3 w-3 mr-1\" />\nCUDA is locked to <b>false</b> — your GPU is AMD Radeon RX 580 2048SP, not NVIDIA.",
+    "ru": "CUDA заблокировано в <b>false</b> — ваша GPU AMD Radeon RX 580 2048SP, не NVIDIA."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 140,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "preferred run mode",
+    "context": "placeholder=\"preferred run mode\"",
+    "ru": "предпочтительный режим запуска"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\pc-profile-settings.tsx",
+    "line": 141,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "fallback run mode",
+    "context": "placeholder=\"fallback run mode\"",
+    "ru": "резервный режим запуска"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 49,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Cloud Provider Policy",
+    "context": "<Cloud className=\"h-4 w-4\" />\n<h2 className=\"font-mono text-xs uppercase tracking-wider\">Cloud Provider Policy</h2>",
+    "ru": "Политика облачных провайдеров"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 62,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Provider",
+    "context": "<div className=\"text-[10px] uppercase text-fuchsia-300/80\">Provider</div>",
+    "ru": "Провайдер"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 72,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "LOCKED",
+    "context": "<Lock className=\"h-3 w-3\" /> LOCKED\n</span>",
+    "ru": "ЗАБЛОКИРОВАНО"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 75,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "ALLOWED",
+    "context": "<ShieldCheck className=\"h-3 w-3\" /> ALLOWED\n</span>",
+    "ru": "РАЗРЕШЕНО"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 84,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Only <b>Ollama Cloud</b> is enabled as the cloud fallback provider. Other cloud/GPU providers are disabled by policy. You cannot select another provider.",
+    "context": "<AlertTriangle className=\"mr-1 inline h-3 w-3\" />\nOnly <b>Ollama Cloud</b> is enabled as the cloud fallback provider. Other cloud/GPU providers are disabled by policy. You cannot select another provider.",
+    "ru": "В качестве резервного облачного провайдера включён только <b>Ollama Cloud</b>. Другие облачные/GPU-провайдеры отключены политикой. Вы не можете выбрать другого."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 91,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Pricing status",
+    "context": "<div className=\"font-mono text-[10px] uppercase text-cyan-300\">Pricing status</div>",
+    "ru": "Статус ценообразования"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 94,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Checked at: ",
+    "context": "<div className=\"mt-2 text-[10px] text-zinc-500\">Checked at: {data.pricing.checkedAt ?? \"never — requires live check\"}</div>",
+    "ru": "Проверено: "
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 94,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "never — requires live check",
+    "context": "<div className=\"mt-2 text-[10px] text-zinc-500\">Checked at: {data.pricing.checkedAt ?? \"never — requires live check\"}</div>",
+    "ru": "никогда — требуется live-проверка"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\cloud-provider-policy.tsx",
+    "line": 117,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Disabled providers (informational)",
+    "context": "<summary className=\"cursor-pointer text-zinc-400\">Disabled providers (informational)</summary>",
+    "ru": "Отключённые провайдеры (справочно)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 49,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Loading AI Provider Status...",
+    "context": "if (!data) return <div className=\"text-cyan-300\">Loading AI Provider Status...</div>;",
+    "ru": "Загрузка статуса AI-провайдеров..."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 60,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "AI Provider Routing",
+    "context": "<h3 className=\"font-mono text-sm uppercase text-cyan-400\">AI Provider Routing</h3>",
+    "ru": "Маршрутизация AI-провайдеров"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 61,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Configure keys in .env.local. UI only shows status to prevent secret leaks.",
+    "context": "<p className=\"text-xs text-zinc-400 mt-1\">Configure keys in .env.local. UI only shows status to prevent secret leaks.</p>",
+    "ru": "Настройте ключи в .env.local. UI показывает только статус, чтобы предотвратить утечку секретов."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 65,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Primary & Heavy",
+    "context": "<div className=\"text-xs font-semibold text-zinc-500 uppercase tracking-wider\">Primary & Heavy</div>",
+    "ru": "Основной и тяжёлый"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 66,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "OLLAMA CLOUD",
+    "context": "<StatusRow label=\"OLLAMA CLOUD\" isConfigured={getProv(\"ollama-cloud\")} subtext=\"Role: Primary Fast (Chat, UI)\" />",
+    "ru": "OLLAMA CLOUD"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 66,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Role: Primary Fast (Chat, UI)",
+    "context": "<StatusRow label=\"OLLAMA CLOUD\" isConfigured={getProv(\"ollama-cloud\")} subtext=\"Role: Primary Fast (Chat, UI)\" />",
+    "ru": "Роль: основной быстрый (чат, UI)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 67,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "GLM 5.2",
+    "context": "<StatusRow label=\"GLM 5.2\" isConfigured={getProv(\"glm\")} subtext=\"Role: Heavy Reasoning (Analysis, Patch)\" />",
+    "ru": "GLM 5.2"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 67,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Role: Heavy Reasoning (Analysis, Patch)",
+    "context": "<StatusRow label=\"GLM 5.2\" isConfigured={getProv(\"glm\")} subtext=\"Role: Heavy Reasoning (Analysis, Patch)\" />",
+    "ru": "Роль: сложные рассуждения (анализ, патчи)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 71,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Fallback Providers",
+    "context": "<div className=\"text-xs font-semibold text-zinc-500 uppercase tracking-wider\">Fallback Providers</div>",
+    "ru": "Резервные провайдеры"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 72,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "OpenRouter",
+    "context": "<StatusRow label=\"OpenRouter\" isConfigured={getProv(\"openrouter\")} />",
+    "ru": "OpenRouter"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 73,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Gemini",
+    "context": "<StatusRow label=\"Gemini\" isConfigured={getProv(\"gemini\")} />",
+    "ru": "Gemini"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 74,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "OpenAI",
+    "context": "<StatusRow label=\"OpenAI\" isConfigured={getProv(\"openai\")} />",
+    "ru": "OpenAI"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 75,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Groq",
+    "context": "<StatusRow label=\"Groq\" isConfigured={getProv(\"groq\")} />",
+    "ru": "Groq"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 76,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Cerebras",
+    "context": "<StatusRow label=\"Cerebras\" isConfigured={getProv(\"cerebras\")} />",
+    "ru": "Cerebras"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 88,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Mock Mode Fallback",
+    "context": "<span className=\"text-sm text-zinc-300\">Mock Mode Fallback</span>",
+    "ru": "Резервный Mock-режим"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 90,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "ACTIVE (NO REAL AI)",
+    "context": "{data.mockMode ? \"ACTIVE (NO REAL AI)\" : \"INACTIVE\"}",
+    "ru": "АКТИВЕН (НЕТ НАСТОЯЩЕГО AI)"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\settings\\ai-provider-center.tsx",
+    "line": 90,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "INACTIVE",
+    "context": "{data.mockMode ? \"ACTIVE (NO REAL AI)\" : \"INACTIVE\"}",
+    "ru": "НЕАКТИВЕН"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\GlobalCommandDock.tsx",
+    "line": 97,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "ДЖАРВИС Signal Console",
+    "context": "<span className=\"text-cyan-500 opacity-60\">((+))</span>\nДЖАРВИС Signal Console",
+    "ru": "Консоль сигналов ДЖАРВИС"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\GlobalCommandDock.tsx",
+    "line": 104,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Processing",
+    "context": "<span className=\"uppercase tracking-wider\">Processing</span>",
+    "ru": "Обработка"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\GlobalCommandDock.tsx",
+    "line": 110,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Fallback Mode",
+    "context": "<span className=\"uppercase tracking-wider\">{fallbackMode ? \"Fallback Mode\" : \"System Ready\"}</span>",
+    "ru": "Резервный режим"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\GlobalCommandDock.tsx",
+    "line": 110,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "System Ready",
+    "context": "<span className=\"uppercase tracking-wider\">{fallbackMode ? \"Fallback Mode\" : \"System Ready\"}</span>",
+    "ru": "Система готова"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\JarwisyanChatPanel.tsx",
+    "line": 138,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "ДЖАРВИС Signal Console",
+    "context": "<span className=\"font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-300 font-semibold\">ДЖАРВИС Signal Console</span>",
+    "ru": "Консоль сигналов ДЖАРВИС"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\JarwisyanChatPanel.tsx",
+    "line": 154,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Обработка",
+    "context": "<span className=\"uppercase tracking-wider\">Обработка</span>",
+    "ru": "Обработка"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\JarwisyanChatPanel.tsx",
+    "line": 160,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Fallback режим",
+    "context": "<span className=\"uppercase tracking-wider\">{fallbackMode ? \"Fallback режим\" : \"Готов к анализу\"}</span>",
+    "ru": "Резервный режим"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\JarwisyanChatPanel.tsx",
+    "line": 160,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Готов к анализу",
+    "context": "<span className=\"uppercase tracking-wider\">{fallbackMode ? \"Fallback режим\" : \"Готов к анализу\"}</span>",
+    "ru": "Готов к анализу"
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\JarwisyanChatPanel.tsx",
+    "line": 253,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Сигнал обрабатывается...",
+    "context": "<Loader2 className=\"h-3 w-3 animate-spin\" /> Сигнал обрабатывается...",
+    "ru": "Сигнал обрабатывается..."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\chat\\JarwisyanChatPanel.tsx",
+    "line": 280,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Спросите ДЖАРВИС: проанализировать репозиторий, подключить проект или создать план интеграции...",
+    "context": "placeholder=\"Спросите ДЖАРВИС: проанализировать репозиторий, подключить проект или создать план интеграции...\"",
+    "ru": "Спросите ДЖАРВИС: проанализировать репозиторий, подключить проект или создать план интеграции..."
+  },
+  {
+    "file": "D:\\АГЕНТ\\ДЖАРВИС\\src\\components\\futuristic\\command-palette.tsx",
+    "line": 64,
+    "type": "UI",
+    "marker": "NOT_BUTTON",
+    "text": "Command Palette",
+    "context": "<DialogPrimitive.Title className=\"sr-only\">Command Palette</DialogPrimitive.Title>",
+    "ru": "Командная палитра"
+  }
+]
