@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { execFile } from "child_process";
-import { writeFile, mkdtemp, unlink, readFile } from "fs/promises";
+import { mkdtemp, unlink, readFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { randomUUID } from "node:crypto";
@@ -8,9 +8,9 @@ import { uploadAsset } from "@/services/storage.service";
 
 export const runtime = "nodejs";
 
-// Path to edge-tts CLI (installed via pip install edge-tts)
-const EDGE_TTS_BIN =
-  "C:\\Users\\Admin\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\Scripts\\edge-tts.exe";
+// Resolve the CLI by its stable command name. A user-profile absolute path leaks
+// machine-specific details and cannot be copied into a standalone Next.js bundle.
+const EDGE_TTS_BIN = process.platform === "win32" ? "edge-tts.exe" : "edge-tts";
 
 export async function POST(req: Request) {
   try {
