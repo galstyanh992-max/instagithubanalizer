@@ -43,6 +43,29 @@ async function runThreeWorkersE2E() {
   if (codexPlan.shell !== false) {
     throw new Error('Security Violation: Codex shell must be false!');
   }
+  if (codexPlan.args.some(arg =>
+    arg.includes('dangerously-bypass-approvals-and-sandbox') ||
+    arg.includes('--yolo') ||
+    arg.includes('danger-full-access') ||
+    arg.includes('--full-auto')
+  )) {
+    throw new Error('Security Violation: Codex dangerous bypass flags present!');
+  }
+  // `codex exec` (codex-cli 0.145.0) rejects `--ask-for-approval` outright — the
+  // approval-never policy is expressed via an inline config override instead.
+  // See 05ZLRT for the dynamic evidence that required this repair.
+  if (codexPlan.args.includes('--ask-for-approval')) {
+    throw new Error('Security Violation: Codex must not pass unsupported --ask-for-approval to exec!');
+  }
+  if (!codexPlan.args.includes('workspace-write') || !codexPlan.args.includes('approval_policy="never"')) {
+    throw new Error('Security Violation: Codex sandbox/approval policy not in expected fail-closed state!');
+  }
+  if (!codexPlan.args.includes('-c')) {
+    throw new Error('Security Violation: Codex inline approval config override (-c) missing!');
+  }
+  if (codexPlan.args.includes(codexTask.instructions)) {
+    throw new Error('Security Violation: Codex prompt must not be passed via argv!');
+  }
 
   const codexResult = await codexAdapter.execute(codexTask, codexWorkspace, { timeoutMs: 180000 });
   const codexFinishTime = new Date().toISOString();

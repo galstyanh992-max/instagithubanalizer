@@ -3,11 +3,37 @@ import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Fail-closed sandbox policy for this adapter. These values are surfaced as
+// diagnostic strings on every WorkerResult (success, failure, timeout,
+// cancellation) so downstream auditing can confirm no dangerous bypass was
+// ever used, without requiring changes to the shared WorkerResult type.
+const CODEX_SANDBOX_DIAGNOSTICS = [
+  'sandboxPolicy=workspace-write',
+  'approvalPolicy=never-via-inline-config',
+  'dangerousBypassUsed=false',
+  'networkAccessEnabled=false'
+];
+
+// Structured, fail-closed failure classification for non-zero-exit results.
+// No dangerous fallback is ever attempted for any of these — a rejected/denied
+// run always surfaces as FAILED with a labeled reason, never a dangerous retry.
+function classifyCodexFailure(stderr: string): string {
+  const text = stderr || '';
+  if (/unexpected argument|error: unrecognized|found\s*$/im.test(text) && /codex exec/i.test(text)) {
+    return `CODEX_CLI_ARGUMENT_REJECTED: ${text}`;
+  }
+  if (/sandbox/i.test(text) && /(denied|not permitted|permission)/i.test(text)) {
+    return `CODEX_SANDBOX_DENIED: ${text}`;
+  }
+  return `CODEX_EXECUTION_FAILED: ${text || 'Non-zero exit code returned'}`;
+}
+
 export class CodexWorkerAdapter implements WorkerAdapter {
   id = 'codex_cli';
   displayName = 'Codex Local CLI';
 
   private activeProcesses: Map<string, child_process.ChildProcess> = new Map();
+  private cancelledRuns: Set<string> = new Set();
 
   async healthCheck(): Promise<WorkerHealth> {
     try {
@@ -63,18 +89,54 @@ export class CodexWorkerAdapter implements WorkerAdapter {
     if (!validation.valid) {
       throw new Error(`Invalid Task Payload: ${validation.reason}`);
     }
-    
+
+    // NON_INTERACTIVE_SANDBOXED policy: sandbox stays enabled (workspace-write),
+    // approvals are never prompted for (fully non-interactive), and the
+    // dangerous full-bypass flag is never emitted. The prompt itself is never
+    // passed as a CLI argument — it is written to stdin and terminated with
+    // EOF (see execute()); '-' tells Codex to read the prompt from stdin.
+    //
+    // `--ask-for-approval` is intentionally NOT used: the installed `codex exec`
+    // subcommand (verified against codex-cli 0.145.0's own `--help`) does not
+    // expose that flag at all — it only exists on the top-level interactive
+    // `codex` command and is rejected by `exec` with "unexpected argument"
+    // (exit code 2). `codex exec` is already non-interactive by construction,
+    // so the equivalent, exec-supported mechanism is an inline config override
+    // via `-c approval_policy="never"`, which `codex exec --help` confirms is
+    // accepted (`-c, --config <key=value>`). This preserves the same fail-closed
+    // "never ask for approval" intent without passing an argument exec rejects.
     let command = 'codex';
-    let args = ['exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', task.instructions];
+    let args = [
+      'exec',
+      '--sandbox', 'workspace-write',
+      '-c', 'approval_policy="never"',
+      '--cd', workspaceRoot,
+      '--json',
+      '--skip-git-repo-check',
+      '-'
+    ];
 
     if (process.platform === 'win32') {
       command = 'node';
       const codexPath = process.env.APPDATA ? `${process.env.APPDATA}\\npm\\node_modules\\@openai\\codex\\bin\\codex.js` : 'C:\\Users\\Admin\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\bin\\codex.js';
-      args = [codexPath, 'exec', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', task.instructions];
+      args = [
+        codexPath,
+        'exec',
+        '--sandbox', 'workspace-write',
+        '-c', 'approval_policy="never"',
+        '--cd', workspaceRoot,
+        '--json',
+        '--skip-git-repo-check',
+        '-'
+      ];
     }
 
     const customEnv = { ...process.env };
-    
+    // API-key fallback is explicitly disallowed: this adapter relies on the
+    // ChatGPT subscription OAuth session already established via `codex login`.
+    delete customEnv.OPENAI_API_KEY;
+    delete customEnv.CODEX_API_KEY;
+
     return {
       command,
       args,
@@ -109,6 +171,9 @@ export class CodexWorkerAdapter implements WorkerAdapter {
         stdio: ['pipe', 'pipe', 'pipe']
       });
 
+      // Prompt is delivered exclusively via stdin, then EOF-terminated.
+      // It is never interpolated into argv (avoids arg-injection surface).
+      child.stdin?.write(task.instructions);
       child.stdin?.end();
 
       this.activeProcesses.set(runId, child);
@@ -156,8 +221,31 @@ export class CodexWorkerAdapter implements WorkerAdapter {
             stderrSummary: stderr.substring(0, 1000),
             exitCode: -1,
             durationMs,
-            warnings: ['TIMEOUT_EXCEEDED'],
-            errors: ['Process killed due to execution timeout.']
+            warnings: ['TIMEOUT_EXCEEDED', ...CODEX_SANDBOX_DIAGNOSTICS],
+            errors: ['CODEX_TIMED_OUT: Process killed due to execution timeout. No automatic dangerous-mode retry was attempted.']
+          });
+        }
+
+        if (this.cancelledRuns.has(runId)) {
+          this.cancelledRuns.delete(runId);
+          return resolve({
+            workerId: this.id,
+            taskId,
+            runId,
+            executionId,
+            status: 'CANCELLED',
+            summary: 'Execution cancelled by caller.',
+            changedFiles: [],
+            createdFiles: [],
+            deletedFiles: [],
+            artifacts: [],
+            patchPath: '',
+            stdoutSummary: stdout.substring(0, 1000),
+            stderrSummary: stderr.substring(0, 1000),
+            exitCode: -1,
+            durationMs,
+            warnings: [...CODEX_SANDBOX_DIAGNOSTICS],
+            errors: ['CODEX_CANCELLED: Process terminated via cancel(). No automatic dangerous-mode retry was attempted.']
           });
         }
 
@@ -204,8 +292,8 @@ export class CodexWorkerAdapter implements WorkerAdapter {
           stderrSummary: stderr.substring(0, 1000),
           exitCode: code,
           durationMs,
-          warnings: [],
-          errors: code !== 0 ? [stderr || 'Non-zero exit code returned'] : []
+          warnings: [...CODEX_SANDBOX_DIAGNOSTICS],
+          errors: code !== 0 ? [classifyCodexFailure(stderr)] : []
         });
       });
 
@@ -229,7 +317,7 @@ export class CodexWorkerAdapter implements WorkerAdapter {
           stderrSummary: err.message,
           exitCode: -1,
           durationMs,
-          warnings: [],
+          warnings: [...CODEX_SANDBOX_DIAGNOSTICS],
           errors: [err.message]
         });
       });
@@ -239,6 +327,7 @@ export class CodexWorkerAdapter implements WorkerAdapter {
   async cancel(runId: string): Promise<boolean> {
     const child = this.activeProcesses.get(runId);
     if (child) {
+      this.cancelledRuns.add(runId);
       child.kill('SIGTERM');
       this.activeProcesses.delete(runId);
       return true;
