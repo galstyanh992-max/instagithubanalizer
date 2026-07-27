@@ -195,6 +195,7 @@ async function runThreeWorkersE2E() {
     runId: `run-agy-${Date.now()}`,
     projectId: 'phase05-e2e',
     projectRoot: agyWorkspace,
+    requestedProfile: 'CODE_REVIEW' as const,
     instructions: 'Review input/sample.ts.\nIdentify correctness and edge-case risks.\nReturn the review through stdout.\nDo not create, modify, or delete files.\nDo not execute commands.',
     files: [],
     requiresFilesystemWrite: false,
@@ -210,6 +211,17 @@ async function runThreeWorkersE2E() {
     throw new Error('Security Violation: Antigravity bypass flags present!');
   }
 
+  if (!agyPlan.args.includes('--model')) {
+    throw new Error('Security Violation: Antigravity must pass --model explicitly!');
+  }
+  const agyModelIdx = agyPlan.args.indexOf('--model');
+  if (!agyPlan.args[agyModelIdx + 1] || /2\.5/.test(agyPlan.args[agyModelIdx + 1])) {
+    throw new Error('Security Violation: Antigravity model value is missing or stale!');
+  }
+  if (agyPlan.modelProfile !== 'primary') {
+    throw new Error('Security Violation: Antigravity model profile must be primary for CODE_REVIEW!');
+  }
+
   const agyResult = await antigravityAdapter.execute(agyTask, agyWorkspace, { timeoutMs: 180000 });
   const agyFinishTime = new Date().toISOString();
   console.log('Antigravity Result:', { status: agyResult.status, exitCode: agyResult.exitCode, createdFiles: agyResult.createdFiles });
@@ -218,6 +230,12 @@ async function runThreeWorkersE2E() {
     throw new Error(`Antigravity E2E failed with status=${agyResult.status}, exitCode=${agyResult.exitCode}`);
   }
   
+  if (!agyResult.modelCliValue || /2\.5/.test(agyResult.modelCliValue)) {
+    throw new Error('Security Violation: Antigravity result diagnostics missing verified model value!');
+  }
+  if (agyResult.modelSelection !== 'explicit-cli-argument' || agyResult.modelFallbackUsed !== false) {
+    throw new Error('Security Violation: Antigravity explicit model routing diagnostics invalid!');
+  }
   if (!agyResult.stdoutSummary || agyResult.stdoutSummary.trim().length === 0) {
     throw new Error('Antigravity E2E failed: stdout is empty, expected review content');
   }

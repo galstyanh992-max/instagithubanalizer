@@ -41,6 +41,10 @@ export interface ExecutionPlan {
   env?: NodeJS.ProcessEnv;
   shell?: boolean;
   fingerprint?: string;
+  // Antigravity explicit model routing diagnostics (owner-approved, verified CLI values).
+  modelProfile?: 'primary' | 'fast';
+  modelLabel?: string;
+  modelCliValue?: string;
 }
 
 export interface NormalizedPatch {
@@ -74,6 +78,17 @@ export interface WorkerResult {
   durationMs: number;
   warnings: string[];
   errors: string[];
+  // Antigravity explicit model routing diagnostics (non-secret).
+  modelProfile?: 'primary' | 'fast';
+  modelLabel?: string;
+  modelCliValue?: string;
+  modelSelection?: 'explicit-cli-argument';
+  internalDefaultAllowed?: boolean;
+  modelFallbackUsed?: boolean;
+  permissionPolicy?: 'READ_ONLY_FAIL_CLOSED';
+  writeCapability?: 'disabled';
+  commandExecutionCapability?: 'disabled';
+  dangerousPermissionsUsed?: boolean;
 }
 
 export interface WorkerAdapter {

@@ -3,20 +3,49 @@ import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * Owner-approved Antigravity models (verified against local agy.exe 1.1.7).
+ *
+ * PRIMARY = Gemini 3.1 Pro  -> gemini-3.1-pro-high
+ * FAST    = Gemini 3.6 Flash -> gemini-3.6-flash-medium
+ *
+ * No stale 2.5 models. No internal default model. No API IDs. No silent
+ * fallback. Every value here was accepted by the local CLI via
+ * `--model <value>` and returned the expected verification token.
+ */
+export type AntigravityModelTier = 'primary' | 'fast';
+
+export interface AntigravityModelEntry {
+  label: string;
+  cliValue: string;
+}
+
+export const ANTIGRAVITY_MODEL_CONFIG: Record<AntigravityModelTier, AntigravityModelEntry> = {
+  primary: {
+    label: 'Gemini 3.1 Pro',
+    cliValue: 'gemini-3.1-pro-high'
+  },
+  fast: {
+    label: 'Gemini 3.6 Flash',
+    cliValue: 'gemini-3.6-flash-medium'
+  }
+};
+
 export const ALLOWED_ANTIGRAVITY_MODELS = [
-  'gemini-2.5-pro',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-1.5-pro'
+  ANTIGRAVITY_MODEL_CONFIG.primary.cliValue,
+  ANTIGRAVITY_MODEL_CONFIG.fast.cliValue
 ] as const;
 
-export const DEFAULT_ANTIGRAVITY_MODEL = 'gemini-2.5-pro';
-
-export const MODEL_PROFILE_MAP: Record<ModelProfile, string> = {
-  FAST: 'gemini-2.5-flash',
-  BALANCED: 'gemini-2.5-flash',
-  DEEP_REASONING: 'gemini-2.5-pro',
-  CODE_REVIEW: 'gemini-2.5-pro'
+/**
+ * Maps a worker ModelProfile to an owner-approved model tier.
+ * DEEP_REASONING/CODE_REVIEW -> primary (Gemini 3.1 Pro).
+ * FAST/BALANCED -> fast (Gemini 3.6 Flash).
+ */
+export const MODEL_PROFILE_MAP: Record<ModelProfile, AntigravityModelTier> = {
+  FAST: 'fast',
+  BALANCED: 'fast',
+  DEEP_REASONING: 'primary',
+  CODE_REVIEW: 'primary'
 };
 
 export class AntigravityWorkerAdapter implements WorkerAdapter {
@@ -51,6 +80,38 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
     }
   }
 
+  /**
+   * Build a minimal, secret-free environment for spawning agy.exe.
+   * Only non-secret OS locator variables are forwarded so the CLI can find its
+   * config/OAuth store. Credentials, API keys, service-role keys, tokens and
+   * project secrets are never forwarded.
+   */
+  private buildSafeEnv(): NodeJS.ProcessEnv {
+    const SAFE_ENV_KEYS = [
+      'PATH',
+      'USERPROFILE',
+      'HOMEDRIVE',
+      'HOMEPATH',
+      'LOCALAPPDATA',
+      'APPDATA',
+      'SystemRoot',
+      'TEMP',
+      'TMP',
+      'ComSpec',
+      'OS',
+      'PATHEXT'
+    ];
+    const env: NodeJS.ProcessEnv = {
+      NODE_ENV: process.env.NODE_ENV || 'production'
+    };
+    for (const key of SAFE_ENV_KEYS) {
+      if (process.env[key] !== undefined && process.env[key] !== '') {
+        env[key] = process.env[key];
+      }
+    }
+    return env;
+  }
+
   async healthCheck(): Promise<WorkerHealth> {
     const execPath = this.resolveExecutablePath();
     if (!execPath) {
@@ -63,16 +124,17 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
     try {
       const versionStr = child_process.execSync(`"${execPath}" --version`, { stdio: 'pipe' }).toString().trim();
       
-      // Perform non-interactive probe in temporary isolated workspace
+      // Perform non-interactive probe in temporary isolated workspace.
+      // Explicit --model is always passed: Antigravity is never launched without it.
       const tempProbeDir = path.join('D:\\JARVIS_WORKSPACES', 'phase05-e2e', 'antigravity-auth-check');
       if (!fs.existsSync(tempProbeDir)) {
         fs.mkdirSync(tempProbeDir, { recursive: true });
       }
 
-      const probeOutput = child_process.execSync(`"${execPath}" -p "Reply exactly ANTIGRAVITY_AUTH_OK. Do not create or modify files."`, {
-        cwd: tempProbeDir,
-        stdio: 'pipe'
-      }).toString().trim();
+      const probeOutput = child_process.execSync(
+        `"${execPath}" --model "${ANTIGRAVITY_MODEL_CONFIG.primary.cliValue}" -p "Reply exactly ANTIGRAVITY_AUTH_OK. Do not create or modify files."`,
+        { cwd: tempProbeDir, stdio: 'pipe' }
+      ).toString().trim();
 
       if (probeOutput.includes('ANTIGRAVITY_AUTH_OK')) {
         return {
@@ -143,21 +205,45 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
     return { valid: true };
   }
 
-  public resolveModel(profile?: ModelProfile): string {
-    if (profile && MODEL_PROFILE_MAP[profile]) {
-      const mappedModel = MODEL_PROFILE_MAP[profile];
-      if (ALLOWED_ANTIGRAVITY_MODELS.includes(mappedModel as any)) {
-        return mappedModel;
-      }
+  /**
+   * Resolve the owner-approved model descriptor for a profile.
+   *
+   * Fail closed for unknown / missing profile. NEVER returns an internal
+   * default, undefined, a stale 2.5 model, or a substituted model. There is
+   * no silent fallback: an unresolved profile throws before any spawn.
+   */
+  public resolveModelDescriptor(profile?: ModelProfile): {
+    tier: AntigravityModelTier;
+    label: string;
+    cliValue: string;
+  } {
+    if (!profile) {
+      throw new Error('ANTIGRAVITY_MODEL_PROFILE_UNKNOWN');
     }
-    return DEFAULT_ANTIGRAVITY_MODEL;
+    const tier = MODEL_PROFILE_MAP[profile];
+    if (!tier) {
+      throw new Error('ANTIGRAVITY_MODEL_PROFILE_UNKNOWN');
+    }
+    const entry = ANTIGRAVITY_MODEL_CONFIG[tier];
+    if (!entry || !entry.cliValue) {
+      throw new Error('ANTIGRAVITY_MODEL_NOT_CONFIGURED');
+    }
+    return { tier, label: entry.label, cliValue: entry.cliValue };
+  }
+
+  /**
+   * Resolve the exact verified CLI model value for a profile.
+   * Fail closed for unknown / missing profile. Never returns a default.
+   */
+  public resolveModel(profile?: ModelProfile): string {
+    return this.resolveModelDescriptor(profile).cliValue;
   }
 
   async prepareExecutionPlan(task: TaskPayload, workspaceRoot: string): Promise<ExecutionPlan> {
     const validation = this.validateTask(task);
     if (!validation.valid) {
       if (validation.reason === 'WORKER_CAPABILITY_DENIED') {
-        throw new Error(validation.reason); // We will catch this in execute or it gets caught by orchestrator. But wait, if execute() calls validateTask directly, we can avoid this.
+        throw new Error(validation.reason);
       }
       throw new Error(`Invalid Task Payload: ${validation.reason}`);
     }
@@ -173,17 +259,32 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
       throw new Error('Security Violation: Antigravity Worker cannot be executed directly in main project repository.');
     }
 
-    const agyArgs = ['--add-dir', workspaceRoot, '--mode', 'plan', '-p', task.instructions];
+    // Explicit model resolution. Fail closed BEFORE spawn for unknown/missing
+    // profile. No silent fallback, no internal default model.
+    const descriptor = this.resolveModelDescriptor(task.requestedProfile);
+
+    // `--model <verified CLI value>` is always present in production args.
+    // The model is passed as an array element, never as a shell string.
+    const agyArgs = [
+      '--add-dir',
+      workspaceRoot,
+      '--mode',
+      'plan',
+      '--model',
+      descriptor.cliValue,
+      '-p',
+      task.instructions
+    ];
 
     return {
       command: execPath,
       args: agyArgs,
       cwd: workspaceRoot,
       shell: false,
-      env: {
-        NODE_ENV: process.env.NODE_ENV || 'production',
-        PATH: process.env.PATH || ''
-      }
+      env: this.buildSafeEnv(),
+      modelProfile: descriptor.tier,
+      modelLabel: descriptor.label,
+      modelCliValue: descriptor.cliValue
     };
   }
 
@@ -222,6 +323,20 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
     }
 
     const plan = await this.prepareExecutionPlan(task, workspaceRoot);
+
+    // Explicit model routing diagnostics attached to every executed result.
+    const modelDiagnostics = {
+      modelProfile: plan.modelProfile,
+      modelLabel: plan.modelLabel,
+      modelCliValue: plan.modelCliValue,
+      modelSelection: 'explicit-cli-argument' as const,
+      internalDefaultAllowed: false,
+      modelFallbackUsed: false,
+      permissionPolicy: 'READ_ONLY_FAIL_CLOSED' as const,
+      writeCapability: 'disabled' as const,
+      commandExecutionCapability: 'disabled' as const,
+      dangerousPermissionsUsed: false
+    };
 
     return new Promise<WorkerResult>((resolve) => {
       let stdout = '';
@@ -286,7 +401,8 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
             exitCode: -1,
             durationMs,
             warnings: ['TIMEOUT_EXCEEDED'],
-            errors: ['Process killed due to execution timeout.']
+            errors: ['Process killed due to execution timeout.'],
+            ...modelDiagnostics
           });
         }
 
@@ -340,7 +456,8 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
           exitCode: code,
           durationMs,
           warnings: [],
-          errors: code !== 0 ? [stderr || 'Non-zero exit code returned'] : []
+          errors: code !== 0 ? [stderr || 'Non-zero exit code returned'] : [],
+          ...modelDiagnostics
         });
       });
 
@@ -365,7 +482,8 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
           exitCode: -1,
           durationMs,
           warnings: [],
-          errors: [err.message]
+          errors: [err.message],
+          ...modelDiagnostics
         });
       });
     });
