@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { ok, safe } from "@/lib/api";
 import { reposQuerySchema } from "@/lib/validators";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma";
 
 export const GET = safe(async (req: Request) => {
   const url = new URL(req.url);

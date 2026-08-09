@@ -1,0 +1,1482 @@
+/*
+ * JARVIS OS — panoramic cockpit reference layer.
+ *
+ * Geometry only. The functional DOM, API handlers, WebGL canvas, telemetry,
+ * chat, media player and module routing continue to come from index.html,
+ * app.js and live.js.
+ */
+
+.jarvis-shell.cockpit-shell {
+  --cockpit-wing: clamp(296px, 21.55vw, 430px);
+  --cockpit-wing-offset: clamp(22px, 2vw, 38px);
+  --cockpit-top: clamp(164px, 10.35vw, 184px);
+  --cockpit-bottom: clamp(198px, 22.7vh, 230px);
+  --cockpit-frame: #07111c;
+  --cockpit-frame-light: #111f2c;
+  --cockpit-cyan: #39e7ff;
+  --cockpit-cyan-soft: rgba(57, 231, 255, .2);
+  --cockpit-glass: rgba(3, 17, 30, .84);
+  background-position: 50% 50%;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Panoramic hull                                                             */
+/* -------------------------------------------------------------------------- */
+
+.cockpit-hull {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cockpit-hull::before,
+.cockpit-hull::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.cockpit-hull::before {
+  z-index: 0;
+  top: -37%;
+  right: -8%;
+  left: -8%;
+  height: 54%;
+  border: 14px solid rgba(5, 12, 19, .98);
+  border-bottom-color: rgba(12, 26, 38, .98);
+  border-radius: 0 0 50% 50% / 0 0 72% 72%;
+  background:
+    repeating-linear-gradient(96deg, transparent 0 8.2%, rgba(84, 224, 255, .12) 8.25% 8.36%, transparent 8.42% 16.5%),
+    radial-gradient(ellipse at 50% 100%, transparent 0 60%, rgba(4, 10, 17, .78) 60.4% 64%, rgba(1, 4, 9, .95) 64.5%);
+  box-shadow:
+    inset 0 -2px 0 rgba(82, 224, 255, .42),
+    inset 0 -13px 24px rgba(0, 0, 0, .8),
+    0 12px 30px rgba(0, 0, 0, .72);
+}
+
+.cockpit-hull::after {
+  z-index: 0;
+  right: -10%;
+  bottom: -31%;
+  left: -10%;
+  height: 59%;
+  border: 18px solid rgba(5, 12, 20, .98);
+  border-top-color: rgba(13, 29, 42, .98);
+  border-radius: 50% 50% 0 0 / 58% 58% 0 0;
+  background:
+    repeating-radial-gradient(ellipse at 50% 100%, transparent 0 34px, rgba(75, 217, 255, .09) 35px 36px, transparent 37px 58px),
+    linear-gradient(0deg, rgba(0, 2, 6, .98), rgba(7, 18, 29, .76) 72%, rgba(2, 9, 17, .24));
+  box-shadow:
+    inset 0 3px 0 rgba(70, 214, 255, .4),
+    inset 0 22px 44px rgba(0, 0, 0, .7),
+    0 -18px 34px rgba(0, 0, 0, .54);
+}
+
+.cockpit-canopy-rail {
+  position: absolute;
+  z-index: 1;
+  right: -7%;
+  left: -7%;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  pointer-events: none;
+}
+
+.cockpit-canopy-rail-outer {
+  top: -68px;
+  height: 142px;
+  border-bottom: 12px solid rgba(7, 15, 24, .98);
+  box-shadow:
+    0 2px 0 rgba(72, 221, 255, .55),
+    0 8px 0 rgba(1, 5, 10, .98),
+    0 10px 0 rgba(50, 197, 237, .22);
+}
+
+.cockpit-canopy-rail-middle {
+  top: -18px;
+  height: 120px;
+  border-bottom: 8px solid rgba(12, 25, 36, .98);
+  box-shadow:
+    0 1px 0 rgba(134, 239, 255, .35),
+    0 6px 0 rgba(2, 7, 13, .98);
+}
+
+.cockpit-canopy-rail-inner {
+  top: 44px;
+  right: -2%;
+  left: -2%;
+  height: 142px;
+  border-bottom: 9px solid rgba(5, 14, 23, .98);
+  box-shadow:
+    0 2px 0 rgba(54, 215, 255, .42),
+    0 9px 19px rgba(0, 0, 0, .58);
+}
+
+.cockpit-wing-frame {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--cockpit-top) - 18px);
+  bottom: calc(var(--cockpit-bottom) - 22px);
+  width: calc(var(--cockpit-wing) + var(--cockpit-wing-offset) + 34px);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 43px, rgba(87, 219, 255, .09) 44px 45px),
+    linear-gradient(90deg, rgba(0, 2, 7, .98), rgba(11, 26, 39, .98) 74%, rgba(33, 70, 91, .86) 79%, rgba(3, 10, 17, .96) 82%);
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .48));
+}
+
+.cockpit-wing-frame::before,
+.cockpit-wing-frame::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.cockpit-wing-frame::before {
+  inset: 9px;
+  border: 1px solid rgba(93, 224, 255, .2);
+  clip-path: inherit;
+}
+
+.cockpit-wing-frame::after {
+  top: 43%;
+  width: 112px;
+  height: 112px;
+  border: 1px solid rgba(76, 217, 255, .2);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(87, 230, 255, .22) 0 2px, transparent 3px),
+    repeating-radial-gradient(circle, transparent 0 15px, rgba(58, 203, 241, .12) 16px 17px, transparent 18px 26px);
+}
+
+.cockpit-wing-frame-left {
+  left: 0;
+  clip-path: polygon(0 0, 88% 0, 100% 7%, 94% 17%, 99% 50%, 94% 83%, 100% 93%, 88% 100%, 0 100%);
+}
+
+.cockpit-wing-frame-left::after { right: -36px; }
+
+.cockpit-wing-frame-right {
+  right: 0;
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 12% 100%, 0 93%, 6% 83%, 1% 50%, 6% 17%, 0 7%);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 43px, rgba(87, 219, 255, .09) 44px 45px),
+    linear-gradient(270deg, rgba(0, 2, 7, .98), rgba(11, 26, 39, .98) 74%, rgba(33, 70, 91, .86) 79%, rgba(3, 10, 17, .96) 82%);
+}
+
+.cockpit-wing-frame-right::after { left: -36px; }
+
+.cockpit-viewport-frame {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--cockpit-top) + 4px);
+  right: calc(var(--cockpit-wing) + 33px);
+  bottom: calc(var(--cockpit-bottom) + 12px);
+  left: calc(var(--cockpit-wing) + 33px);
+  border: 10px solid rgba(5, 13, 22, .96);
+  border-radius: 48% 48% 12% 12% / 11% 11% 7% 7%;
+  box-shadow:
+    inset 0 0 0 1px rgba(66, 218, 255, .24),
+    0 0 0 1px rgba(76, 208, 242, .18),
+    inset 0 0 34px rgba(0, 0, 0, .68),
+    0 15px 28px rgba(0, 0, 0, .52);
+}
+
+.cockpit-viewport-frame::before,
+.cockpit-viewport-frame::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.cockpit-viewport-frame::before {
+  inset: 7px 4%;
+  border: 1px solid rgba(66, 214, 252, .14);
+  border-radius: 48% 48% 10% 10% / 10% 10% 6% 6%;
+}
+
+.cockpit-viewport-frame::after {
+  right: 8%;
+  bottom: -13px;
+  left: 8%;
+  height: 18px;
+  border-top: 2px solid rgba(84, 226, 255, .5);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -5px 13px rgba(28, 197, 245, .22);
+}
+
+.cockpit-console-frame {
+  position: absolute;
+  z-index: 1;
+  right: -5%;
+  left: -5%;
+  pointer-events: none;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+.cockpit-console-frame-outer {
+  top: calc(100% - 292px);
+  height: 455px;
+  border-top: 18px solid rgba(5, 13, 22, .98);
+  background:
+    radial-gradient(ellipse 60% 80% at 50% 0%, rgba(57, 231, 255, .1), transparent 60%),
+    linear-gradient(180deg, rgba(6, 18, 29, .8), rgba(0, 3, 8, .96) 52%);
+  box-shadow:
+    inset 0 3px 0 rgba(65, 216, 255, .5),
+    inset 0 0 0 1px rgba(57, 231, 255, .08),
+    inset 0 18px 40px rgba(0, 0, 0, .55),
+    0 -10px 26px rgba(0, 0, 0, .72);
+}
+
+.cockpit-console-frame-inner {
+  top: calc(100% - 244px);
+  right: 3%;
+  left: 3%;
+  height: 390px;
+  border-top: 9px solid rgba(10, 26, 39, .98);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 66px, rgba(73, 214, 251, .08) 67px 68px),
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(57, 231, 255, .08), transparent 64%),
+    linear-gradient(180deg, rgba(4, 16, 28, .72), rgba(0, 3, 8, .96));
+  box-shadow:
+    inset 0 2px 0 rgba(75, 221, 255, .36),
+    inset 0 14px 30px rgba(0, 0, 0, .5),
+    0 -6px 16px rgba(0, 0, 0, .64);
+}
+
+.cockpit-console-frame::before,
+.cockpit-console-frame::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.cockpit-console-frame-outer::before {
+  top: 52px;
+  right: 7%;
+  left: 7%;
+  height: 290px;
+  border-top: 10px solid rgba(8, 20, 32, .98);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow:
+    inset 0 2px 0 rgba(67, 216, 251, .3),
+    0 -3px 0 rgba(0, 0, 0, .8);
+}
+
+.cockpit-console-frame-outer::after {
+  top: 102px;
+  right: 12%;
+  left: 12%;
+  height: 240px;
+  border-top: 7px solid rgba(10, 25, 38, .98);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: inset 0 1px 0 rgba(72, 220, 255, .28);
+}
+
+.cockpit-console-frame-inner::before {
+  top: 54px;
+  right: 9%;
+  left: 9%;
+  height: 260px;
+  clip-path: polygon(7% 0, 93% 0, 100% 28%, 95% 100%, 5% 100%, 0 28%);
+  background:
+    linear-gradient(90deg, transparent 0 11%, rgba(82, 215, 248, .12) 11.2% 11.4%, transparent 11.6% 88.4%, rgba(82, 215, 248, .12) 88.6% 88.8%, transparent 89%),
+    repeating-linear-gradient(90deg, rgba(4, 13, 22, .82) 0 70px, rgba(14, 30, 43, .9) 71px 137px);
+  opacity: .76;
+}
+
+.cockpit-console-frame-inner::after {
+  top: 118px;
+  right: 18%;
+  left: 18%;
+  height: 170px;
+  border-top: 3px solid rgba(68, 218, 253, .3);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -4px 13px rgba(33, 188, 232, .13);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Upper cockpit controls                                                     */
+/* -------------------------------------------------------------------------- */
+
+.unified-top-panel {
+  position: absolute;
+  z-index: 25;
+  top: 14px;
+  right: 18px;
+  left: 18px;
+  height: 154px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px clamp(28px, 4vw, 76px) 0;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* Tilt the whole canopy back so it reads as a 3D recessed arc, not flat */
+  transform: perspective(1700px) rotateX(7deg);
+  transform-origin: 50% 0%;
+}
+
+/* Outer hull of the canopy — layered concave fill */
+.unified-top-panel::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  clip-path: polygon(1% 0, 99% 0, 100% 58%, 97.5% 78%, 74% 100%, 26% 100%, 2.5% 78%, 0 58%);
+  border-bottom: 2px solid rgba(74, 219, 255, .38);
+  background:
+    repeating-linear-gradient(99deg, transparent 0 7.6%, rgba(107, 225, 255, .1) 7.68% 7.82%, transparent 7.9% 15.2%),
+    radial-gradient(ellipse 70% 90% at 50% 0%, rgba(57, 231, 255, .14), transparent 62%),
+    linear-gradient(180deg, rgba(8, 26, 40, .96), rgba(2, 10, 19, .82));
+  /* Deep inset at bottom = the panel sinks INTO the hull (concave cockpit feel) */
+  box-shadow:
+    inset 0 -14px 30px rgba(0, 0, 0, .78),
+    inset 0 -2px 0 rgba(151, 239, 255, .22),
+    inset 0 6px 14px rgba(57, 231, 255, .08),
+    0 18px 34px rgba(0, 0, 0, .5);
+}
+
+/* Inner bezel — second concave layer inset from the outer hull */
+.unified-top-panel::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 6px;
+  right: 6%;
+  bottom: 14px;
+  left: 6%;
+  clip-path: polygon(1% 0, 99% 0, 100% 60%, 97% 80%, 73% 100%, 27% 100%, 3% 80%, 0 60%);
+  border-bottom: 1px solid rgba(95, 226, 255, .26);
+  background:
+    linear-gradient(180deg, rgba(10, 32, 48, .55), rgba(2, 10, 19, .35) 70%);
+  box-shadow:
+    inset 0 -10px 22px rgba(0, 0, 0, .6),
+    inset 0 0 0 1px rgba(57, 231, 255, .06);
+  pointer-events: none;
+}
+
+/* Glowing neon arc along the bottom edge of the canopy */
+.unified-top-panel > .unified-header-meta ~ .unified-hotspots::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  right: 4%;
+  bottom: -10px;
+  left: 4%;
+  height: 22px;
+  border-bottom: 1.5px solid rgba(95, 230, 255, .55);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  box-shadow:
+    0 0 14px rgba(57, 231, 255, .5),
+    0 0 28px rgba(57, 231, 255, .25);
+  pointer-events: none;
+}
+
+.unified-header-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: clamp(48px, 4.8vw, 80px);
+  border-bottom: 1px solid rgba(75, 216, 252, .2);
+  padding-bottom: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #dff9ff;
+  font-size: clamp(12px, .86vw, 15px);
+  letter-spacing: .28em;
+  text-shadow: 0 0 8px rgba(57, 231, 255, .8);
+}
+
+.brand-ring {
+  position: relative;
+  display: block;
+  width: 26px;
+  height: 26px;
+  border: 2px solid rgba(57, 231, 255, .7);
+  border-radius: 50%;
+  box-shadow:
+    0 0 12px rgba(57, 231, 255, .9),
+    inset 0 0 9px rgba(57, 231, 255, .7);
+}
+
+.brand-ring::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: rgba(57, 231, 255, .9);
+  box-shadow: 0 0 10px rgba(57, 231, 255, 1);
+}
+
+.nav-meta {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1vw, 18px);
+  color: #a4dbf8;
+  font-size: clamp(8px, .62vw, 10px);
+  text-shadow: 0 0 6px rgba(57, 231, 255, .4);
+}
+
+.nav-meta b {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, .8);
+}
+
+.nav-meta em {
+  color: #2eff76;
+  text-shadow: 0 0 8px rgba(46, 255, 118, .8);
+  font-style: normal;
+}
+
+.unified-hotspots {
+  position: relative;
+  display: flex;
+  align-items: flex-end; /* seat buttons on a curve, not a flat line */
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-top: 6px;
+  /* Subtle perspective so the button row reads as an arc, not a flat strip */
+  perspective: 1100px;
+}
+
+/* Each direct child gets a gentle rotateX so the centre sits higher than the
+   edges — buttons appear seated along the concave canopy rim. */
+.unified-hotspots > button,
+.unified-hotspots > .tool-dropdown > button,
+.unified-hotspots > .tool-dropdown,
+.unified-hotspots > .hotspot-divider {
+  transform-origin: 50% 100%;
+}
+
+/* Position the outermost menu items lower along the canopy arc */
+.unified-hotspots > button:first-of-type,
+.unified-hotspots > button:last-of-type,
+.unified-hotspots > .hotspot-divider:first-of-type {
+  transform: translateY(6px);
+}
+.unified-hotspots > .tool-dropdown:first-of-type,
+.unified-hotspots > .tool-dropdown:last-of-type {
+  transform: translateY(6px);
+}
+
+.unified-hotspots > button,
+.unified-hotspots .tool-dropdown > button {
+  position: relative;
+  height: 44px;
+  padding: 0 clamp(14px, 1.5vw, 24px);
+  color: #bce9ff;
+  font-size: clamp(10px, .75vw, 12px);
+  font-weight: 500;
+  line-height: 42px; /* For vertical centering with 1px border */
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 0 5px rgba(57, 231, 255, .3);
+  background: linear-gradient(180deg, rgba(8, 26, 40, 0.5) 0%, rgba(2, 10, 19, 0.8) 100%);
+  border: 1px solid rgba(57, 231, 255, 0.15);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+}
+
+.unified-hotspots > button:hover,
+.unified-hotspots .tool-dropdown > button:hover,
+.unified-hotspots > button.is-on {
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(57, 231, 255, 1), 0 0 20px rgba(57, 231, 255, 0.8);
+  background: linear-gradient(180deg, rgba(14, 46, 74, 0.8) 0%, rgba(4, 20, 35, 0.95) 100%);
+  border-color: rgba(57, 231, 255, 0.6);
+  box-shadow: 
+    0 6px 12px rgba(0, 0, 0, 0.4),
+    inset 0 0 20px rgba(57, 231, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.unified-hotspots > button:active,
+.unified-hotspots .tool-dropdown > button:active {
+  transform: translateY(1px);
+  box-shadow: 
+    inset 0 2px 10px rgba(0, 0, 0, 0.5),
+    inset 0 0 10px rgba(57, 231, 255, 0.2);
+}
+
+.unified-hotspots > button::after,
+.unified-hotspots .tool-dropdown > button::after {
+  content: "";
+  position: absolute;
+  right: 15%;
+  bottom: 0;
+  left: 15%;
+  height: 2px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 2px 2px 0 0;
+  transition: all 0.3s ease;
+}
+
+.unified-hotspots > button:hover::after,
+.unified-hotspots .tool-dropdown > button:hover::after,
+.unified-hotspots > button.is-on::after {
+  right: 0;
+  left: 0;
+  background: rgba(57, 231, 255, 1);
+  box-shadow: 0 -2px 12px rgba(57, 231, 255, 0.9);
+}
+
+.hotspot-divider {
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(180deg, transparent, rgba(57, 231, 255, 0.3), transparent);
+  margin: 0 4px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Functional wings                                                          */
+/* -------------------------------------------------------------------------- */
+
+.system-panel,
+.projects-panel {
+  z-index: 22;
+  top: var(--cockpit-top);
+  bottom: var(--cockpit-bottom);
+  width: var(--cockpit-wing);
+  gap: 8px;
+  padding: 18px 20px 16px;
+  overflow: hidden;
+  outline: 1px solid rgba(121, 229, 250, .15);
+  outline-offset: -8px;
+  border: 1px solid rgba(97, 220, 249, .32) !important;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(46, 186, 232, .12), transparent 39%),
+    linear-gradient(145deg, rgba(8, 29, 45, .93), rgba(1, 9, 17, .92) 76%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(210, 249, 255, .16),
+    inset 0 0 46px rgba(9, 116, 159, .1),
+    0 17px 34px rgba(0, 0, 0, .46) !important;
+  backdrop-filter: blur(11px) saturate(1.08);
+  -webkit-backdrop-filter: blur(11px) saturate(1.08);
+}
+
+.system-panel {
+  left: var(--cockpit-wing-offset);
+  bottom: 195px;
+  --base-tilt-y: .8deg;
+  --base-tilt-z: -.12deg;
+  transform-origin: right center;
+  clip-path: polygon(0 14px, 14px 0, 96% 2%, 100% 9%, 96% 50%, 100% 91%, 96% 98%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.projects-panel {
+  right: var(--cockpit-wing-offset);
+  bottom: 220px;
+  --base-tilt-y: -.8deg;
+  --base-tilt-z: .12deg;
+  transform-origin: left center;
+  clip-path: polygon(4% 2%, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 4% 98%, 0 91%, 4% 50%, 0 9%);
+}
+
+.system-panel::after,
+.projects-panel::after {
+  width: 142px;
+  height: 142px;
+  opacity: .48;
+}
+
+.system-panel::after { right: -70px; }
+.projects-panel::after { left: -70px; }
+
+.p-title {
+  color: #5bcce6;
+  font-size: clamp(10px, .72vw, 12px) !important;
+  line-height: 1.2;
+}
+
+.metrics { gap: 8px; }
+.metric { grid-template-columns: 43px 1fr 48px; gap: 9px; }
+.metric > span { color: #88a5b5; font-size: 9px; }
+.metric > b { color: #e0f7fc; font-size: 10px; }
+.track { height: 4px; }
+
+.stats-row { gap: 7px; }
+.stat { min-height: 60px; padding: 10px 8px 8px; }
+.stat b { font-size: 16px; }
+.stat span { color: #7e99a8; font-size: 7px; line-height: 1.2; }
+
+.core3d { height: clamp(100px, 11.4vh, 114px); }
+.core-legend { color: #748f9e; font-size: 7px; }
+
+.providers { gap: 5px; }
+.prov { min-height: 24px; padding: 6px 7px; }
+.prov u { font-size: 8px; }
+.prov i { width: 5px; height: 5px; }
+
+.net-wrap { height: clamp(50px, 6.4vh, 62px); }
+.counter b { font-size: 10px; }
+.counter span { color: #718d9c; font-size: 6.5px; line-height: 1.2; }
+
+.tabs button {
+  min-height: 34px;
+  color: #7793a3;
+  font-size: 9px;
+}
+
+.entity {
+  padding: 11px 12px 10px;
+  background: rgba(2, 13, 23, .42);
+}
+
+.entity .e-name { font-size: 10px; }
+.entity .e-state { font-size: 8px; }
+.entity .e-meta { color: #7892a1; font-size: 8px; }
+
+.projects-panel .entities {
+  flex: 0 1 90px;
+  min-height: 86px;
+  overflow-y: auto;
+  padding-right: 3px;
+  scrollbar-color: rgba(57, 231, 255, .62) transparent;
+}
+
+.projects-panel .music-player {
+  flex: 0 0 auto;
+  gap: 7px;
+  padding-top: 9px;
+}
+
+.projects-panel .mp-head { min-height: 42px; }
+.projects-panel .mp-track { font-size: 8px; }
+.projects-panel .mp-controls button { height: 38px; }
+.projects-panel .mp-visualizer { height: 27px; }
+.projects-panel .tg-music-source { min-height: 34px; font-size: 8px; }
+.projects-panel .yt-mini { gap: 7px; }
+.projects-panel .yt-account-button { height: 30px; }
+.projects-panel .yt-form input { height: 34px; }
+.projects-panel .yt-status { font-size: 8px; }
+.panel-foot button { min-height: 34px; font-size: 8px; }
+
+/* -------------------------------------------------------------------------- */
+/* Recessed central command viewport                                          */
+/* -------------------------------------------------------------------------- */
+
+.avatar-stage {
+  z-index: 4;
+  top: calc(var(--cockpit-top) + 10px);
+  right: calc(var(--cockpit-wing) + 51px);
+  bottom: calc(var(--cockpit-bottom) + 39px);
+  left: calc(var(--cockpit-wing) + 51px);
+  overflow: hidden;
+  border: 0;
+  border-radius: 48% 48% 10% 10% / 10% 10% 7% 7%;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(20, 150, 209, .16), transparent 39%),
+    repeating-radial-gradient(ellipse at 50% 51%, transparent 0 73px, rgba(48, 188, 229, .07) 74px 75px, transparent 76px 105px),
+    linear-gradient(180deg, rgba(1, 7, 16, .2), rgba(0, 5, 13, .44));
+  box-shadow:
+    inset 0 0 70px rgba(0, 0, 0, .52),
+    inset 0 0 0 1px rgba(74, 216, 248, .12);
+}
+
+.avatar-stage::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 4% 5% 3%;
+  border: 1px solid rgba(76, 217, 250, .1);
+  border-radius: 48% 48% 14% 14% / 11% 11% 8% 8%;
+  background:
+    linear-gradient(90deg, transparent 49.88%, rgba(81, 218, 249, .08) 50%, transparent 50.12%),
+    linear-gradient(0deg, transparent 49.88%, rgba(81, 218, 249, .06) 50%, transparent 50.12%);
+  pointer-events: none;
+}
+
+.avatar-stage::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  right: 10%;
+  bottom: 5%;
+  left: 10%;
+  height: 30px;
+  border-top: 2px solid rgba(67, 216, 253, .34);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -9px 26px rgba(32, 187, 236, .14);
+  pointer-events: none;
+}
+
+.avatar-aura {
+  top: 10%;
+  width: 60%;
+  height: 75%;
+  opacity: .72;
+  filter: blur(20px);
+}
+
+.avatar-fallback {
+  inset: 11% 15% auto;
+  height: 80%;
+  object-position: 50% 47%;
+}
+
+.avatar-canvas {
+  inset: 9% 12% auto;
+  width: 76%;
+  height: 85%;
+}
+
+.scan-layer {
+  opacity: .18;
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 0 34%, rgba(0, 0, 0, .65) 57%, transparent 78%);
+}
+
+.model-toggle,
+.avatar-status {
+  min-height: 30px;
+  padding: 8px 12px;
+  border-color: rgba(72, 222, 255, .3) !important;
+  background: rgba(1, 9, 18, .82) !important;
+  color: #d9f7ff !important;
+  font-size: 9px !important;
+}
+
+.model-toggle {
+  top: 29%;
+  left: 17%;
+}
+
+.avatar-status {
+  top: 44%;
+  right: 17%;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Lower command crescent                                                     */
+/* -------------------------------------------------------------------------- */
+
+.chat-panel {
+  z-index: 26;
+  right: calc(var(--cockpit-wing) + var(--cockpit-wing-offset) + clamp(14px, 1.2vw, 28px)) !important;
+  bottom: 7px;
+  left: calc(var(--cockpit-wing) + var(--cockpit-wing-offset) + clamp(14px, 1.2vw, 28px)) !important;
+  width: auto !important;
+  max-width: min(960px, 50vw);
+  min-height: 239px;
+  margin: 0 auto;
+  gap: 9px;
+  padding: 22px clamp(40px, 4vw, 64px) 26px;
+  overflow: hidden;
+  /* Minimalist flat bar — no perspective tilt, no concave bowl */
+  transform: none !important;
+  clip-path: none !important;
+  border: 1px solid rgba(57, 231, 255, .18) !important;
+  border-radius: 18px !important;
+  /* Single flat dark glass — clean, minimal */
+  background:
+    linear-gradient(180deg, rgba(6, 16, 26, .88), rgba(2, 8, 15, .94)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(175, 245, 255, .08),
+    0 10px 30px rgba(0, 0, 0, .55),
+    0 0 0 1px rgba(0, 0, 0, .3) !important;
+}
+
+.chat-panel:hover {
+  transform: none !important;
+  border-color: rgba(57, 231, 255, .28) !important;
+}
+
+.chat-panel.is-minimized {
+  min-height: 0 !important;
+  height: auto !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  clip-path: none !important;
+}
+
+.chat-panel.is-minimized .chat-head { min-height: 0 !important; }
+.chat-panel.is-minimized #chatMinimize { color: var(--cockpit-amber, #ffd36e); }
+
+/* No container accents */
+.chat-panel::before { content: none !important; }
+.chat-panel::after { content: none !important; }
+
+.chat-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.chat-head {
+  min-height: 32px;
+  padding-inline: 3px;
+}
+
+.chat-head .p-title {
+  color: var(--cockpit-cyan);
+  font-size: 14px !important;
+  letter-spacing: .28em;
+}
+
+.chat-icons { gap: 8px; }
+.chat-icons button {
+  width: 38px;
+  height: 32px;
+  font-size: 17px;
+}
+
+.modes {
+  position: absolute;
+  z-index: 2;
+  top: 22px;
+  left: 22%;
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.modes button {
+  min-height: 31px;
+  padding: 8px 14px;
+  font-size: 9px;
+}
+
+.command-form {
+  position: relative;
+  z-index: 2;
+  margin-top: 14px;
+  gap: 9px;
+  padding: 7px 9px 10px 15px;
+  /* Light translucent capsule so the floating row reads as one unit */
+  border: 1px solid rgba(81, 218, 250, .22);
+  border-radius: 16px;
+  background: rgba(2, 10, 18, .42);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .35);
+}
+
+/* Subtle glow seam */
+.command-form::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -2px -1px -3px;
+  border-radius: inherit;
+  border: 1px solid rgba(95, 226, 255, .1);
+  pointer-events: none;
+}
+
+.command-form #commandInput {
+  height: 56px !important;
+  padding-inline: 20px;
+  border-color: rgba(77, 214, 247, .18) !important;
+  background: rgba(0, 7, 15, .5) !important;
+  color: #e6f9fd !important;
+  font-size: 15px !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.command-form #commandInput::placeholder {
+  color: #8197a4 !important;
+  letter-spacing: .1em;
+}
+
+.attach-zone,
+.mic-zone,
+.send-zone {
+  width: 62px !important;
+  min-width: 62px !important;
+  height: 66px !important;
+  color: #43dff8;
+  font-size: 25px;
+  border-color: rgba(74, 219, 251, .36) !important;
+  background: rgba(2, 16, 27, .74) !important;
+}
+
+.send-zone {
+  width: 98px !important;
+  min-width: 98px !important;
+  color: #7aedff;
+  font-size: 31px;
+  border-color: rgba(77, 228, 255, .68) !important;
+  box-shadow:
+    inset 0 0 18px rgba(29, 180, 231, .12),
+    0 0 18px rgba(40, 208, 251, .18) !important;
+}
+
+.attach-zone:hover,
+.mic-zone:hover,
+.send-zone:hover,
+.attach-zone:focus-visible,
+.mic-zone:focus-visible,
+.send-zone:focus-visible {
+  color: #e8fcff;
+  border-color: rgba(135, 241, 255, .82) !important;
+  box-shadow: 0 0 17px rgba(57, 231, 255, .22) !important;
+  outline: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Central modules                                                            */
+/* -------------------------------------------------------------------------- */
+
+.module-overlay {
+  z-index: 60;
+  overflow: hidden;
+  clip-path: polygon(2% 0, 98% 0, 100% 4%, 100% 96%, 98% 100%, 2% 100%, 0 96%, 0 4%);
+  border-color: rgba(88, 222, 251, .3);
+  border-radius: 44px 44px 22px 22px / 24px 24px 18px 18px;
+  background:
+    radial-gradient(ellipse at 50% 0, rgba(32, 166, 216, .1), transparent 58%),
+    linear-gradient(145deg, rgba(4, 17, 29, .96), rgba(0, 5, 11, .96)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(204, 250, 255, .14),
+    inset 0 0 52px rgba(11, 114, 157, .08),
+    0 22px 44px rgba(0, 0, 0, .5);
+}
+
+.module-head { min-height: 52px; }
+
+/* Route modules keep their own document height so the central viewport is the
+   only scrolling surface. The live browser workspace remains viewport-bound. */
+.module-overlay:not(.browser-workspace) .module-body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.module-overlay.browser-workspace .module-body {
+  overflow: hidden;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive shell                                                          */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1280px) {
+  .jarvis-shell.cockpit-shell {
+    --cockpit-wing: clamp(230px, 20.4vw, 282px);
+    --cockpit-wing-offset: clamp(14px, 1.7vw, 24px);
+    --cockpit-top: 152px;
+    --cockpit-bottom: 178px;
+  }
+
+  .navigation-panel { padding-inline: 22px; gap: 15px; }
+  .nav-hotspots button { padding-inline: 8px; }
+  .nav-meta { gap: 8px; }
+  .tools-panel.glass { top: 82px; height: 76px; padding-inline: 24px; }
+  .tool-hotspots, .tool-hotspots button { height: 59px; }
+  .cockpit-canopy-rail-inner { top: 34px; height: 124px; }
+  .cockpit-viewport-frame { right: calc(var(--cockpit-wing) + 25px); left: calc(var(--cockpit-wing) + 25px); }
+  .avatar-stage { right: calc(var(--cockpit-wing) + 40px); left: calc(var(--cockpit-wing) + 40px); }
+  .chat-panel { right: clamp(130px, 13.5vw, 190px); left: clamp(130px, 13.5vw, 190px); max-width: 50vw; min-height: 184px; padding: 16px 34px 23px; }
+  .chat-head .p-title { font-size: 11px !important; }
+  .modes { top: 17px; left: 21%; }
+  .modes button { min-height: 27px; padding: 6px 9px; font-size: 8px; }
+  .command-form { margin-top: 7px; }
+  .command-form #commandInput { height: 44px !important; font-size: 12px !important; }
+  .attach-zone, .mic-zone, .send-zone { width: 46px !important; min-width: 46px !important; height: 44px !important; }
+  .send-zone { width: 58px !important; min-width: 58px !important; }
+}
+
+@media (max-width: 1040px) {
+  .jarvis-shell.cockpit-shell {
+    --cockpit-top: 138px;
+    --cockpit-bottom: 184px;
+  }
+
+  .cockpit-wing-frame,
+  .cockpit-viewport-frame { display: none; }
+  .navigation-panel { top: 0; right: 0; left: 0; height: 54px; padding-inline: 14px; }
+  .brand { font-size: 11px; }
+  .brand-ring { width: 20px; height: 20px; }
+  .nav-hotspots { overflow-x: auto; }
+  .nav-hotspots button { height: 50px; min-width: 86px; line-height: 50px; }
+  .nav-meta { display: none; }
+  .tools-panel.glass { top: 52px; height: 78px; padding: 3px 8px 10px; overflow-x: auto; }
+  .tool-hotspots { min-width: 720px; }
+  .avatar-stage { top: 136px; right: 4vw; bottom: 188px; left: 4vw; }
+  .model-toggle { left: 4%; }
+  .avatar-status { right: 4%; }
+  .cockpit-console-frame-outer { top: calc(100% - 220px); }
+  .cockpit-console-frame-inner { top: calc(100% - 190px); }
+  .chat-panel {
+    right: 14px;
+    bottom: 4px;
+    left: 14px;
+    max-width: 50vw;
+    min-height: 220px;
+    padding: 24px 40px;
+    /* Овал сохраняется на узких экранах */
+    clip-path: ellipse(50% 50% at 50% 50%) !important;
+    border-radius: 50% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .jarvis-shell.cockpit-shell { min-height: 568px; }
+  .navigation-panel { gap: 8px; }
+  .brand { flex: 0 0 auto; }
+  .nav-hotspots button { min-width: 78px; font-size: 8px; }
+  .avatar-stage { right: 3vw; bottom: 178px; left: 3vw; }
+  .avatar-fallback { inset: 15% 8% auto; height: 68%; }
+  .avatar-canvas { inset: 12% 7% auto; width: 86%; height: 73%; }
+  .model-toggle, .avatar-status { padding: 5px 7px; font-size: 7px !important; }
+  .model-toggle { top: 8%; left: 3%; }
+  .avatar-status { top: 33%; right: 3%; }
+  .chat-panel { min-height: 166px; padding: 12px 12px 16px; }
+  .chat-head { min-height: 27px; }
+  .chat-head .p-title { font-size: 10px !important; }
+  .chat-icons { gap: 2px; }
+  .chat-icons button { width: 27px; height: 25px; font-size: 13px; }
+  .modes {
+    position: static;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .modes button { flex: 0 0 auto; }
+  .command-form { margin-top: 0; gap: 5px; padding: 4px; }
+  .command-form #commandInput { min-width: 0; height: 40px !important; padding-inline: 10px; font-size: 10px !important; }
+  .attach-zone, .mic-zone, .send-zone { width: 38px !important; min-width: 38px !important; height: 40px !important; font-size: 17px; }
+  .send-zone { width: 44px !important; min-width: 44px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-panel,
+  .projects-panel,
+  .chat-panel,
+  .chat-panel:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* User requested adjustment */
+.tools-panel .tool-hotspots { margin-top: -38px !important; }
+
+
+/* ========================================================================== */
+/* VECTOR CHAT-ONLY — ONLY the chat on screen, vector, floating buttons       */
+/* Activated via data-chat-style="vector" on .jarvis-shell                    */
+/* ========================================================================== */
+
+/* Hide decorative/auxiliary elements — keep header nav + hologram + chat */
+.jarvis-shell[data-chat-style="vector"] .space-field,
+.jarvis-shell[data-chat-style="vector"] .particle-field,
+.jarvis-shell[data-chat-style="vector"] .cockpit-hull {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* HEADER PANEL — remove background/container. Only buttons float.      */
+/* ------------------------------------------------------------------ */
+.jarvis-shell[data-chat-style="vector"] .unified-top-panel {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transform: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  /* Drop the button bar down ~1cm (38px) and make it taller */
+  padding: 42px clamp(16px, 3vw, 40px) 12px !important;
+}
+.jarvis-shell[data-chat-style="vector"] .unified-top-panel::before,
+.jarvis-shell[data-chat-style="vector"] .unified-top-panel::after {
+  content: none !important;
+  display: none !important;
+}
+/* Hide "JARVIS OS" brand + "CPU/RAM/МОДЕЛЬ/ОНЛАЙН" meta — keep only nav buttons */
+.jarvis-shell[data-chat-style="vector"] .unified-header-meta {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* HEADER LAYOUT — 3 columns: left buttons | center AI CORE | right    */
+/* All buttons on ONE line (no curve), thinner (36px), raised up.       */
+/* ------------------------------------------------------------------ */
+.jarvis-shell[data-chat-style="vector"] .unified-hotspots {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  perspective: none !important;
+}
+
+/* Side groups — symmetric: same width, 5 buttons each, anchored to edges */
+.jarvis-shell[data-chat-style="vector"] .hotspots-left,
+.jarvis-shell[data-chat-style="vector"] .hotspots-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+.jarvis-shell[data-chat-style="vector"] .hotspots-left { justify-content: flex-end !important; }
+.jarvis-shell[data-chat-style="vector"] .hotspots-right { justify-content: flex-start !important; }
+
+/* Flatten the arc transforms so every button is on the same line */
+.jarvis-shell[data-chat-style="vector"] .unified-hotspots > button,
+.jarvis-shell[data-chat-style="vector"] .unified-hotspots > .tool-dropdown,
+.jarvis-shell[data-chat-style="vector"] .unified-hotspots > .hotspot-divider,
+.jarvis-shell[data-chat-style="vector"] .hotspots-group > button,
+.jarvis-shell[data-chat-style="vector"] .hotspots-group > .tool-dropdown {
+  transform: none !important;
+  transform-origin: 50% 50% !important;
+}
+
+/* Center column — AI CORE label + J.A.R.V.I.S. */
+.jarvis-shell[data-chat-style="vector"] .hotspots-center {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  padding: 0 20px !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+}
+.jarvis-shell[data-chat-style="vector"] .ai-core-label {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  letter-spacing: .5em !important;
+  text-transform: uppercase !important;
+  color: rgba(57, 231, 255, .55) !important;
+  text-shadow: 0 0 6px rgba(57, 231, 255, .35) !important;
+  text-indent: .5em !important;
+}
+.jarvis-shell[data-chat-style="vector"] .ai-core-name {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: .22em !important;
+  text-transform: uppercase !important;
+  color: #eafcff !important;
+  text-shadow: 0 0 10px rgba(57, 231, 255, .7), 0 0 22px rgba(57, 231, 255, .35) !important;
+  text-indent: .22em !important;
+}
+
+/* Header buttons — ALL identical size & style, incl. group/dropdown */
+.jarvis-shell[data-chat-style="vector"] .unified-hotspots button,
+.jarvis-shell[data-chat-style="vector"] .hotspots-group > button,
+.jarvis-shell[data-chat-style="vector"] .hotspots-group .tool-dropdown > button {
+  height: 40px !important;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  padding: 0 8px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 38px !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  border-radius: 8px !important;
+  flex: 0 0 100px !important;
+  /* One uniform glass style for every header button */
+  color: #bce9ff !important;
+  text-shadow: 0 0 5px rgba(57, 231, 255, .3) !important;
+  background: linear-gradient(180deg, rgba(8, 26, 40, 0.5) 0%, rgba(2, 10, 19, 0.8) 100%) !important;
+  border: 1px solid rgba(57, 231, 255, 0.15) !important;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+/* Unified hover / active state for every header button */
+.jarvis-shell[data-chat-style="vector"] .unified-hotspots button:hover,
+.jarvis-shell[data-chat-style="vector"] .hotspots-group > button:hover,
+.jarvis-shell[data-chat-style="vector"] .hotspots-group .tool-dropdown > button:hover,
+.jarvis-shell[data-chat-style="vector"] .unified-hotspots button.is-on {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(57, 231, 255, 1), 0 0 20px rgba(57, 231, 255, 0.8) !important;
+  background: linear-gradient(180deg, rgba(14, 46, 74, 0.8) 0%, rgba(4, 20, 35, 0.95) 100%) !important;
+  border-color: rgba(57, 231, 255, 0.6) !important;
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.4),
+    inset 0 0 20px rgba(57, 231, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+/* Dropdown wrapper must not stretch the inner button out of line */
+.jarvis-shell[data-chat-style="vector"] .hotspots-group .tool-dropdown {
+  flex: 0 0 auto !important;
+}
+/* Remove dividers — groups separated by center label instead */
+.jarvis-shell[data-chat-style="vector"] .hotspot-divider { display: none !important; }
+
+/* ------------------------------------------------------------------ */
+/* HOLOGRAM — remove the "FULL 3D LIVE" / "ГОТОВА" badges, push back   */
+/* ------------------------------------------------------------------ */
+/* Hide the floating pointer badges around the hologram */
+.jarvis-shell[data-chat-style="vector"] .model-toggle,
+.jarvis-shell[data-chat-style="vector"] .avatar-status {
+  display: none !important;
+}
+
+/* Push the hologram girl slightly back (smaller / farther) */
+.jarvis-shell[data-chat-style="vector"] .avatar-stage {
+  transform: scale(.82) translateZ(0) !important;
+  transform-origin: 50% 60%;
+  opacity: .92;
+}
+
+/* ------------------------------------------------------------------ */
+/* CHAT CONTAINER — NO background. Reclined (полулежащий) tilt.        */
+/* ------------------------------------------------------------------ */
+.jarvis-shell[data-chat-style="vector"] .chat-panel {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  clip-path: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  right: 50% !important;
+  left: 50% !important;
+  margin-left: 0 !important;
+  /* Reclined look: top leans back, bottom comes forward */
+  transform: translateX(-50%) perspective(1500px) rotateX(6deg) !important;
+  transform-origin: 50% 100%;
+  max-width: min(720px, 88vw) !important;
+  width: min(720px, 88vw) !important;
+  padding: 8px 8px 12px !important;
+}
+.jarvis-shell[data-chat-style="vector"] .chat-panel:hover {
+  transform: translateX(-50%) perspective(1500px) rotateX(6deg) !important;
+}
+.jarvis-shell[data-chat-style="vector"] .chat-panel::before,
+.jarvis-shell[data-chat-style="vector"] .chat-panel::after {
+  content: none !important;
+}
+.jarvis-shell[data-chat-style="vector"] .chat-head,
+.jarvis-shell[data-chat-style="vector"] .chat-head .p-title {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* FLOATING VECTOR BUTTONS — icons + modes ON ONE LINE                 */
+/* ------------------------------------------------------------------ */
+
+/* chat-head = single flex row: [modes ...... icons] */
+.jarvis-shell[data-chat-style="vector"] .chat-head {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 44px !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+/* Hide the duplicate title inside chat-head (AI CORE is in the header now) */
+.jarvis-shell[data-chat-style="vector"] .chat-head .p-title {
+  display: none !important;
+}
+.jarvis-shell[data-chat-style="vector"] .chat-icons {
+  gap: 10px !important;
+  flex: 0 0 auto !important;
+}
+
+/* Modes sit inline next to icons on the same line */
+.jarvis-shell[data-chat-style="vector"] .modes {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  margin-top: 0 !important;
+  gap: 8px !important;
+  flex: 1 1 auto !important;
+  justify-content: flex-start !important;
+  flex-wrap: nowrap !important;
+}
+
+/* ============ FLOATING GLASS BUTTONS — same language as header nav ============ */
+
+/* Top icon buttons (∿ ◉ ≡ ВЕБ ⇢ −) — glass chips like header */
+.jarvis-shell[data-chat-style="vector"] .chat-icons button {
+  height: 44px !important;
+  width: 48px !important;
+  padding: 0 !important;
+  color: #bce9ff !important;
+  font-size: 17px !important;
+  text-shadow: 0 0 5px rgba(57, 231, 255, .3) !important;
+  background: linear-gradient(180deg, rgba(8, 26, 40, .5) 0%, rgba(2, 10, 19, .8) 100%) !important;
+  border: 1px solid rgba(57, 231, 255, .15) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+  transform: translateY(0);
+  transition: all .3s cubic-bezier(.4, 0, .2, 1) !important;
+}
+.jarvis-shell[data-chat-style="vector"] .chat-icons button:hover {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(57, 231, 255, 1), 0 0 20px rgba(57, 231, 255, .8) !important;
+  background: linear-gradient(180deg, rgba(14, 46, 74, .8) 0%, rgba(4, 20, 35, .95) 100%) !important;
+  border-color: rgba(57, 231, 255, .6) !important;
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, .4),
+    inset 0 0 20px rgba(57, 231, 255, .25),
+    inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+}
+
+/* Mode pills (Авто/Медиа/Транскрипция/Анализ/···) — same height as top icons */
+.jarvis-shell[data-chat-style="vector"] .modes button {
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 16px !important;
+  color: #bce9ff !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 5px rgba(57, 231, 255, .3) !important;
+  background: linear-gradient(180deg, rgba(8, 26, 40, .5) 0%, rgba(2, 10, 19, .8) 100%) !important;
+  border: 1px solid rgba(57, 231, 255, .15) !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+  transform: translateY(0);
+  transition: all .3s cubic-bezier(.4, 0, .2, 1) !important;
+}
+.jarvis-shell[data-chat-style="vector"] .modes button:hover,
+.jarvis-shell[data-chat-style="vector"] .modes button.is-on {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(57, 231, 255, 1), 0 0 20px rgba(57, 231, 255, .8) !important;
+  background: linear-gradient(180deg, rgba(14, 46, 74, .8) 0%, rgba(4, 20, 35, .95) 100%) !important;
+  border-color: rgba(57, 231, 255, .6) !important;
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, .4),
+    inset 0 0 20px rgba(57, 231, 255, .25),
+    inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* COMMAND FORM — NO panel background. Input + buttons float with gap.  */
+/* ------------------------------------------------------------------ */
+.jarvis-shell[data-chat-style="vector"] .command-form {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-top: 12px !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+}
+.jarvis-shell[data-chat-style="vector"] .command-form::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Input field — glass capsule matching the header button language */
+.jarvis-shell[data-chat-style="vector"] .command-form #commandInput {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  background: linear-gradient(180deg, rgba(8, 26, 40, .5) 0%, rgba(2, 10, 19, .8) 100%) !important;
+  border: 1px solid rgba(57, 231, 255, .25) !important;
+  color: #e6f9fd !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+}
+.jarvis-shell[data-chat-style="vector"] .command-form #commandInput:focus {
+  border-color: rgba(57, 231, 255, .6) !important;
+  box-shadow:
+    0 0 18px rgba(57, 231, 255, .3),
+    inset 0 0 20px rgba(57, 231, 255, .15) !important;
+  outline: none !important;
+}
+
+/* Attach / mic / send — same 44px height, glass chips like header */
+.jarvis-shell[data-chat-style="vector"] .attach-zone,
+.jarvis-shell[data-chat-style="vector"] .mic-zone,
+.jarvis-shell[data-chat-style="vector"] .send-zone {
+  height: 44px !important;
+  min-width: 48px !important;
+  padding: 0 14px !important;
+  color: #43dff8 !important;
+  font-size: 25px !important;
+  background: linear-gradient(180deg, rgba(8, 26, 40, .5) 0%, rgba(2, 10, 19, .8) 100%) !important;
+  border: 1px solid rgba(57, 231, 255, .25) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+  transform: translateY(0);
+  transition: all .3s cubic-bezier(.4, 0, .2, 1) !important;
+}
+.jarvis-shell[data-chat-style="vector"] .send-zone {
+  color: #7aedff !important;
+  border-color: rgba(77, 228, 255, .6) !important;
+  box-shadow:
+    inset 0 0 18px rgba(29, 180, 231, .12),
+    0 4px 6px rgba(0, 0, 0, .3),
+    0 0 18px rgba(40, 208, 251, .18) !important;
+}
+.jarvis-shell[data-chat-style="vector"] .attach-zone:hover,
+.jarvis-shell[data-chat-style="vector"] .mic-zone:hover,
+.jarvis-shell[data-chat-style="vector"] .send-zone:hover {
+  color: #ffffff !important;
+  border-color: rgba(135, 241, 255, .9) !important;
+  background: linear-gradient(180deg, rgba(14, 46, 74, .8) 0%, rgba(4, 20, 35, .95) 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, .4),
+    inset 0 0 20px rgba(57, 231, 255, .25),
+    0 0 18px rgba(57, 231, 255, .3) !important;
+}
+
+/* Chat title — vector neon text, no background */
+.jarvis-shell[data-chat-style="vector"] .chat-head .p-title {
+  background: transparent !important;
+  border: 0 !important;
+  text-shadow: 0 0 8px rgba(57, 231, 255, .6) !important;
+}
+
+/* UI Overhaul: Neon text and Futuristic SVGs */
+.tool-hotspots button { text-shadow: 0 0 4px rgba(79, 227, 255, 0.8), 0 0 10px rgba(79, 227, 255, 0.4); color: #fff !important; }
+.tool-hotspots button:hover { text-shadow: 0 0 8px rgba(79, 227, 255, 1), 0 0 20px rgba(79, 227, 255, 0.8); }
+.dropdown-menu button { text-shadow: 0 0 3px rgba(79, 227, 255, 0.5); }
+.futuristic-icon { width: 18px; height: 18px; fill: none; stroke: var(--cyan, #4fe3ff); stroke-width: 1.5; filter: drop-shadow(0 0 4px var(--cyan, #4fe3ff)) drop-shadow(0 0 8px rgba(79,227,255,0.5)); transition: all 0.3s ease; }
+.tool-hotspots button:hover .futuristic-icon { filter: drop-shadow(0 0 8px var(--cyan, #4fe3ff)) drop-shadow(0 0 16px rgba(79,227,255,0.8)); transform: scale(1.1); }
+

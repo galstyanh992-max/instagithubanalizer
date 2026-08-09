@@ -8,6 +8,7 @@ import { licenseService } from "@/services/license.service";
 import { securityService } from "@/services/security.service";
 import { compatibilityService } from "@/services/compatibility.service";
 import { duplicateService } from "@/services/duplicate.service";
+import { localizeRepositoryMetadata } from "@/services/repository-localization.service";
 import type { RepoMetadata, RepoAnalysisResult } from "@/lib/types";
 
 export interface AnalyzeOptions {
@@ -31,13 +32,13 @@ export async function analyzeRepoPipeline(
   const { force = false, screenshotId } = options;
 
   // 1. Resolve metadata from GitHub
-  const meta: RepoMetadata =
+  const githubMeta: RepoMetadata =
     typeof input === "string"
       ? await resolveRepo(input)
       : await fetchRepoMetadata(input.owner, input.repo);
 
   // 2. Duplicate check
-  const existing = await duplicateService.findDuplicate(meta.fullName);
+  const existing = await duplicateService.findDuplicate(githubMeta.fullName);
   if (existing && !force) {
     return {
       repositoryId: existing.id,
@@ -48,6 +49,7 @@ export async function analyzeRepoPipeline(
       finalPriorityScore: existing.finalPriorityScore,
     };
   }
+  const meta = await localizeRepositoryMetadata(githubMeta);
 
   // 3. Get settings + project context
   const settings = await db.setting.findUnique({ where: { id: "singleton" } });

@@ -2,7 +2,7 @@
 // Генерирует план интеграции полезных частей из GitHub-репозитория в подключённый проект пользователя.
 
 import { db } from "@/lib/db";
-import { aiService } from "./ai.service";
+import { aiProviderRouter } from "./ai-provider-router.service";
 import { licenseService } from "./license.service";
 import type { RepoMetadata, RepoAnalysisResult } from "@/lib/types";
 
@@ -265,20 +265,12 @@ export const integrationPlanService = {
       goals: safeParseArr(project.goals),
     };
 
-    // Try real AI if configured
-    if (!aiService.isMock()) {
-      try {
-        const ZAISDK = (await import("z-ai-web-dev-sdk")).default;
-        const zai = await ZAISDK.create();
-        const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "system", content: buildSystemPrompt(projectProfile, repo ?? null) },
-            { role: "user", content: buildUserPrompt(repo ?? null, analysis ?? null) },
-          ],
-          temperature: 0.3,
-          max_tokens: 4096,
-        });
-        const raw = completion.choices[0]?.message?.content ?? "";
+    try {
+        const raw = await aiProviderRouter.chat(
+          "integration_plan",
+          buildSystemPrompt(projectProfile, repo ?? null),
+          buildUserPrompt(repo ?? null, analysis ?? null),
+        );
         const cleaned = raw.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
         const parsed = JSON.parse(cleaned) as Partial<IntegrationPlanResult>;
         const result: IntegrationPlanResult = {
@@ -329,38 +321,9 @@ export const integrationPlanService = {
         });
 
         return result;
-      } catch (e) {
-        console.warn("[integration-plan] AI failed, using mock:", e instanceof Error ? e.message : String(e));
-      }
+    } catch (error) {
+      throw new Error(`Не удалось получить план от подключённого AI-провайдера: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    // Mock fallback
-    const mock = mockPlan(projectProfile, repo ?? null, analysis ?? null);
-    await db.integrationPlan.create({
-      data: {
-        connectedProjectId,
-        repositoryId: repositoryId ?? null,
-        title: mock.title,
-        summary: mock.summary,
-        usefulParts: JSON.stringify(mock.usefulParts),
-        filesToInspect: JSON.stringify(mock.filesToInspect),
-        reusableComponents: JSON.stringify(mock.reusableComponents),
-        apiPatterns: JSON.stringify(mock.apiPatterns),
-        agentWorkflowIdeas: JSON.stringify(mock.agentWorkflowIdeas),
-        databasePatterns: JSON.stringify(mock.databasePatterns),
-        uiUxIdeas: JSON.stringify(mock.uiUxIdeas),
-        requiredDeps: JSON.stringify(mock.requiredDeps),
-        compatibilityConcerns: JSON.stringify(mock.compatibilityConcerns),
-        risks: JSON.stringify(mock.risks),
-        implementationSteps: JSON.stringify(mock.implementationSteps),
-        doNotIntegrate: JSON.stringify(mock.doNotIntegrate),
-        estimatedEffort: mock.estimatedEffort,
-        finalRecommendation: mock.finalRecommendation,
-        status: "DRAFT",
-        mock: true,
-      },
-    });
-    return mock;
   },
 
   async listForProject(connectedProjectId: string) {

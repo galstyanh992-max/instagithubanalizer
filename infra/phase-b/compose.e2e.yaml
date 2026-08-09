@@ -1,0 +1,8 @@
+services:
+  n8n:
+    volumes:
+      - jarvis_phase_b_n8n_e2e_data:/home/node/.n8n
+
+volumes:
+  jarvis_phase_b_n8n_e2e_data:
+    name: jarvis-phase-b-n8n-e2e-data

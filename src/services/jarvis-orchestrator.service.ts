@@ -1,6 +1,7 @@
 import { aiProviderRouter, type AiIntent } from "@/services/ai-provider-router.service";
 import { generateMedia, transcribeAudio, type MediaResult } from "@/services/media-router.service";
 import { fileToBuffer } from "@/services/storage.service";
+import { resolvePage, isNavigationIntent } from "@/lib/jarvis/page-registry";
 
 export type TaskType =
   | "auto"
@@ -11,7 +12,14 @@ export type TaskType =
   | "transcription"
   | "analysis"
   | "repo_analysis"
+  | "ui_navigation"
   | "unknown";
+
+/**
+ * Server-side UI action emitted by the orchestrator. Only "navigate" today,
+ * but shaped as a discriminated union so it can grow without breaking clients.
+ */
+export type ServerUiAction = { type: "navigate"; path: string };
 
 export interface JarvisTask {
   type: TaskType;
@@ -31,6 +39,16 @@ export function parseTask(input: string, preferredType?: TaskType): JarvisTask {
   // Explicit UI mode takes precedence.
   if (preferredType === "analysis") {
     return { type: "analysis", intent: "analysis", prompt: input };
+  }
+
+  // Navigation intent: "открой агентов" / "go to settings" → emit a UI action
+  // instead of routing to an AI model. This lets the orchestrator drive the app
+  // UI directly from chat.
+  if (isNavigationIntent(lower)) {
+    const page = resolvePage(lower);
+    if (page) {
+      return { type: "ui_navigation", intent: "chat/general", prompt: input };
+    }
   }
   if (preferredType && preferredType !== "auto") {
     const mediaIntentMap: Record<string, AiIntent> = {
@@ -142,13 +160,34 @@ export function selectChatModel(prompt: string): { provider: string; model: stri
 
 /**
  * Execute a Jarvis task. Returns a plain object for the caller to display.
+ * `uiAction` (when present) instructs the client to perform a UI action such
+ * as navigating to a page — the orchestrator does not wait for the client.
  */
-export async function executeTask(task: JarvisTask): Promise<{ ok: boolean; result: unknown; url?: string; mimeType?: string; key?: string; bucket?: string; task?: JarvisTask & { model?: string; provider?: string }; error?: string }> {
+export async function executeTask(task: JarvisTask): Promise<{ ok: boolean; result: unknown; url?: string; mimeType?: string; key?: string; bucket?: string; task?: JarvisTask & { model?: string; provider?: string }; error?: string; uiAction?: ServerUiAction }> {
+  // UI navigation: resolve the page and emit a navigate action. No model call.
+  if (task.type === "ui_navigation") {
+    const page = resolvePage(task.prompt);
+    if (!page) {
+      return { ok: false, result: "", error: "Не удалось определить раздел для открытия." };
+    }
+    return {
+      ok: true,
+      result: `Открываю раздел «${page.label}».`,
+      uiAction: { type: "navigate", path: page.path },
+      task: { ...task, provider: "ui" },
+    };
+  }
+
   if (task.type === "chat") {
+    const route = await aiProviderRouter.getProviderForIntent(task.intent);
+    if (route.isMock) {
+      return { ok: false, result: "", error: "AUTH_REQUIRED: no real provider is configured" };
+    }
     const { model } = selectChatModel(task.prompt);
+    const preferredModel = route.providerName === "ollama-cloud" ? model : undefined;
     try {
-      const reply = await aiProviderRouter.chat(task.intent, "You are Jarwisyan, a helpful AI operator.", task.prompt, model);
-      return { ok: true, result: reply, task: { ...task, model, provider: "ollama-cloud" } };
+      const reply = await aiProviderRouter.chat(task.intent, "You are Jarwisyan, a helpful AI operator.", task.prompt, preferredModel);
+      return { ok: true, result: reply, task: { ...task, model: preferredModel, provider: route.providerName } };
     } catch (e) {
       return { ok: false, result: "", error: e instanceof Error ? e.message : String(e) };
     }

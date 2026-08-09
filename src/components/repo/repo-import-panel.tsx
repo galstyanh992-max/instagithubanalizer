@@ -1,12 +1,14 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
 
-import { useState, useCallback, useRef } from "react";
+
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Github, FileJson, Loader2, ArrowRight, X, CheckCircle2,
+  Github, FileJson, Loader2, ArrowRight, CheckCircle2,
   AlertTriangle, Sparkles, Cpu, Cloud, Lightbulb, UploadCloud,
 } from "lucide-react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -24,6 +26,14 @@ type Job = {
   verdict?: string;
   finalPriorityScore?: number;
   error?: string;
+};
+
+type StoredBatch = {
+  id: string;
+  status: "queued" | "running" | "completed" | "completed_with_errors" | "failed";
+  total: number;
+  completed: number;
+  items: Job[];
 };
 
 /**
@@ -136,54 +146,48 @@ export function RepoImportPanel() {
   const router = useRouter();
   const [mode, setMode] = useState<ImportMode>("url");
   const [urlInput, setUrlInput] = useState("");
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [importJobs, setImportJobs] = useState<Job[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [batchRunning, setBatchRunning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const jobs = importJobs;
 
   const analyzeRef = useCallback(
-    async (ref: string): Promise<Job> => {
-      const id = Math.random().toString(36).slice(2);
-      setJobs((prev) => [
-        ...prev,
-        { id, ref, status: "analyzing" },
-      ]);
-
+    async (ref: string): Promise<void> => {
       try {
-        const res = await fetch("/api/repos/analyze", {
+        const res = await fetch("/api/repos/import-batch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullName: ref }),
+          body: JSON.stringify({ refs: [ref], originalName: `Ручной анализ: ${ref}` }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
           throw new Error(d.error ?? d.message ?? `HTTP ${res.status}`);
         }
-        const data = await res.json();
-        const result = data.result ?? data;
-        const job: Job = {
-          id,
-          ref,
-          status: "done",
-          repositoryId: result.repositoryId,
-          verdict: result.verdict,
-          finalPriorityScore: result.finalPriorityScore,
-        };
-        setJobs((prev) => prev.map((j) => (j.id === id ? job : j)));
-        return job;
+        toast.success(`${ref}: анализ поставлен в постоянную очередь`);
       } catch (e) {
-        const job: Job = {
-          id,
-          ref,
-          status: "error",
-          error: e instanceof Error ? e.message : String(e),
-        };
-        setJobs((prev) => prev.map((j) => (j.id === id ? job : j)));
-        return job;
+        toast.error(`${ref}: ${e instanceof Error ? e.message : String(e)}`);
       }
     },
     []
   );
+
+  const syncImportBatches = useCallback(async () => {
+    const response = await fetch("/api/repos/import-batch", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json() as { batches?: StoredBatch[] };
+    const batches = data.batches ?? [];
+    setImportJobs(batches.flatMap((batch) => batch.items));
+    setBatchRunning(batches.some((batch) => batch.status === "queued" || batch.status === "running"));
+  }, []);
+
+  // Import actions are server-side records. Polling both shows live progress
+  // and restores the list after a refresh or reopening the module.
+  useEffect(() => {
+    void syncImportBatches();
+    const timer = window.setInterval(() => void syncImportBatches(), 2_500);
+    return () => window.clearInterval(timer);
+  }, [syncImportBatches]);
 
   const handleUrlSubmit = async () => {
     const ref = parseRepoRef(urlInput);
@@ -205,71 +209,31 @@ export function RepoImportPanel() {
         continue;
       }
 
-      // Upload file to Supabase Storage first so it does not stay on the PC
+      // Parse locally on the server and persist the queue before analysis starts.
       const uploadForm = new FormData();
       uploadForm.append("file", file);
-      const uploadRes = await fetch("/api/repos/import-upload", {
-        method: "POST",
-        body: uploadForm,
-      });
-      if (!uploadRes.ok) {
-        const d = await uploadRes.json().catch(() => ({}));
-        toast.error(`${file.name}: не удалось загрузить — ${d.error ?? uploadRes.status}`);
-        continue;
-      }
-      const { url } = await uploadRes.json();
-
-      // Read back from Supabase and run batch analysis on the server
       const batchRes = await fetch("/api/repos/import-batch", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storageUrl: url }),
+        body: uploadForm,
       });
       if (!batchRes.ok) {
         const d = await batchRes.json().catch(() => ({}));
         toast.error(`${file.name}: аудит не запустился — ${d.error ?? batchRes.status}`);
         continue;
       }
-      const { results } = await batchRes.json();
-
-      // Map server results to local job list
-      for (const r of results) {
-        const id = Math.random().toString(36).slice(2);
-        if (r.ok) {
-          setJobs((prev) => [
-            ...prev,
-            {
-              id,
-              ref: r.ref,
-              status: "done",
-              repositoryId: r.repositoryId,
-              verdict: r.verdict,
-              finalPriorityScore: r.finalPriorityScore,
-            },
-          ]);
-        } else {
-          setJobs((prev) => [
-            ...prev,
-            {
-              id,
-              ref: r.ref,
-              status: "error",
-              error: r.error,
-            },
-          ]);
-        }
-      }
+      const batch = await batchRes.json() as { total?: number };
+      toast.success(`${file.name}: ${batch.total ?? 0} репозиториев поставлено в очередь`);
     }
 
-    setBatchRunning(false);
-  }, []);
+    await syncImportBatches();
+  }, [syncImportBatches]);
 
   const openRepo = (job: Job) => {
     if (job.repositoryId) router.push(`/repos/${job.repositoryId}`);
   };
 
   return (
-    <HolographicPanel accent="cyan" className="p-4 space-y-4">
+    <SciFiPanel accent="cyan" className="p-4 space-y-4">
       {/* Mode tabs */}
       <div className="flex items-center gap-2">
         <button
@@ -430,13 +394,6 @@ export function RepoImportPanel() {
                     ОТКРЫТЬ <ArrowRight className="h-3 w-3" />
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setJobs((prev) => prev.filter((j) => j.id !== job.id))}
-                  className="shrink-0 text-zinc-500 hover:text-red-400"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -464,6 +421,6 @@ export function RepoImportPanel() {
           <Loader2 className="h-3 w-3 animate-spin" /> Пакетный аудит выполняется…
         </div>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

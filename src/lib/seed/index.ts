@@ -1,3 +1,4 @@
+
 // ─── Agent OS — Seed / Initialization ───────────────────────
 // Creates the default user, workspace, and agents on first run.
 // Stage 3: Also seeds agent profiles, capabilities, permissions, models, runtime states.
@@ -122,8 +123,8 @@ export async function getSystemStatus() {
     userCount,
     workspaceCount,
     projectCount,
-    epicCount,
-    taskCount,
+    runCount,
+    agentTaskCount,
     agentCount,
     memoryCount,
     approvalCount,
@@ -142,8 +143,8 @@ export async function getSystemStatus() {
     db.user.count(),
     db.workspace.count(),
     db.project.count(),
-    db.epic.count(),
-    db.task.count(),
+    db.orchestrationRun.count(),
+    db.agentTask.count(),
     db.agent.count(),
     db.memoryItem.count(),
     db.approvalRequest.count(),
@@ -164,8 +165,8 @@ export async function getSystemStatus() {
     users: userCount,
     workspaces: workspaceCount,
     projects: projectCount,
-    epics: epicCount,
-    tasks: taskCount,
+    runs: runCount,
+    agentTasks: agentTaskCount,
     agents: agentCount,
     memories: memoryCount,
     approvals: approvalCount,
@@ -182,3 +183,4 @@ export async function getSystemStatus() {
     toolPolicies: toolPolicyCount,
   };
 }
+

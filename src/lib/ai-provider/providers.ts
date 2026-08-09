@@ -26,7 +26,10 @@ const openRouterEntry: ProviderConfigEntry = {
     baseUrlEnv: 'OPENROUTER_BASE_URL',
     defaultBaseUrl: 'https://openrouter.ai/api/v1',
     defaultModelEnv: 'OPENROUTER_MODEL',
-    fallbackModel: 'anthropic/claude-3-5-sonnet-20240620',
+    // Used only when OPENROUTER_MODEL is absent. Keep this aligned with
+    // OpenRouter's catalogue so a valid provider is never called with a
+    // non-existent default model.
+    fallbackModel: 'openai/gpt-4o',
     siteUrlEnv: 'OPENROUTER_SITE_URL',
     siteNameEnv: 'OPENROUTER_SITE_NAME',
     timeoutMsEnv: 'OPENROUTER_TIMEOUT_MS',

@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Rocket, CheckCircle2, AlertTriangle, XCircle, Loader2 } from "lucide-react";
 
@@ -43,7 +44,7 @@ export default function DeployPage() {
         <p className="text-xs text-zinc-500">Проверка готовности проекта к production деплою</p>
       </div>
 
-      <HolographicPanel accent="cyan" className="p-6">
+      <SciFiPanel accent="cyan" className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm text-zinc-300">Проверка готовности</div>
@@ -54,11 +55,11 @@ export default function DeployPage() {
             Проверить готовность
           </Button>
         </div>
-      </HolographicPanel>
+      </SciFiPanel>
 
       {result && (
         <>
-          <HolographicPanel accent={result.ready ? "lime" : "magenta"} className="p-5">
+          <SciFiPanel accent={result.ready ? "lime" : "magenta"} className="p-5">
             <div className="flex items-center gap-3">
               {result.ready ? (
                 <CheckCircle2 className="h-8 w-8 text-lime-400" />
@@ -73,9 +74,9 @@ export default function DeployPage() {
               </div>
             </div>
             <p className="mt-3 text-sm text-zinc-300">{result.recommendation}</p>
-          </HolographicPanel>
+          </SciFiPanel>
 
-          <HolographicPanel accent="cyan" className="p-4">
+          <SciFiPanel accent="cyan" className="p-4">
             <div className="space-y-2">
               {result.checks.map((check, i) => (
                 <div key={i} className="flex items-start gap-3 rounded-lg border border-zinc-800/60 bg-zinc-900/40 p-3">
@@ -89,7 +90,7 @@ export default function DeployPage() {
                 </div>
               ))}
             </div>
-          </HolographicPanel>
+          </SciFiPanel>
         </>
       )}
     </div>

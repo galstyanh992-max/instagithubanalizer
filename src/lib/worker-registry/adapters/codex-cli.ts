@@ -1,4 +1,4 @@
-import { WorkerAdapter, WorkerHealth, WorkerCapabilities, TaskPayload, ExecutionPlan, NormalizedResult, WorkerResult } from '../types';
+import { WorkerAdapter, WorkerHealth, WorkerCapabilities, TaskPayload, ExecutionPlan, NormalizedResult, WorkerResult, classifyWorkerTerminal, formatTerminalDiagnostics } from '../types';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -17,13 +17,16 @@ const CODEX_SANDBOX_DIAGNOSTICS = [
 // Structured, fail-closed failure classification for non-zero-exit results.
 // No dangerous fallback is ever attempted for any of these — a rejected/denied
 // run always surfaces as FAILED with a labeled reason, never a dangerous retry.
-function classifyCodexFailure(stderr: string): string {
+function classifyCodexFailure(stderr: string, terminalReason?: string): string {
   const text = stderr || '';
   if (/unexpected argument|error: unrecognized|found\s*$/im.test(text) && /codex exec/i.test(text)) {
     return `CODEX_CLI_ARGUMENT_REJECTED: ${text}`;
   }
   if (/sandbox/i.test(text) && /(denied|not permitted|permission)/i.test(text)) {
     return `CODEX_SANDBOX_DENIED: ${text}`;
+  }
+  if (terminalReason === 'NO_EXIT_CODE') {
+    return `CODEX_NO_EXIT_CODE: ${text || 'Process terminated without a confirmed exit code.'}`;
   }
   return `CODEX_EXECUTION_FAILED: ${text || 'Non-zero exit code returned'}`;
 }
@@ -163,6 +166,33 @@ export class CodexWorkerAdapter implements WorkerAdapter {
       let stdout = '';
       let stderr = '';
       let isTimedOut = false;
+      // Single-finalization guard: the Promise resolves exactly once regardless
+      // of whether 'close' and/or 'error' fire, and regardless of event order.
+      let finalized = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
+      // Single-finalization protocol.
+      //
+      // `claimTerminal()` MUST be called synchronously at the very top of every
+      // terminal handler - before any `await` - otherwise a second event that
+      // arrives during the await window would slip past the guard and race the
+      // first one. The first claimant wins; every later event returns early.
+      // Timers are cleared as part of the claim.
+      const claimTerminal = (): boolean => {
+        if (finalized) return false;
+        finalized = true;
+        if (timer !== undefined) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        this.activeProcesses.delete(runId);
+        return true;
+      };
+
+      const settle = (result: WorkerResult): void => {
+        this.cancelledRuns.delete(runId);
+        resolve(result);
+      };
 
       const child = this.spawnProcess(plan.command, plan.args, {
         cwd: plan.cwd,
@@ -178,7 +208,8 @@ export class CodexWorkerAdapter implements WorkerAdapter {
 
       this.activeProcesses.set(runId, child);
 
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
+        if (finalized) return;
         isTimedOut = true;
         child.kill('SIGKILL');
       }, timeoutMs);
@@ -198,20 +229,33 @@ export class CodexWorkerAdapter implements WorkerAdapter {
         }
       });
 
-      child.on('close', async (exitCode: number | null) => {
-        clearTimeout(timer);
-        this.activeProcesses.delete(runId);
+      child.on('close', async (exitCode: number | null, signal: NodeJS.Signals | null) => {
+        if (!claimTerminal()) return;
         const durationMs = Date.now() - startTime;
-        const code = exitCode ?? 0;
 
-        if (isTimedOut) {
-          return resolve({
+        // Strict terminal precedence. A null/undefined exit code is NEVER
+        // coerced to 0, so a signal-only close can never become SUCCESS.
+        const classification = classifyWorkerTerminal({
+          cancelRequested: this.cancelledRuns.has(runId),
+          timedOut: isTimedOut,
+          spawnError: null,
+          exitCode,
+          signal
+        });
+        const diagnostics = formatTerminalDiagnostics(classification);
+        const code = classification.exitCode;
+
+        if (classification.status === 'CANCELLED' || classification.status === 'TIMEOUT') {
+          const isTimeout = classification.status === 'TIMEOUT';
+          return settle({
             workerId: this.id,
             taskId,
             runId,
             executionId,
-            status: 'TIMEOUT',
-            summary: `Execution timed out after ${timeoutMs}ms`,
+            status: classification.status,
+            summary: isTimeout
+              ? `Execution timed out after ${timeoutMs}ms`
+              : 'Execution cancelled by caller.',
             changedFiles: [],
             createdFiles: [],
             deletedFiles: [],
@@ -221,35 +265,18 @@ export class CodexWorkerAdapter implements WorkerAdapter {
             stderrSummary: stderr.substring(0, 1000),
             exitCode: -1,
             durationMs,
-            warnings: ['TIMEOUT_EXCEEDED', ...CODEX_SANDBOX_DIAGNOSTICS],
-            errors: ['CODEX_TIMED_OUT: Process killed due to execution timeout. No automatic dangerous-mode retry was attempted.']
+            warnings: isTimeout
+              ? ['TIMEOUT_EXCEEDED', ...CODEX_SANDBOX_DIAGNOSTICS, ...diagnostics]
+              : [...CODEX_SANDBOX_DIAGNOSTICS, ...diagnostics],
+            errors: [isTimeout
+              ? 'CODEX_TIMED_OUT: Process killed due to execution timeout. No automatic dangerous-mode retry was attempted.'
+              : 'CODEX_CANCELLED: Process terminated via cancel(). No automatic dangerous-mode retry was attempted.'],
+            terminalReason: classification.reason,
+            terminalSignal: classification.diagnostics.signal
           });
         }
 
-        if (this.cancelledRuns.has(runId)) {
-          this.cancelledRuns.delete(runId);
-          return resolve({
-            workerId: this.id,
-            taskId,
-            runId,
-            executionId,
-            status: 'CANCELLED',
-            summary: 'Execution cancelled by caller.',
-            changedFiles: [],
-            createdFiles: [],
-            deletedFiles: [],
-            artifacts: [],
-            patchPath: '',
-            stdoutSummary: stdout.substring(0, 1000),
-            stderrSummary: stderr.substring(0, 1000),
-            exitCode: -1,
-            durationMs,
-            warnings: [...CODEX_SANDBOX_DIAGNOSTICS],
-            errors: ['CODEX_CANCELLED: Process terminated via cancel(). No automatic dangerous-mode retry was attempted.']
-          });
-        }
-
-        const normalized = await this.normalizeResult(stdout, stderr, code, workspaceRoot);
+        await this.normalizeResult(stdout, stderr, code, workspaceRoot);
 
         const createdFiles: string[] = [];
         try {
@@ -273,15 +300,16 @@ export class CodexWorkerAdapter implements WorkerAdapter {
           // ignore scan errors
         }
 
-        const status = code === 0 ? 'SUCCESS' : 'FAILED';
-        const summary = status === 'SUCCESS' ? 'Codex CLI task completed successfully.' : `Task failed with exit code ${code}.`;
+        const summary = classification.status === 'SUCCESS'
+          ? 'Codex CLI task completed successfully.'
+          : `Task failed with exit code ${code}.`;
 
-        resolve({
+        settle({
           workerId: this.id,
           taskId,
           runId,
           executionId,
-          status,
+          status: classification.status,
           summary,
           changedFiles: createdFiles,
           createdFiles,
@@ -292,21 +320,32 @@ export class CodexWorkerAdapter implements WorkerAdapter {
           stderrSummary: stderr.substring(0, 1000),
           exitCode: code,
           durationMs,
-          warnings: [...CODEX_SANDBOX_DIAGNOSTICS],
-          errors: code !== 0 ? [classifyCodexFailure(stderr)] : []
+          warnings: [...CODEX_SANDBOX_DIAGNOSTICS, ...diagnostics],
+          errors: classification.status === 'FAILED'
+            ? [classifyCodexFailure(stderr, classification.reason)]
+            : [],
+          terminalReason: classification.reason,
+          terminalSignal: classification.diagnostics.signal
         });
       });
 
       child.on('error', (err: Error) => {
-        clearTimeout(timer);
-        this.activeProcesses.delete(runId);
+        if (!claimTerminal()) return;
         const durationMs = Date.now() - startTime;
-        resolve({
+        // Spawn/process error is terminal on its own and always FAILED.
+        const classification = classifyWorkerTerminal({
+          cancelRequested: false,
+          timedOut: false,
+          spawnError: err,
+          exitCode: null,
+          signal: null
+        });
+        settle({
           workerId: this.id,
           taskId,
           runId,
           executionId,
-          status: 'FAILED',
+          status: classification.status,
           summary: `Failed to spawn process: ${err.message}`,
           changedFiles: [],
           createdFiles: [],
@@ -315,10 +354,12 @@ export class CodexWorkerAdapter implements WorkerAdapter {
           patchPath: '',
           stdoutSummary: '',
           stderrSummary: err.message,
-          exitCode: -1,
+          exitCode: classification.exitCode,
           durationMs,
-          warnings: [...CODEX_SANDBOX_DIAGNOSTICS],
-          errors: [err.message]
+          warnings: [...CODEX_SANDBOX_DIAGNOSTICS, ...formatTerminalDiagnostics(classification)],
+          errors: [err.message],
+          terminalReason: classification.reason,
+          terminalSignal: null
         });
       });
     });

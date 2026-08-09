@@ -25,7 +25,7 @@ class ToolRegistryService {
   async getTools(workspaceId?: string) {
     const where = workspaceId
       ? { OR: [{ workspaceId }, { workspaceId: null }] }
-      : undefined;
+      : { workspaceId: null };
 
     return db.tool.findMany({
       where,
@@ -70,7 +70,7 @@ class ToolRegistryService {
   async getToolsByCategory(category: string, workspaceId?: string) {
     const where = workspaceId
       ? { category, OR: [{ workspaceId }, { workspaceId: null }] }
-      : { category };
+      : { category, workspaceId: null };
 
     return db.tool.findMany({
       where,

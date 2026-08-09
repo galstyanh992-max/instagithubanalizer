@@ -1,4 +1,5 @@
-import { resolve, isAbsolute } from "path";
+import { resolve, isAbsolute, relative } from "path";
+import { existsSync, realpathSync } from "node:fs";
 import type { AllowedWorkspace } from "./types";
 
 export function getAllowedWorkspace(): AllowedWorkspace | null {
@@ -29,8 +30,11 @@ export function checkPathAllowed(requestedPath: string | undefined, workspace: A
   }
 
   const target = isAbsolute(requestedPath) ? resolve(requestedPath) : resolve(workspace.rootPath, requestedPath);
-  if (!target.startsWith(workspace.rootPath)) {
+  const root = existsSync(workspace.rootPath) ? realpathSync.native(workspace.rootPath) : resolve(workspace.rootPath);
+  const canonicalTarget = existsSync(target) ? realpathSync.native(target) : target;
+  const rel = relative(root, canonicalTarget);
+  if (rel === ".." || rel.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) || isAbsolute(rel)) {
     return { ok: false, reason: "Path traversal за пределы workspace запрещён." };
   }
-  return { ok: true, resolvedPath: target };
+  return { ok: true, resolvedPath: canonicalTarget };
 }

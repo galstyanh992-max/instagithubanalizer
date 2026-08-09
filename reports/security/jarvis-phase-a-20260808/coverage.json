@@ -1,0 +1,72 @@
+{
+  "completeness": "complete",
+  "deferred": [],
+  "documentType": "codex-security.coverage",
+  "excludePaths": [],
+  "explicitExclusions": [
+    {
+      "pattern": "artifacts/, public/dashboard-recovery-baseline/vendor/, temp_extract/, src/generated/",
+      "reason": "Generated, recovered, vendored, or temporary code outside the Phase A implementation scope."
+    }
+  ],
+  "includePaths": [
+    "src/lib/jarvis/platform/",
+    "src/app/api/jarvis/",
+    "src/app/dashboard/",
+    "src/lib/supabase/middleware.ts",
+    "src/lib/jarvis/owner-guard.ts",
+    "src/lib/api.ts",
+    "src/middleware.ts",
+    "src/services/repository-import.service.ts",
+    "src/app/api/repos/import-batch/route.ts"
+  ],
+  "inventoryStrategy": "custom",
+  "mode": "scoped_path",
+  "openQuestions": [],
+  "scanId": "jarvis-phase-a-20260808",
+  "schemaVersion": "1.0",
+  "surfaces": [
+    {
+      "disposition": "no_issue_found",
+      "id": "owner_authorization",
+      "label": "Owner-only middleware and route guards",
+      "notes": "Fail-open owner handling corrected to fail closed; sensitive Phase A APIs also verify ownership in-route.",
+      "receiptRefs": []
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "registry_mutation",
+      "label": "Persistent registry mutation and provenance",
+      "notes": "Manual collisions with discovered records are rejected; record and snapshot limits are enforced.",
+      "receiptRefs": []
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "local_discovery",
+      "label": "Local CLI and Docker discovery",
+      "notes": "Fixed command probes use execFile; command-shim paths are data, not interpolated shell source; raw Docker labels are not persisted.",
+      "receiptRefs": []
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "ollama_loopback",
+      "label": "Loopback Ollama adapter",
+      "notes": "Endpoint and paths are fixed; elapsed time, response bytes, model count, and model-name length are bounded.",
+      "receiptRefs": []
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "repository_import",
+      "label": "Persistent JSON/JSONL repository import",
+      "notes": "File and record limits, durable item state, atomic claims, stale recovery, and bounded provider/GitHub waits were reviewed.",
+      "receiptRefs": []
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "frontend_rendering",
+      "label": "Dynamic dashboard rendering",
+      "notes": "Registry values are rendered as React text; no raw HTML sink was found.",
+      "receiptRefs": []
+    }
+  ]
+}

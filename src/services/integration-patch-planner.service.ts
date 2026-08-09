@@ -2,7 +2,7 @@
 // Генерирует конкретный план патча: какие файлы создать/изменить, зависимости, env vars
 
 import { db } from "@/lib/db";
-import { aiService } from "./ai.service";
+import { aiProviderRouter } from "./ai-provider-router.service";
 import type { RepoMetadata } from "@/lib/types";
 
 export interface PatchPlan {
@@ -89,30 +89,15 @@ export const integrationPatchPlanner = {
       mock: true,
     };
 
-    // Try real AI
-    if (!aiService.isMock()) {
-      try {
-        const ZAISDK = (await import("z-ai-web-dev-sdk")).default;
-        const zai = await ZAISDK.create();
+    try {
         const systemPrompt = `Ты — интеграционный архитектор. Всегда отвечай на русском. JSON keys на английском, значения на русском. Сгенерируй конкретный план патча для интеграции ${repo.fullName} в проект «${project.name}» (tech: ${techStack.join(", ")}).`;
         const userPrompt = `Репозиторий: ${repo.fullName}, ${repo.description}. License: ${repo.license}. Docker: ${repo.hasDocker}. Анализ: ${analysis?.summary ?? ""}. Цели проекта: ${goals.join(", ")}. Правила: ${rules.join(", ")}. README: ${repo.readmeText.slice(0, 2000)}`;
-        const completion = await zai.chat.completions.create({
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          temperature: 0.3,
-          max_tokens: 4096,
-        });
-        const raw = completion.choices[0]?.message?.content ?? "";
+        const raw = await aiProviderRouter.chat("patch_plan", systemPrompt, userPrompt);
         const parsed = JSON.parse(raw.replace(/```json\s*/gi, "").replace(/```/g, "").trim());
         return { ...mock, ...parsed, mock: false };
-      } catch {
-        return mock;
-      }
+    } catch (error) {
+      throw new Error(`Не удалось получить план изменений от подключённого AI-провайдера: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    return mock;
   },
 };
 

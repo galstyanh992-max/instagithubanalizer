@@ -107,4 +107,11 @@ describe("terminal-guard", () => {
     const r = analyzeTerminalCommand("somerandombinary --do-stuff", { workspaceRoot: ROOT });
     expect(r.requiresApproval).toBe(true);
   });
+
+  it("rejects shell syntax appended to a safe prefix", () => {
+    const r = analyzeTerminalCommand("echo harmless; powershell whoami", { workspaceRoot: ROOT });
+    expect(r.allowed).toBe(false);
+    expect(r.requiresApproval).toBe(false);
+    expect(r.riskLevel).toBe("CRITICAL");
+  });
 });

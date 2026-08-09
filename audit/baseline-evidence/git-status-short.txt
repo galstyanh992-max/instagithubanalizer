@@ -1,0 +1,159 @@
+﻿ M .env.example
+ D 3001
+ M eslint.config.mjs
+ D lint_full.txt
+ D lint_out.txt
+ M package-lock.json
+ M package.json
+ M prisma/schema.prisma
+ M src/app/agents/page.tsx
+ M src/app/api/agents/route.ts
+R  src/app/api/auth/[nextauth]/route.ts -> src/app/api/auth/[...nextauth]/route.ts
+ M src/app/api/chat/route.ts
+ M src/app/api/departments/[id]/route.ts
+ M src/app/api/departments/route.ts
+ M src/app/api/jarvis/orchestrate/route.ts
+ M src/app/api/settings/route.ts
+ M src/app/api/workflow-templates/[id]/route.ts
+ M src/app/api/workflow-templates/route.ts
+ M src/app/board/page.tsx
+ M src/app/categories/page.tsx
+ M src/app/compare/page.tsx
+ M src/app/dashboard/page.tsx
+ M src/app/departments/page.tsx
+ M src/app/deploy/page.tsx
+ M src/app/globals.css
+ M src/app/layout.tsx
+ M src/app/login/page.tsx
+ M src/app/manual-review/page.tsx
+ M src/app/memory/page.tsx
+ M src/app/page.tsx
+ M src/app/projects/page.tsx
+ M src/app/repos/[id]/page.tsx
+ M src/app/repos/analyze/page.tsx
+ M src/app/repos/page.tsx
+ M src/app/settings/page.tsx
+ M src/app/voice/page.tsx
+ M src/app/watchlist/page.tsx
+ M src/components/futuristic/CosmicBackground.tsx
+ D src/components/futuristic/holographic-panel.tsx
+ D src/components/futuristic/neon-badge.tsx
+ D src/components/futuristic/score-ring.tsx
+ D src/components/futuristic/stat-card.tsx
+ M src/components/jarvis/jarvis-unified-console.tsx
+ M src/components/jarvis/media-player.tsx
+ M src/components/jarvis/use-jarvis.ts
+ D src/components/layout/chat-bar.tsx
+ D src/components/layout/device-preview.tsx
+ D src/components/layout/futuristic-shell.tsx
+ M src/components/layout/mac-dock.tsx
+ D src/components/layout/sidebar.tsx
+ M src/components/layout/topbar.tsx
+ M src/components/os/OsOperationsHub.tsx
+ M src/components/os/OsSystemStatus.tsx
+ M src/components/projects/integration-plan-panel.tsx
+ M src/components/repo/github-alternatives-panel.tsx
+ M src/components/repo/my-pc-compatibility-panel.tsx
+ M src/components/repo/ollama-cloud-options-panel.tsx
+ M src/components/repo/panels/repo-panels.tsx
+ M src/components/repo/repo-card.tsx
+ M src/components/repo/repo-import-panel.tsx
+ M src/components/repo/run-options-panel.tsx
+ M src/components/settings/ai-provider-center.tsx
+ M src/components/settings/cloud-provider-policy.tsx
+ M src/components/settings/model-hierarchy-panel.tsx
+ M src/components/settings/pc-profile-settings.tsx
+ M src/components/sidebar/task-list-sidebar.tsx
+ D src/components/three/JarwisyanAICore.new.tsx
+ D src/components/three/JarwisyanAICore.tsx
+ D src/components/three/JarwisyanAICoreFallback.tsx
+ M src/components/voice/use-voice.ts
+ M src/lib/ai-provider/providers.ts
+ M src/lib/auth.ts
+ M src/lib/types/events.ts
+ M src/middleware.ts
+ M src/server/executor/__tests__/codex-cli-adapter.test.ts
+ M src/server/executor/codex-cli-adapter.ts
+ M src/services/ai-provider-router.service.ts
+ M src/services/chat.service.ts
+ M src/services/github.service.ts
+ M src/services/jarvis-orchestrator.service.ts
+ M tsconfig.json
+ M vitest.config.ts
+?? .agent.md
+?? .agents/skills/ui-ux-max-pro/
+?? .playwright-cli/
+?? .playwright-mcp/
+?? .vscode/
+?? AGENTS.md
+?? JARVIS_DESIGN_PHILOSOPHY.md
+?? JARVIS_Live_Model_UI_v9.zip
+?? JARVIS_VOLUMETRIC_SILENCE.png
+?? architecture/
+?? artifacts/
+?? audit/01_baseline_audit.md
+?? audit/03_use_voice_repair_loop.md
+?? audit/baseline-evidence/
+?? docs/
+?? graphify-out/
+?? output/
+?? prisma/migrations/20260721000000_jarvis_agent_network/
+?? prisma/migrations/20260723000000_infrastructure_operations/
+?? prisma/migrations/20260723010000_chat_attachments/
+?? prisma/migrations/20260723020000_orchestration_resume_guards/
+?? prisma/migrations/20260723030000_codex_subscription_provider/
+?? prisma/migrations/20260723040000_provider_function_routes/
+?? prisma/migrations/20260723050000_platform_integration_tokens/
+?? public/dashboard/
+?? public/hologram_face.png
+?? reports/11_use_voice_lint_fix.md
+?? reports/12_build_runtime_verification.md
+?? reports/13_nextauth_configuration_gate.md
+?? reports/16_auth_source_map.md
+?? reports/17_nextauth_secret_repair.md
+?? reports/18_admin_password_repair.md
+?? reports/19_auth_config_validation.md
+?? reports/20_auth_credential_handoff.md
+?? reports/clarification/
+?? reports/phase2-overlay-source-gate.md
+?? scripts/dev.mjs
+?? scripts/test-prisma-env.mjs
+?? src/app/api/browser/camofox/
+?? src/app/api/chat/attachments/
+?? src/app/api/development/
+?? src/app/api/ecosystem/
+?? src/app/api/graphify/
+?? src/app/api/infra/
+?? src/app/api/jarvis/network/
+?? src/app/api/jarvis/runs/
+?? src/app/api/os/
+?? src/app/api/providers/codex-subscription/
+?? src/app/api/telegram/music/
+?? src/app/api/youtube/
+?? src/app/graphify/
+?? src/app/jarvis/
+?? src/app/page.tsx.bak
+?? src/components/layout/cockpit-shell.module.css
+?? src/components/layout/cockpit-shell.tsx
+?? src/components/os/ModuleEmbedDetector.tsx
+?? src/components/settings/codex-subscription-card.tsx
+?? src/components/settings/provider-routing-panel.tsx
+?? src/components/ui/sci-fi-panel.tsx
+?? src/lib/ai-provider/codex-subscription/
+?? src/lib/ai-provider/provider-health.test.ts
+?? src/lib/ai-provider/provider-health.ts
+?? src/lib/auth-config.test.ts
+?? src/lib/auth-config.ts
+?? src/lib/auth.test.ts
+?? src/lib/chat/
+?? src/lib/ecosystem/
+?? src/lib/integrations/
+?? src/lib/jarvis/
+?? src/lib/media/
+?? src/lib/youtube-oauth.test.ts
+?? src/lib/youtube-oauth.ts
+?? src/services/camofox-browser.service.ts
+?? src/services/graphify.service.ts
+?? src/services/project-infrastructure.service.test.ts
+?? src/services/project-infrastructure.service.ts
+?? vendor/

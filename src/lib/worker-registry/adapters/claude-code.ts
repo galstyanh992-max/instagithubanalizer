@@ -1,4 +1,4 @@
-import { WorkerAdapter, WorkerHealth, WorkerCapabilities, TaskPayload, ExecutionPlan, NormalizedResult, WorkerResult } from '../types';
+import { WorkerAdapter, WorkerHealth, WorkerCapabilities, TaskPayload, ExecutionPlan, NormalizedResult, WorkerResult, classifyWorkerTerminal, formatTerminalDiagnostics } from '../types';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -8,6 +8,10 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
   displayName = 'Claude Code CLI';
 
   private activeProcesses: Map<string, child_process.ChildProcess> = new Map();
+  // Runs whose cancellation was requested by the owner before the process
+  // closed. Drives the CANCELLED terminal classification (precedence over
+  // timeout / null-exit / exit code).
+  private cancelledRuns: Set<string> = new Set();
 
   async healthCheck(): Promise<WorkerHealth> {
     try {
@@ -102,6 +106,33 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
       let stdout = '';
       let stderr = '';
       let isTimedOut = false;
+      // Single-finalization guard: the Promise resolves exactly once regardless
+      // of whether 'close' and/or 'error' fire, and regardless of event order.
+      let finalized = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
+      // Single-finalization protocol.
+      //
+      // `claimTerminal()` MUST be called synchronously at the very top of every
+      // terminal handler — before any `await` — otherwise a second event that
+      // arrives during the await window would slip past the guard and race the
+      // first one. The first claimant wins; every later event returns early.
+      // Timers are cleared as part of the claim.
+      const claimTerminal = (): boolean => {
+        if (finalized) return false;
+        finalized = true;
+        if (timer !== undefined) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        this.activeProcesses.delete(runId);
+        return true;
+      };
+
+      const settle = (result: WorkerResult): void => {
+        this.cancelledRuns.delete(runId);
+        resolve(result);
+      };
 
       const child = this.spawnProcess(plan.command, plan.args, {
         cwd: plan.cwd,
@@ -114,7 +145,8 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
 
       this.activeProcesses.set(runId, child);
 
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
+        if (finalized) return;
         isTimedOut = true;
         child.kill('SIGKILL');
       }, timeoutMs);
@@ -134,20 +166,33 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
         }
       });
 
-      child.on('close', async (exitCode: number | null) => {
-        clearTimeout(timer);
-        this.activeProcesses.delete(runId);
+      child.on('close', async (exitCode: number | null, signal: NodeJS.Signals | null) => {
+        // Claim synchronously: this handler awaits below, and a late 'error'
+        // event must not be able to overwrite an already-decided terminal state.
+        if (!claimTerminal()) return;
+        const cancelRequested = this.cancelledRuns.has(runId);
         const durationMs = Date.now() - startTime;
-        const code = exitCode ?? 0;
 
-        if (isTimedOut) {
-          return resolve({
+        const classification = classifyWorkerTerminal({
+          cancelRequested,
+          timedOut: isTimedOut,
+          spawnError: null,
+          exitCode,
+          signal
+        });
+        const diagnostics = formatTerminalDiagnostics(classification);
+
+        // Cancellation / timeout are terminal without a workspace file scan.
+        if (classification.status === 'CANCELLED' || classification.status === 'TIMEOUT') {
+          return settle({
             workerId: this.id,
             taskId,
             runId,
             executionId,
-            status: 'TIMEOUT',
-            summary: `Execution timed out after ${timeoutMs}ms`,
+            status: classification.status,
+            summary: classification.status === 'CANCELLED'
+              ? 'Execution cancelled by caller.'
+              : `Execution timed out after ${timeoutMs}ms`,
             changedFiles: [],
             createdFiles: [],
             deletedFiles: [],
@@ -157,12 +202,20 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
             stderrSummary: stderr.substring(0, 1000),
             exitCode: -1,
             durationMs,
-            warnings: ['TIMEOUT_EXCEEDED'],
-            errors: ['Process killed due to execution timeout.']
+            warnings: [
+              classification.status === 'TIMEOUT' ? 'TIMEOUT_EXCEEDED' : 'CANCELLED_BY_OWNER',
+              ...diagnostics
+            ],
+            errors: [classification.status === 'TIMEOUT'
+              ? 'CLAUDE_TIMED_OUT: Process killed due to execution timeout.'
+              : 'CLAUDE_CANCELLED: Process terminated via cancel().'],
+            terminalReason: classification.reason,
+            terminalSignal: classification.diagnostics.signal
           });
         }
 
-        const normalized = await this.normalizeResult(stdout, stderr, code, workspaceRoot);
+        // SUCCESS or FAILED: discover created files before finalizing.
+        await this.normalizeResult(stdout, stderr, classification.exitCode, workspaceRoot);
 
         const createdFiles: string[] = [];
         try {
@@ -186,15 +239,16 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
           // ignore scan errors
         }
 
-        const status = code === 0 ? 'SUCCESS' : 'FAILED';
-        const summary = status === 'SUCCESS' ? 'Claude Code CLI task completed successfully.' : `Task failed with exit code ${code}.`;
+        const summary = classification.status === 'SUCCESS'
+          ? 'Claude Code CLI task completed successfully.'
+          : `Task failed with exit code ${classification.exitCode}.`;
 
-        resolve({
+        settle({
           workerId: this.id,
           taskId,
           runId,
           executionId,
-          status,
+          status: classification.status,
           summary,
           changedFiles: createdFiles,
           createdFiles,
@@ -203,23 +257,36 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
           patchPath: '',
           stdoutSummary: stdout.substring(0, 1000),
           stderrSummary: stderr.substring(0, 1000),
-          exitCode: code,
+          exitCode: classification.exitCode,
           durationMs,
-          warnings: [],
-          errors: code !== 0 ? [stderr || 'Non-zero exit code returned'] : []
+          warnings: [...diagnostics],
+          errors: classification.status === 'FAILED'
+            ? [stderr || `CLAUDE_EXECUTION_FAILED: ${classification.reason}`]
+            : [],
+          terminalReason: classification.reason,
+          terminalSignal: classification.diagnostics.signal
         });
       });
 
       child.on('error', (err: Error) => {
-        clearTimeout(timer);
-        this.activeProcesses.delete(runId);
+        if (!claimTerminal()) return;
         const durationMs = Date.now() - startTime;
-        resolve({
+        // A spawn/process error is terminal on its own: the process never
+        // produced a confirmed exit code, so this is always FAILED. It is
+        // never re-interpreted as SUCCESS.
+        const classification = classifyWorkerTerminal({
+          cancelRequested: false,
+          timedOut: false,
+          spawnError: err,
+          exitCode: null,
+          signal: null
+        });
+        settle({
           workerId: this.id,
           taskId,
           runId,
           executionId,
-          status: 'FAILED',
+          status: classification.status,
           summary: `Failed to spawn process: ${err.message}`,
           changedFiles: [],
           createdFiles: [],
@@ -228,10 +295,12 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
           patchPath: '',
           stdoutSummary: '',
           stderrSummary: err.message,
-          exitCode: -1,
+          exitCode: classification.exitCode,
           durationMs,
-          warnings: [],
-          errors: [err.message]
+          warnings: [...formatTerminalDiagnostics(classification)],
+          errors: [err.message],
+          terminalReason: classification.reason,
+          terminalSignal: null
         });
       });
     });
@@ -240,6 +309,9 @@ export class ClaudeCodeWorkerAdapter implements WorkerAdapter {
   async cancel(runId: string): Promise<boolean> {
     const child = this.activeProcesses.get(runId);
     if (child) {
+      // Record cancellation BEFORE killing so the close handler classifies
+      // the run as CANCELLED (precedence over timeout / null exit / exit code).
+      this.cancelledRuns.add(runId);
       child.kill('SIGTERM');
       this.activeProcesses.delete(runId);
       return true;

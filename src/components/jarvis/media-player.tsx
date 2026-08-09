@@ -19,8 +19,44 @@ export function MediaPlayer({ url, mimeType, type }: MediaPlayerProps) {
   const [muted, setMuted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [spectrum, setSpectrum] = useState<number[]>(Array(24).fill(8));
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const animationRef = useRef<number | null>(null);
 
   const isVideo = type === "video";
+
+  const stopVisualizing = useCallback(() => {
+    if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
+    animationRef.current = null;
+    setSpectrum(Array(24).fill(8));
+  }, []);
+
+  const startVisualizing = useCallback(() => {
+    const media = mediaRef.current;
+    if (!media || type !== "audio" || typeof AudioContext === "undefined") return;
+    const context = audioContextRef.current ?? new AudioContext();
+    audioContextRef.current = context;
+    const analyser = analyserRef.current ?? context.createAnalyser();
+    analyser.fftSize = 128;
+    analyserRef.current = analyser;
+    if (!sourceRef.current) {
+      const source = context.createMediaElementSource(media);
+      source.connect(analyser);
+      analyser.connect(context.destination);
+      sourceRef.current = source;
+    }
+    void context.resume();
+    const samples = new Uint8Array(analyser.frequencyBinCount);
+    const draw = () => {
+      analyser.getByteFrequencyData(samples);
+      setSpectrum(Array.from({ length: 24 }, (_, index) => Math.max(6, Math.round((samples[index] / 255) * 100))));
+      animationRef.current = requestAnimationFrame(draw);
+    };
+    stopVisualizing();
+    draw();
+  }, [stopVisualizing, type]);
 
   const togglePlay = useCallback(() => {
     const media = mediaRef.current;
@@ -96,8 +132,8 @@ export function MediaPlayer({ url, mimeType, type }: MediaPlayerProps) {
       setLoading(false);
     };
     const onTimeUpdate = () => setCurrentTime(media.currentTime);
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
+    const onPlay = () => { setPlaying(true); startVisualizing(); };
+    const onPause = () => { setPlaying(false); stopVisualizing(); };
     const onWaiting = () => setLoading(true);
     const onCanPlay = () => setLoading(false);
     const onError = () => {
@@ -121,8 +157,13 @@ export function MediaPlayer({ url, mimeType, type }: MediaPlayerProps) {
       media.removeEventListener("waiting", onWaiting);
       media.removeEventListener("canplay", onCanPlay);
       media.removeEventListener("error", onError);
+      stopVisualizing();
+      if (audioContextRef.current) void audioContextRef.current.close();
+      audioContextRef.current = null;
+      analyserRef.current = null;
+      sourceRef.current = null;
     };
-  }, []);
+  }, [startVisualizing, stopVisualizing]);
 
   const fmt = (s: number) => {
     if (!isFinite(s) || isNaN(s)) return "0:00";
@@ -151,7 +192,9 @@ export function MediaPlayer({ url, mimeType, type }: MediaPlayerProps) {
       ) : (
         <div className="relative p-3 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80">
           <audio ref={mediaRef as React.RefObject<HTMLAudioElement>} src={url} preload="metadata" className="hidden" />
-          {/* Visualizer placeholder when not playing */}
+          <div className="mb-2 flex h-12 items-end gap-1" aria-label="Audio spectrum visualizer">
+            {spectrum.map((height, index) => <span key={index} className="flex-1 rounded-sm bg-cyan-400/80 transition-[height] duration-75 motion-reduce:transition-none" style={{ height: `${height}%` }} />)}
+          </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -168,21 +211,6 @@ export function MediaPlayer({ url, mimeType, type }: MediaPlayerProps) {
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                {playing && (
-                  <div className="flex items-end gap-0.5 h-6">
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <span
-                        key={i}
-                        className="w-1 bg-cyan-400 rounded-full animate-pulse"
-                        style={{
-                          height: `${20 + Math.sin((Date.now() / 200) + i) * 50}%`,
-                          animation: `pulse 0.${3 + i * 2}s ease-in-out infinite alternate`,
-                          animationDelay: `${i * 0.1}s`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
                 <div className="text-[10px] font-mono text-cyan-300/80 truncate">{mimeType}</div>
               </div>
             </div>

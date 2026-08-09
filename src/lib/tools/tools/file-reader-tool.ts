@@ -120,7 +120,9 @@ export const fileReaderTool: ITool = {
         : pathModule.resolve(projectRoot, normalizedPath);
 
       // Ensure the resolved path doesn't escape the project
-      const relativePath = pathModule.relative(projectRoot, resolvedPath);
+      const canonicalRoot = await fs.realpath(projectRoot);
+      const canonicalPath = await fs.realpath(resolvedPath);
+      const relativePath = pathModule.relative(canonicalRoot, canonicalPath);
       if (relativePath.startsWith('..') || pathModule.isAbsolute(relativePath)) {
         return {
           success: false,
@@ -133,7 +135,7 @@ export const fileReaderTool: ITool = {
       }
 
       // Read file
-      const content = await fs.readFile(resolvedPath, 'utf-8');
+      const content = await fs.readFile(canonicalPath, 'utf-8');
       const lines = content.split('\n');
 
       // Apply line range

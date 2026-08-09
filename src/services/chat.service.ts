@@ -6,8 +6,7 @@
 import { aiService } from "./ai.service";
 import { aiProviderRouter } from "./ai-provider-router.service";
 import { db } from "@/lib/db";
-import { memoryService } from "./memory/memory.service";
-import { memorySafetyService } from "./memory/memory-safety.service";
+import { graphifyService } from "./graphify.service";
 
 export type ChatIntent =
   | "general"
@@ -92,7 +91,7 @@ async function generateMockReply(message: string, intent: ChatIntent, repoRef: s
       const status = aiProviderRouter.getStatus();
       let providerText = "AI provider не настроен. Работаю в mock-режиме. Добавьте ключ Ollama Cloud, GLM 5.2, OpenRouter, Gemini или другой provider в Settings.";
       
-      const route = aiProviderRouter.getProviderForIntent(intent);
+      const route = await aiProviderRouter.getProviderForIntent(intent);
       if (!route.isMock) {
         const activeProv = status.providers.find(p => p.name === route.providerName);
         if (activeProv?.role === "primary-fast") {
@@ -154,43 +153,44 @@ export const chatService = {
       actions.push({ type: "navigate", label: "Открыть /repos", target: "/repos" });
     }
 
-    // Try real AI if configured
-    const isMock = aiService.isMock();
+    // Every response is produced by a configured provider; placeholder replies are not allowed.
+    const isMock = false;
     let reply: string;
 
-    // Memory retrieval — достаём релевантную память (без secrets)
-    let memoryContext = "";
-    try {
-      const memRecords = await memoryService.retrieveRelevant({
-        query: message,
-        projectId: projectId,
-        limit: 5,
-      });
-      if (memRecords.length > 0) {
-        memoryContext = memorySafetyService.sanitizeForAI(
-          memRecords.map((r) => ({ sensitive: r.sensitive, content: r.content, title: r.title }))
-        );
-        if (memoryContext) {
-          memoryContext = `\n\nРелевантная память:\n${memoryContext}`;
+    // If user asks about codebase/project structure, query Graphify graph
+    let graphContext = "";
+    const graphKeywords = /кодовая база|codebase|проект|project|файл|file|класс|class|функция|function|модуль|module|связь|connection|graph|граф|зависимость|dependency/i;
+    if (graphKeywords.test(message)) {
+      try {
+        const built = await graphifyService.isGraphBuilt();
+        if (!built) {
+          await graphifyService.analyzeProject();
         }
+        const g = await graphifyService.query(message);
+        graphContext = `\n\nGraphify memory result:\n${g.stdout}`;
+      } catch (e) {
+        console.error("[chat.service] Graphify query failed:", e);
       }
-    } catch {
-      // memory недоступна — продолжаем без неё
     }
 
-    if (isMock) {
-      reply = await generateMockReply(message, intent, repoRef);
-      if (memoryContext) {
-        reply += "\n\nℹ️ Использована память из Memory Hub при ответе.";
-      }
-    } else {
-      try {
-        const systemPrompt = `Ты — AI Jarwisyan. ВСЕГДА отвечай пользователю на русском языке, если пользователь явно не попросил другой язык. Все объяснения, рекомендации, планы запуска, планы интеграции, анализ рисков, fallback-сообщения и голосовые ответы должны быть на русском языке. Технические имена файлов, команды, API endpoints, JSON keys и названия библиотек оставляй без перевода. ${contextInfo}${memoryContext}\nIntent: ${intent}. Ответь кратко на русском. Если нужно что-то сделать — предложи action.`;
+    try {
+        const systemPrompt = `Ты — AI Jarwisyan. ВСЕГДА отвечай пользователю на русском языке, если пользователь явно не попросил другой язык. Все объяснения, рекомендации, планы запуска, планы интеграции, анализ рисков, fallback-сообщения и голосовые ответы должны быть на русском языке. Технические имена файлов, команды, API endpoints, JSON keys и названия библиотек оставляй без перевода.
+
+Ты управляешь внешним видом 3D-аватара-девушки. В конце каждого ответа добавляй ОДИН тег эмоции, который соответствует твоему тону: [emotion: smiling] для улыбки/поддержки, [emotion: laughing] для шутки/радости, [emotion: thinking] для размышлений, [emotion: sad] для сожаления/ошибки, [emotion: surprised] для удивления, [emotion: idle] для нейтрального ответа. Не объясняй этот тег и не выделяй его отдельно.
+
+У JARVIS есть веб-агент CamoFox для внешних сайтов. Не говори, что у тебя нет доступа к внешним сайтам: по команде пользователя браузерный агент открывает сайты, ищет, читает страницы, нажимает элементы и вводит текст. Для запуска пользователь может сказать «открой сайт …», «зайди на …», «перейди на https://…», «веб найди …», «веб клик eN» или «веб введи eN …». Перед действиями, которые публикуют, отправляют, оплачивают или меняют данные на внешнем сайте, запроси явное подтверждение.
+
+Если пользователь запускает режимы из верхней панели:
+- "Промпт-Инжиниринг" — превращай простой запрос в структурированный production-ready промпт-пак с ролями, ограничениями и циклом реализация-проверка-исправление.
+- "Планирование" — задавай уточняющие вопросы и создавай идеальный план проекта до начала кода.
+- "Реализация" — создавай поэтапный Roadmap с тестами на каждом шаге и выполняй этапы последовательно.
+- "GitHub Анализ" — анализируй указанный репозиторий, его интеграции, риски и возможности для внедрения.
+
+${contextInfo}${graphContext}\nIntent: ${intent}. Ответь кратко на русском. Если нужно что-то сделать — предложи action.`;
         reply = await aiProviderRouter.chat(intent, systemPrompt, message);
-      } catch (err) {
-        console.error("[chat.service] AI router failed:", err);
-        reply = await generateMockReply(message, intent, repoRef);
-      }
+    } catch (err) {
+      console.error("[chat.service] AI router failed:", err);
+      throw new Error("Подключённый AI-провайдер временно недоступен. Повторите запрос после восстановления соединения.");
     }
 
     return {

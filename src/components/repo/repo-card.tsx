@@ -1,3 +1,4 @@
+import { SciFiPanel, SciFiRing, SciFiBadge } from "@/components/ui/sci-fi-panel";
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -6,9 +7,6 @@ import { useRouter } from 'next/navigation'
 import { Star, GitFork, GitBranch, Eye, ExternalLink, RefreshCw, BookmarkPlus, BookmarkMinus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useState } from 'react'
-import { HolographicPanel } from '@/components/futuristic/holographic-panel'
-import { VerdictBadge } from '@/components/futuristic/neon-badge'
-import { ScoreRing } from '@/components/futuristic/score-ring'
 import { Button } from '@/components/ui/button'
 import { LicenseStatusBadge } from './license-badge'
 import type { Verdict } from '@/lib/types'
@@ -58,7 +56,7 @@ export function RepoCard({ repo, compact = false, showCompare = true }: RepoCard
   })
 
   return (
-    <HolographicPanel
+    <SciFiPanel
       accent={repo.gpuRequired ? 'magenta' : 'cyan'}
       className="hover:scale-[1.01] transition-transform cursor-pointer group"
     >
@@ -68,7 +66,7 @@ export function RepoCard({ repo, compact = false, showCompare = true }: RepoCard
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{repo.owner}</div>
             <div className="font-bold text-lg neon-text truncate group-hover:text-cyan-200">{repo.name}</div>
           </div>
-          <VerdictBadge verdict={repo.verdict as Verdict} size="sm" />
+          <SciFiBadge verdict={repo.verdict as Verdict} size="sm" />
         </div>
         {!compact && repo.description && (
           <p className="text-xs text-muted-foreground line-clamp-2">{repo.description}</p>
@@ -99,9 +97,9 @@ export function RepoCard({ repo, compact = false, showCompare = true }: RepoCard
         </div>
         <div className="flex items-center justify-between gap-3 pt-2 border-t border-cyan-400/10">
           <div className="flex items-center gap-2">
-            <ScoreRing value={repo.finalPriorityScore} size={48} label="ИТОГ" />
-            <ScoreRing value={repo.usefulnessScore} size={36} color="var(--neon-lime)" label="ПОЛЬЗА" />
-            <ScoreRing value={repo.healthScore} size={36} color="var(--neon-magenta)" label="ЗДОР." />
+            <SciFiRing value={repo.finalPriorityScore} size={48} label="ИТОГ" />
+            <SciFiRing value={repo.usefulnessScore} size={36} color="var(--neon-lime)" label="ПОЛЬЗА" />
+            <SciFiRing value={repo.healthScore} size={36} color="var(--neon-magenta)" label="ЗДОР." />
           </div>
           <LicenseStatusBadge license={repo.license} />
         </div>
@@ -136,7 +134,7 @@ export function RepoCard({ repo, compact = false, showCompare = true }: RepoCard
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>
-    </HolographicPanel>
+    </SciFiPanel>
   )
 }
 

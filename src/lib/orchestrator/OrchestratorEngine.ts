@@ -172,10 +172,16 @@ class OrchestratorEngine {
         effectiveProjectId = undefined;
       }
 
-      // Single decompose call — creates project if needed, then epics/tasks
       const result = await taskDecompositionEngine.decompose(
         plan, workspaceId, effectiveProjectId
       );
+
+      if (result.status === 'UNSUPPORTED') {
+        return {
+          type: 'error',
+          summary: result.reason,
+        };
+      }
 
       // Emit plan approved event
       await eventBus.emit(EventTypes.ORCHESTRATOR_PLAN_APPROVED, {
@@ -288,6 +294,13 @@ class OrchestratorEngine {
       riskLevel,
       requiresApproval: approvalAssessment.requiresApproval,
     });
+
+    if (result.status === 'UNSUPPORTED') {
+      return {
+        type: 'error',
+        summary: result.reason,
+      };
+    }
 
     // Emit cost estimated event
     await eventBus.emit(EventTypes.ORCHESTRATOR_COST_ESTIMATED, {

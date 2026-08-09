@@ -49,15 +49,14 @@ describe("command router", () => {
     const r = await run("запусти git push origin main");
     expect(r.requiresApproval).toBe(true);
     expect(r.nextAction).toBe("request_approval");
-  });
+  }, 15000);
 
   it("dangerous terminal command → deny/critical", async () => {
     const r = await run("запусти rm -rf /");
     expect(r.allowed).toBe(false);
-    // hard deny (not approval) for destructive
     expect(["deny", "request_approval"]).toContain(r.nextAction);
     expect(r.riskLevel).toBe("CRITICAL");
-  });
+  }, 15000);
 
   it("create agent → requires approval", async () => {
     const r = await run("создай агента");

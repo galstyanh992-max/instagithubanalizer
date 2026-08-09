@@ -24,6 +24,7 @@ const MIME_MAP: Record<string, string> = {
   ".json": "application/json", ".html": "text/html", ".css": "text/css",
   ".js": "text/javascript", ".ts": "text/typescript",
 };
+const ACTIVE_CONTENT = new Set([".html", ".htm", ".svg", ".js", ".mjs", ".css", ".xml"]);
 
 function isLocalRequest(req: NextRequest): boolean {
   const host = (req.headers.get("host") ?? "").split(":")[0];
@@ -70,10 +71,11 @@ export async function GET(req: NextRequest) {
     if (!s.isFile()) return NextResponse.json({ error: "Not a file" }, { status: 400 });
 
     const ext = extname(target).toLowerCase();
-    const mime = MIME_MAP[ext] ?? "application/octet-stream";
+    const activeContent = ACTIVE_CONTENT.has(ext);
+    const mime = activeContent ? "application/octet-stream" : MIME_MAP[ext] ?? "application/octet-stream";
     const buf = await readFile(target);
-    const download = req.nextUrl.searchParams.get("download") === "1";
-    const filename = basename(target);
+    const download = activeContent || req.nextUrl.searchParams.get("download") === "1";
+    const filename = basename(target).replace(/["\r\n]/g, "_");
 
     return new NextResponse(buf, {
       status: 200,
@@ -81,6 +83,8 @@ export async function GET(req: NextRequest) {
         "Content-Type": mime,
         "Content-Length": String(buf.length),
         "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "sandbox; default-src 'none'",
         ...(download
           ? { "Content-Disposition": `attachment; filename="${filename}"` }
           : { "Content-Disposition": `inline; filename="${filename}"` }),

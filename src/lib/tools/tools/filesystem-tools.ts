@@ -8,8 +8,15 @@ async function safeResolve(targetPath: string): Promise<string> {
     ? path.resolve(process.env.AGENT_WORKSPACE_ROOT) 
     : path.resolve(process.cwd());
     
-  const resolved = path.isAbsolute(targetPath) ? targetPath : path.resolve(projectRoot, targetPath);
-  const relative = path.relative(projectRoot, resolved);
+  const resolved = path.isAbsolute(targetPath) ? path.resolve(targetPath) : path.resolve(projectRoot, targetPath);
+  const canonicalRoot = await fs.realpath(projectRoot);
+  let existingParent = resolved;
+  while (existingParent !== path.dirname(existingParent)) {
+    try { await fs.access(existingParent); break; } catch { existingParent = path.dirname(existingParent); }
+  }
+  const canonicalParent = await fs.realpath(existingParent);
+  const canonicalResolved = path.resolve(canonicalParent, path.relative(existingParent, resolved));
+  const relative = path.relative(canonicalRoot, canonicalResolved);
   
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new Error('Path traversal detected: Access denied outside workspace root.');
@@ -21,7 +28,7 @@ async function safeResolve(targetPath: string): Promise<string> {
     throw new Error(`Governance violation: Access to sensitive path '${relative}' is explicitly denied.`);
   }
 
-  return resolved;
+  return canonicalResolved;
 }
 
 export const filesystemReadTool: ITool = {

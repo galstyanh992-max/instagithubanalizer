@@ -1,199 +1,128 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { FolderKanban, Cog, Users, HardDrive, Bell, MessageSquare, Archive, Music } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import { JarvisChatList } from "@/components/jarvis/jarvis-chat-list";
-import { JarvisArchiveList } from "@/components/jarvis/jarvis-archive";
 import { useJarvisStore } from "@/components/jarvis/jarvis-store";
-
-const projects = [
-  { name: "ДЖАРВИС AI Core", progress: 85, status: "deploying", desc: "Версия: v2.4.1 · Сборка: 5732 · Узлы: 12" },
-  { name: "Next.js Admin Template", progress: 100, status: "completed", desc: "Готово · Развернуто на 12 узлах" },
-  { name: "Database Migration", progress: 45, status: "syncing", desc: "Синхронизация данных · Этап 2 из 4" },
-  { name: "Neural Data Pipeline", progress: 72, status: "running", desc: "Обработка потоков · Задержка: 68ms" },
-];
-
-const tasks = [
-  { name: "Building dependencies", agent: "Terminal", time: "12s ago" },
-  { name: "Analyzing page.tsx", agent: "Planner", time: "45s ago" },
-  { name: "Fetching repos", agent: "GitHub", time: "1m ago" },
-];
-
-const agents = [
-  { name: "DevOps", status: "idle", load: 5 },
-  { name: "Research", status: "active", load: 85 },
-  { name: "Coder", status: "active", load: 60 },
-];
-
-const memory = [
-  { file: "OsOperationsHub.tsx", type: "code", time: "Just now" },
-  { file: "page.tsx", type: "layout", time: "2m ago" },
-  { file: "API route (os-metrics)", type: "api", time: "5m ago" },
-];
-
-const notifications = [
-  { msg: "Agent 'Coder' updated 3 files.", type: "success" },
-  { msg: "CPU Load reached 85%", type: "warn" },
-  { msg: "Build completed successfully.", type: "info" },
-];
-
-type TabId = 'projects' | 'tasks' | 'agents' | 'memory' | 'notifications' | 'chats' | 'archive' | 'music';
-
-const tabs: { id: TabId; label: string; icon: typeof FolderKanban }[] = [
-  { id: 'projects', label: 'Проекты', icon: FolderKanban },
-  { id: 'tasks', label: 'Задачи', icon: Cog },
-  { id: 'agents', label: 'Агенты', icon: Users },
-  { id: 'memory', label: 'Память', icon: HardDrive },
-  { id: 'chats', label: 'Чаты', icon: MessageSquare },
-  { id: 'archive', label: 'Файлы', icon: Archive },
-  { id: 'music', label: 'Музыка', icon: Music },
-  { id: 'notifications', label: 'Алерты', icon: Bell },
-];
+import { Activity, ShieldCheck, Brain, Network, ChevronRight } from "lucide-react";
 
 export function OsOperationsHub() {
-  const [activeTab, setActiveTab] = useState<TabId>('projects');
-  const archivedFiles = useJarvisStore((s) => s.archivedFiles);
-  const musicFiles = useMemo(
-    () => archivedFiles.filter((f) => f.folder === "music" || f.type === "music"),
-    [archivedFiles]
-  );
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { tab?: TabId } | undefined;
-      const tab = detail?.tab;
-      if (tab && tabs.some((t) => t.id === tab)) setActiveTab(tab);
-    };
-    window.addEventListener('jarvis:set-hub-tab', handler);
-    return () => window.removeEventListener('jarvis:set-hub-tab', handler);
-  }, []);
-
   return (
-    <div className="h-full flex flex-col glass-panel-strong p-4 space-y-4 relative overflow-hidden border-r-2 border-r-cyan-400">
-      {/* Tabs Row */}
-      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-2 border-b border-cyan-400/10">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-200 shrink-0",
-                isActive
-                  ? "bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_10px_rgba(34,211,238,0.15)]"
-                  : "text-zinc-500 hover:text-cyan-300 hover:bg-white/[0.03] border border-transparent"
-              )}
-            >
-              <Icon className={cn("h-3 w-3", isActive && "text-cyan-300")} />
-              <span className="whitespace-nowrap">{tab.label}</span>
+    <div className="flex flex-col gap-4 h-full">
+      
+      {/* ПРОЕКТЫ И ВЕРХНИЕ ВКЛАДКИ */}
+      <div className="sci-fi-panel sci-fi-panel-chamfer-tl-br flex-1 flex flex-col p-4 relative">
+        {/* Tabs */}
+        <div className="flex items-center gap-4 mb-6 border-b border-cyan-500/20 pb-2">
+          {['ПРОЕКТЫ', 'ЗАДАЧИ', 'АГЕНТЫ', 'ЧАТЫ', 'ФАЙЛЫ', 'МУЗЫКА'].map((tab, i) => (
+            <button key={tab} className={`text-[9px] font-bold tracking-[0.2em] transition-all ${
+              i === 0 
+                ? 'text-cyan-400 text-glow' 
+                : 'text-cyan-700 hover:text-cyan-400'
+            }`}>
+              {tab}
             </button>
-          );
-        })}
+          ))}
+          {/* Active Tab indicator */}
+          <div className="absolute top-[28px] left-4 w-12 h-[2px] bg-cyan-400 shadow-[0_0_8px_#00f0ff]"></div>
+        </div>
+
+        {/* List of projects */}
+        <div className="flex flex-col gap-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
+          
+          <div className="flex gap-4 items-center bg-cyan-950/10 p-3 rounded-lg border border-cyan-500/10 hover:border-cyan-500/30 transition-all cursor-pointer">
+            <div className="w-10 h-10 rounded-full border border-cyan-500/50 flex items-center justify-center shrink-0">
+              <Brain className="w-4 h-4 text-cyan-400" />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <span className="text-cyan-100 font-bold tracking-wider text-sm">JARVIS AI Core</span>
+              <span className="text-cyan-700 text-[8px] uppercase tracking-widest">Разработка ядра ИИ нового поколения</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-cyan-600 text-[7px] uppercase">Прогресс</span>
+                <div className="flex-1 h-[2px] bg-cyan-950"><div className="w-[78%] h-full bg-cyan-400 shadow-[0_0_5px_#00f0ff]"></div></div>
+                <span className="text-cyan-100 text-[9px] font-bold">78%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4 items-center bg-cyan-950/10 p-3 rounded-lg border border-cyan-500/10 hover:border-cyan-500/30 transition-all cursor-pointer">
+            <div className="w-10 h-10 rounded-full border border-orange-500/50 flex items-center justify-center shrink-0">
+              <div className="w-3 h-3 rounded-sm border-2 border-orange-400"></div>
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <span className="text-cyan-100 font-bold tracking-wider text-sm">Mark VII Development</span>
+              <span className="text-cyan-700 text-[8px] uppercase tracking-widest">Разработка и тестирование систем</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-cyan-600 text-[7px] uppercase">Прогресс</span>
+                <div className="flex-1 h-[2px] bg-cyan-950"><div className="w-[63%] h-full bg-orange-400 shadow-[0_0_5px_#f97316]"></div></div>
+                <span className="text-cyan-100 text-[9px] font-bold">63%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4 items-center bg-cyan-950/10 p-3 rounded-lg border border-cyan-500/10 hover:border-cyan-500/30 transition-all cursor-pointer">
+            <div className="w-10 h-10 rounded-full border border-cyan-500/50 flex items-center justify-center shrink-0">
+              <Activity className="w-4 h-4 text-cyan-400" />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <span className="text-cyan-100 font-bold tracking-wider text-sm">Neural Interface</span>
+              <span className="text-cyan-700 text-[8px] uppercase tracking-widest">Интерфейс мозг-компьютер</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-cyan-600 text-[7px] uppercase">Прогресс</span>
+                <div className="flex-1 h-[2px] bg-cyan-950"><div className="w-[41%] h-full bg-cyan-400 shadow-[0_0_5px_#00f0ff]"></div></div>
+                <span className="text-cyan-100 text-[9px] font-bold">41%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4 items-center bg-cyan-950/10 p-3 rounded-lg border border-cyan-500/10 hover:border-cyan-500/30 transition-all cursor-pointer">
+            <div className="w-10 h-10 rounded-full border border-cyan-500/50 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-cyan-400" />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <span className="text-cyan-100 font-bold tracking-wider text-sm">Stark Network Security</span>
+              <span className="text-cyan-700 text-[8px] uppercase tracking-widest">Сетевая безопасность и защита</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-cyan-600 text-[7px] uppercase">Прогресс</span>
+                <div className="flex-1 h-[2px] bg-cyan-950"><div className="w-[92%] h-full bg-cyan-400 shadow-[0_0_5px_#00f0ff]"></div></div>
+                <span className="text-cyan-100 text-[9px] font-bold">92%</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="border-t border-cyan-500/20 pt-3 mt-2 flex items-center justify-between cursor-pointer group">
+          <span className="text-cyan-700 text-[8px] uppercase tracking-widest group-hover:text-cyan-400 transition-colors">Показать все проекты</span>
+          <ChevronRight className="w-3 h-3 text-cyan-700 group-hover:text-cyan-400" />
+        </div>
       </div>
 
-      {/* Content Area */}
-      <div className="min-h-[250px] h-[calc(100%-3rem)] relative">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-2 absolute inset-0 flex flex-col"
-          >
-            {activeTab === 'projects' && projects.map((p, i) => (
-              <div key={i} className="flex flex-col gap-1 p-2 rounded bg-zinc-900/50 border border-cyan-400/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_2px_5px_rgba(0,0,0,0.2)]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-cyan-100">{p.name}</span>
-                  <span className={`text-[8px] uppercase tracking-wider ${p.progress === 100 ? 'text-lime-400' : 'text-cyan-400'}`}>
-                    {p.status}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <div className="h-0.5 flex-1 bg-zinc-800 rounded mr-3 overflow-hidden shadow-[inset_0_1px_1px_rgba(0,0,0,0.5)]">
-                    <div className={`h-full ${p.progress === 100 ? 'bg-lime-400 shadow-[0_0_5px_rgba(163,230,53,0.8)]' : 'bg-cyan-400 shadow-[0_0_5px_rgba(34,211,238,0.8)]'}`} style={{ width: `${p.progress}%` }} />
-                  </div>
-                  <span className="text-[9px] font-mono text-zinc-500">{p.progress}%</span>
-                </div>
+      {/* АКТИВНОСТЬ СИСТЕМЫ */}
+      <div className="sci-fi-panel sci-fi-panel-chamfer-tr p-4 relative h-64 shrink-0 flex flex-col">
+        <div className="flex items-center gap-2 mb-4">
+          <Network className="w-3 h-3 text-cyan-500" />
+          <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-cyan-500">Активность системы</span>
+        </div>
+        <div className="flex flex-col gap-2 font-mono text-[9px] tracking-widest flex-1 overflow-y-auto custom-scrollbar">
+          {[
+            { a: 'Синхронизация с облаком', t: '05:06:12', c: 'text-cyan-400' },
+            { a: 'Проверка целостности системы', t: '05:05:48', c: 'text-cyan-400' },
+            { a: 'Оптимизация нейросети', t: '05:05:21', c: 'text-orange-400' },
+            { a: 'Проверка систем безопасности', t: '05:04:58', c: 'text-[#a3e635]' },
+            { a: 'Обновление моделей ИИ', t: '05:04:33', c: 'text-cyan-400' },
+            { a: 'Резервное копирование данных', t: '05:04:10', c: 'text-cyan-400' }
+          ].map((log, i) => (
+            <div key={i} className="flex items-center justify-between py-1 border-b border-cyan-900/20">
+              <div className="flex items-center gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full ${log.c.replace('text-', 'bg-')} shadow-[0_0_5px]`}></div>
+                <span className="text-cyan-100">{log.a}</span>
               </div>
-            ))}
-
-            {activeTab === 'tasks' && tasks.map((t, i) => (
-              <div key={i} className="flex flex-col gap-1 px-2 py-1.5 rounded bg-zinc-900/50 border border-cyan-400/10 shadow-[inset_0_1px_rgba(255,255,255,0.05)]">
-                <span className="text-[10px] text-zinc-300">{t.name}</span>
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-mono text-cyan-500">@{t.agent}</span>
-                  <span className="text-[8px] text-zinc-600">{t.time}</span>
-                </div>
-              </div>
-            ))}
-
-            {activeTab === 'agents' && agents.map((a, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded bg-zinc-900/50 border border-cyan-400/10 shadow-[inset_0_1px_rgba(255,255,255,0.05)]">
-                <span className="text-[10px] text-cyan-100">{a.name}</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[8px] font-mono uppercase ${a.status === 'active' ? 'text-lime-400 drop-shadow-[0_0_5px_currentColor]' : 'text-zinc-500'}`}>{a.status}</span>
-                  <div className="w-10 h-1 bg-zinc-800 rounded overflow-hidden">
-                    <div className={`h-full ${a.load > 80 ? 'bg-amber-400' : 'bg-cyan-400'}`} style={{ width: `${a.load}%` }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {activeTab === 'memory' && memory.map((m, i) => (
-              <div key={i} className="flex flex-col gap-1 px-2 py-1.5 rounded bg-zinc-900/50 border border-cyan-400/10 shadow-[inset_0_1px_rgba(255,255,255,0.05)]">
-                <span className="text-[10px] text-zinc-300 font-mono truncate">{m.file}</span>
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] font-mono text-purple-400 uppercase tracking-widest">{m.type}</span>
-                  <span className="text-[8px] text-zinc-600">{m.time}</span>
-                </div>
-              </div>
-            ))}
-
-            {activeTab === 'notifications' && notifications.map((n, i) => (
-              <div key={i} className={`p-2 rounded bg-zinc-900/50 border text-[10px] shadow-[inset_0_1px_rgba(255,255,255,0.05)] ${n.type === 'warn' ? 'border-amber-400/30 text-amber-300' : n.type === 'success' ? 'border-lime-400/30 text-lime-300' : 'border-cyan-400/10 text-cyan-100'}`}>
-                {n.msg}
-              </div>
-            ))}
-
-            {activeTab === 'chats' && (
-              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
-                <JarvisChatList />
-              </div>
-            )}
-
-            {activeTab === 'archive' && (
-              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
-                <JarvisArchiveList />
-              </div>
-            )}
-
-            {activeTab === 'music' && (
-              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 space-y-2">
-                {musicFiles.length === 0 ? (
-                  <div className="text-[10px] text-zinc-500 font-mono text-center py-6">
-                    Папка «Музыка» пуста. Скажите «сгенерируй музыку ...» или перетащите файлы сюда.
-                  </div>
-                ) : (
-                  musicFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="rounded bg-zinc-900/50 border border-cyan-400/10 p-2 flex flex-col gap-1"
-                    >
-                      <span className="text-[10px] text-zinc-300 font-mono truncate">{file.prompt || file.url.split("/").pop() || "Трек"}</span>
-                      <audio controls src={file.url} className="w-full h-8 opacity-80" />
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+              <span className="text-cyan-700">{log.t}</span>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-cyan-500/20 pt-3 mt-2 flex items-center justify-between cursor-pointer group">
+          <span className="text-cyan-700 text-[8px] uppercase tracking-widest group-hover:text-cyan-400 transition-colors">Показать всю активность</span>
+          <ChevronRight className="w-3 h-3 text-cyan-700 group-hover:text-cyan-400" />
+        </div>
       </div>
 
     </div>

@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Loader2, Search, Star, ExternalLink, Github } from "lucide-react";
 import type { GithubAlternativesResult } from "@/lib/types";
@@ -25,7 +26,7 @@ export function GithubAlternativesPanel({ repoId }: { repoId: string }) {
   }
 
   return (
-    <HolographicPanel accent="amber" className="space-y-4 p-5">
+    <SciFiPanel accent="amber" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-amber-300">
           <Search className="h-4 w-4" />
@@ -101,6 +102,6 @@ export function GithubAlternativesPanel({ repoId }: { repoId: string }) {
           </div>
         </>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

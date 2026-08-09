@@ -1,6 +1,7 @@
 "use client";
 
 import type { UiAction } from "./use-jarvis-ui-executor";
+import { resolvePage } from "@/lib/jarvis/page-registry";
 
 // Normalized intents from server-side command router are mapped to client UI actions.
 
@@ -8,23 +9,6 @@ interface ParsedCommand {
   action: UiAction;
   confirmation?: string;
 }
-
-const PAGE_PATHS: { re: RegExp; path: string }[] = [
-  { re: /главн|домой|home|dashboard|статист/i, path: "/dashboard" },
-  { re: /проект|projects/i, path: "/projects" },
-  { re: /агент|agents/i, path: "/agents" },
-  { re: /памят|memory/i, path: "/memory" },
-  { re: /анализ|upload|загрузк/i, path: "/upload" },
-  { re: /систем|system/i, path: "/settings" },
-  { re: /настройк|settings/i, path: "/settings" },
-  { re: /репозитор|github|repos/i, path: "/repos" },
-  { re: /деплой|docker|deploy/i, path: "/deploy" },
-  { re: /голос|voice/i, path: "/voice" },
-  { re: /сравнен|compare/i, path: "/compare" },
-  { re: /доска|board/i, path: "/board" },
-  { re: /watchlist/i, path: "/watchlist" },
-  { re: /workflow|workflows/i, path: "/workflows" },
-];
 
 const HUB_TABS: { re: RegExp; tab: string }[] = [
   { re: /проект/i, tab: "projects" },
@@ -58,10 +42,10 @@ export function parseJarvisCommand(text: string): ParsedCommand | null {
       }
     }
 
-    for (const { re, path } of PAGE_PATHS) {
-      if (re.test(t)) {
-        return { action: { type: "navigate", path }, confirmation: `Открываю ${path}` };
-      }
+    // Then resolve against the unified page registry (covers ALL app sections).
+    const page = resolvePage(t);
+    if (page) {
+      return { action: { type: "navigate", path: page.path }, confirmation: `Открываю «${page.label}»` };
     }
   }
 

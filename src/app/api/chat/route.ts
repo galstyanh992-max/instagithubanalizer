@@ -38,7 +38,7 @@ export const POST = safe(async (req: Request) => {
   const safeAction = await runSafeAction({
     action: "chat.message",
     payload: parsed.data.message,
-    actor: "user"
+    actor: { id: "web-user", role: "owner", source: "web" }
   });
 
   if (safeAction.blocked) {

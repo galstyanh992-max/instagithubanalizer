@@ -43,8 +43,15 @@ export function useJarvisUiExecutor() {
     async (action: UiAction): Promise<UiCommandResult> => {
       switch (action.type) {
         case "navigate":
-          if (typeof window !== "undefined") {
-            window.location.href = action.path;
+          // SPA navigation via Next router — avoids a full page reload and
+          // preserves client state (chat history, store). Fallback to
+          // location only if the router is unavailable.
+          try {
+            await router.push(action.path);
+          } catch {
+            if (typeof window !== "undefined") {
+              window.location.href = action.path;
+            }
           }
           return { success: true, message: `Перехожу на ${action.path}` };
 

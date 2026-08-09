@@ -1,15 +1,26 @@
 // AI Jarwisyan — GitHub service (server-side only)
 
-import { env, isGitHubConfigured } from "@/lib/env";
+import { getGitHubToken } from "@/lib/integrations/runtime-secrets";
 import type { RepoMetadata, ExtractedCandidate } from "@/lib/types";
 
 const API = "https://api.github.com";
+const GITHUB_TIMEOUT_MS = 15_000;
 
-function authHeaders(): HeadersInit {
-  const h: HeadersInit = { Accept: "application/vnd.github+json" };
-  if (isGitHubConfigured()) {
-    h.Authorization = `Bearer ${env.GITHUB_TOKEN}`;
+async function githubFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new Error("GitHub API не ответил за 15 секунд");
+    }
+    throw error;
   }
+}
+
+async function authHeaders(): Promise<HeadersInit> {
+  const h: HeadersInit = { Accept: "application/vnd.github+json" };
+  const token = await getGitHubToken();
+  if (token) h.Authorization = `Bearer ${token}`;
   return h;
 }
 
@@ -76,7 +87,7 @@ export async function fetchRepoMetadata(
   repo: string
 ): Promise<RepoMetadata> {
   const url = `${API}/repos/${owner}/${repo}`;
-  const res = await fetch(url, { headers: authHeaders() });
+  const res = await githubFetch(url, { headers: await authHeaders() });
   if (res.status === 404) {
     throw new Error(`Repository ${owner}/${repo} not found`);
   }
@@ -100,9 +111,9 @@ export async function fetchRepoMetadata(
   let hasPyproject = false;
   let hasEnvExample = false;
   try {
-    const readmeRes = await fetch(
+    const readmeRes = await githubFetch(
       `${API}/repos/${owner}/${repo}/readme`,
-      { headers: { ...authHeaders(), Accept: "application/vnd.github.raw" } }
+      { headers: { ...(await authHeaders()), Accept: "application/vnd.github.raw" } }
     );
     if (readmeRes.ok) {
       readmeText = await readmeRes.text();
@@ -111,9 +122,9 @@ export async function fetchRepoMetadata(
     // ignore
   }
   try {
-    const treeRes = await fetch(
+    const treeRes = await githubFetch(
       `${API}/repos/${owner}/${repo}/contents`,
-      { headers: authHeaders() }
+      { headers: await authHeaders() }
     );
     if (treeRes.ok) {
       const files: Array<{ name: string; type: string }> = await treeRes.json();

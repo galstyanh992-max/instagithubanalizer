@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import type { VoiceCommandResult } from "@/lib/types";
+import { resolvePage, isNavigationIntent } from "@/lib/jarvis/page-registry";
 
 export const voiceService = {
   async handleCommand(transcript: string): Promise<VoiceCommandResult> {
@@ -140,12 +141,28 @@ export const voiceService = {
       };
     }
 
+    // General navigation fallback: "открой агентов" / "перейди в настройки" /
+    // "open dashboard" → resolve via the unified page registry. This catches
+    // any section the targeted rules above did not cover.
+    if (isNavigationIntent(t)) {
+      const page = resolvePage(t);
+      if (page) {
+        return {
+          action: "navigate",
+          payload: { path: page.path },
+          spokenResponse: `Открываю раздел «${page.label}».`,
+          handled: true,
+        };
+      }
+    }
+
     return {
       action: "unknown",
       payload: { transcript },
       spokenResponse:
         "Я не понял команду. Попробуйте: «Проанализируй репозиторий», «Покажи лучшие для Agent OS», " +
-        "«Сравни docling и MegaParse», «Что запустится на моём ПК?», «Покажи рискованные лицензии».",
+        "«Сравни docling и MegaParse», «Что запустится на моём ПК?», «Покажи рискованные лицензии», " +
+        "или «Открой агентов / настройки / память».",
       handled: false,
     };
   },

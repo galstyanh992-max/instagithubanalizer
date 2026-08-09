@@ -1,3 +1,4 @@
+
 // ─── Agent OS — Approval Engine ──────────────────────────────
 // Determines if a task requires human approval based on risk patterns.
 
@@ -136,7 +137,7 @@ class ApprovalEngine {
    * Create an approval request in the database and emit event
    */
   async createApprovalRequest(params: {
-    taskId: string;
+    taskId?: string;
     agentId: string;
     actionType: string;
     summary: string;
@@ -146,7 +147,6 @@ class ApprovalEngine {
   }) {
     const request = await db.approvalRequest.create({
       data: {
-        taskId: params.taskId,
         workspaceId: params.workspaceId ?? null,
         agentId: params.agentId,
         actionType: params.actionType,
@@ -170,7 +170,7 @@ class ApprovalEngine {
 
     return {
       id: request.id,
-      taskId: request.taskId,
+      taskId: params.taskId ?? null,
       actionType: request.actionType,
       summary: request.summary,
       risk: request.risk as RiskLevel,
@@ -193,3 +193,4 @@ class ApprovalEngine {
 }
 
 export const approvalEngine = ApprovalEngine.getInstance();
+

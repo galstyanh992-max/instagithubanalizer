@@ -1,7 +1,9 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +17,16 @@ import { PcProfileSettings } from "@/components/settings/pc-profile-settings";
 import { CloudProviderPolicy } from "@/components/settings/cloud-provider-policy";
 import { AiProviderCenter } from "@/components/settings/ai-provider-center";
 import { ModelHierarchyPanel } from "@/components/settings/model-hierarchy-panel";
+import { ProviderRoutingPanel } from "@/components/settings/provider-routing-panel";
 
 interface Settings {
   githubToken: string;
+  vercelToken: string;
+  supabaseAccessToken: string;
+  supabaseProjectUrl: string;
+  supabaseServiceRoleKey: string;
   aiProvider: string;
+  providerRoutes: string;
   glmApiKey: string;
   glmBaseUrl: string;
   ocrProvider: string;
@@ -52,6 +60,7 @@ interface Settings {
 export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/api/settings")
@@ -74,7 +83,7 @@ export default function SettingsPage() {
         body: JSON.stringify(s),
       });
       if (!res.ok) throw new Error("Failed");
-      toast.success("Settings saved");
+      toast.success("Настройки сохранены");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -82,7 +91,22 @@ export default function SettingsPage() {
     }
   }
 
-  if (!s) return <div className="text-cyan-300">Loading...</div>;
+  async function testIntegration(provider: "github" | "vercel" | "supabase") {
+    setConnectionStatus((current) => ({ ...current, [provider]: "Проверка…" }));
+    try {
+      const response = await fetch("/api/settings/integrations/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
+      const result = await response.json();
+      setConnectionStatus((current) => ({ ...current, [provider]: result.message ?? "Статус неизвестен." }));
+    } catch {
+      setConnectionStatus((current) => ({ ...current, [provider]: "Не удалось проверить подключение." }));
+    }
+  }
+
+  if (!s) return <div className="text-cyan-300">Загрузка настроек…</div>;
 
   const fallbackActive = !s.githubToken;
 
@@ -90,74 +114,114 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-5xl space-y-4 pb-32">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-mono text-2xl font-bold neon-text">SETTINGS</h1>
-          <p className="text-xs text-zinc-500">Configure API keys, PC specs, UI and project context</p>
+          <h1 className="font-mono text-2xl font-bold neon-text">НАСТРОЙКИ</h1>
+          <p className="text-xs text-zinc-500">Поставщики ИИ, ключи, компьютер, интерфейс и контекст проектов</p>
         </div>
         <Button onClick={save} disabled={saving}>
-          <Save className="mr-1 h-4 w-4" /> {saving ? "Saving..." : "Save"}
+          <Save className="mr-1 h-4 w-4" /> {saving ? "Сохранение…" : "Сохранить"}
         </Button>
       </div>
 
       {fallbackActive && (
-        <HolographicPanel accent="amber" className="flex items-center gap-3 p-4">
+        <SciFiPanel accent="amber" className="flex items-center gap-3 p-4">
           <AlertTriangle className="h-5 w-5 text-amber-300" />
           <div className="text-sm text-amber-100">
-            GitHub API key is missing. Some features (live GitHub API) will use mock data.
-            Add a GitHub token to unlock full power.
+            Не указан токен GitHub. Часть функций GitHub будет работать с ограничениями. Добавьте токен, чтобы включить полный доступ.
           </div>
-        </HolographicPanel>
+        </SciFiPanel>
       )}
 
       <Tabs defaultValue="keys">
         <TabsList className="flex flex-wrap gap-1">
-          <TabsTrigger value="keys">API Keys</TabsTrigger>
-          <TabsTrigger value="pc">My PC Profile</TabsTrigger>
-          <TabsTrigger value="provider">Cloud Provider</TabsTrigger>
-          <TabsTrigger value="ui">UI</TabsTrigger>
-          <TabsTrigger value="ctx">Project Context</TabsTrigger>
+          <TabsTrigger value="keys">ИИ и ключи</TabsTrigger>
+          <TabsTrigger value="pc">Мой компьютер</TabsTrigger>
+          <TabsTrigger value="provider">Облачные поставщики</TabsTrigger>
+          <TabsTrigger value="ui">Интерфейс</TabsTrigger>
+          <TabsTrigger value="ctx">Контекст проектов</TabsTrigger>
         </TabsList>
 
         {/* API keys */}
         <TabsContent value="keys" className="space-y-4">
+          <ProviderRoutingPanel value={s.providerRoutes} onChange={(value) => update("providerRoutes", value)} />
           <ModelHierarchyPanel />
           <AiProviderCenter />
           
-          <HolographicPanel accent="cyan" className="space-y-3 p-5">
+          <SciFiPanel accent="cyan" className="space-y-3 p-5">
+            <div>
+              <h2 className="font-mono text-sm uppercase text-cyan-300">Подключения платформ</h2>
+              <p className="mt-1 text-xs text-zinc-500">Токены хранятся только на сервере и после сохранения отображаются точками. Сначала сохраните, затем проверьте подключение.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded border border-white/10 bg-black/25 p-3">
+                <Label>Токен GitHub</Label>
+                <Input type="password" value={s.githubToken} onChange={(e) => update("githubToken", e.target.value)} placeholder="ghp_…" />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-[10px] text-zinc-500">Репозитории, анализ и GitHub API.</p>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void testIntegration("github")}>Проверить</Button>
+                </div>
+                {connectionStatus.github && <p className="mt-2 text-[11px] text-cyan-300">{connectionStatus.github}</p>}
+              </div>
+              <div className="rounded border border-white/10 bg-black/25 p-3">
+                <Label>Токен Vercel</Label>
+                <Input type="password" value={s.vercelToken} onChange={(e) => update("vercelToken", e.target.value)} placeholder="vcp_…" />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-[10px] text-zinc-500">Проекты и деплои Vercel.</p>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void testIntegration("vercel")}>Проверить</Button>
+                </div>
+                {connectionStatus.vercel && <p className="mt-2 text-[11px] text-cyan-300">{connectionStatus.vercel}</p>}
+              </div>
+              <div className="rounded border border-white/10 bg-black/25 p-3">
+                <Label>Токен управления Supabase</Label>
+                <Input type="password" value={s.supabaseAccessToken} onChange={(e) => update("supabaseAccessToken", e.target.value)} placeholder="sbp_…" />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-[10px] text-zinc-500">Проверяет доступ к проектам через Management API.</p>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void testIntegration("supabase")}>Проверить</Button>
+                </div>
+                {connectionStatus.supabase && <p className="mt-2 text-[11px] text-cyan-300">{connectionStatus.supabase}</p>}
+              </div>
+              <div className="space-y-3 rounded border border-white/10 bg-black/25 p-3">
+                <div>
+                  <Label>URL проекта Supabase</Label>
+                  <Input value={s.supabaseProjectUrl} onChange={(e) => update("supabaseProjectUrl", e.target.value)} placeholder="https://xxxxx.supabase.co" />
+                </div>
+                <div>
+                  <Label>Секретный ключ проекта Supabase (необязательно)</Label>
+                  <Input type="password" value={s.supabaseServiceRoleKey} onChange={(e) => update("supabaseServiceRoleKey", e.target.value)} placeholder="Для Storage и серверных операций" />
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-white/10 pt-3">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <Label>GitHub Token</Label>
-                <Input type="password" value={s.githubToken === "***" ? "" : s.githubToken} onChange={(e) => update("githubToken", e.target.value)} placeholder="ghp_..." />
-                <p className="mt-1 text-[10px] text-zinc-500">Required for higher GitHub API rate limits.</p>
-              </div>
-              <div>
-                <Label>OCR Provider</Label>
+                <Label>Поставщик OCR</Label>
                 <Select value={s.ocrProvider} onValueChange={(v) => update("ocrProvider", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="local">Local (Tesseract.js)</SelectItem>
+                    <SelectItem value="local">Локальный (Tesseract.js)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>TTS Provider</Label>
+                <Label>Поставщик озвучивания</Label>
                 <Select value={s.ttsProvider} onValueChange={(v) => update("ttsProvider", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="browser">Browser SpeechSynthesis</SelectItem>
+                    <SelectItem value="browser">Голос браузера</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>STT Provider</Label>
+                <Label>Поставщик распознавания речи</Label>
                 <Select value={s.sttProvider} onValueChange={(v) => update("sttProvider", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="browser">Browser SpeechRecognition</SelectItem>
+                    <SelectItem value="browser">Распознавание речи браузера</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-          </HolographicPanel>
+            </div>
+          </SciFiPanel>
         </TabsContent>
 
         {/* My PC profile (expanded) */}
@@ -172,7 +236,7 @@ export default function SettingsPage() {
 
         {/* UI */}
         <TabsContent value="ui">
-          <HolographicPanel accent="magenta" className="space-y-4 p-5">
+          <SciFiPanel accent="magenta" className="space-y-4 p-5">
             <label className="flex items-center justify-between">
               <span className="text-sm text-zinc-300">Enable 3D mode</span>
               <Switch checked={s.enable3d} onCheckedChange={(v) => update("enable3d", v)} />
@@ -197,12 +261,12 @@ export default function SettingsPage() {
               <Label>Neon intensity: {s.neonIntensity}%</Label>
               <Slider value={[s.neonIntensity]} onValueChange={(v) => update("neonIntensity", v[0])} min={0} max={100} step={5} className="mt-2" />
             </div>
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         {/* Project context */}
         <TabsContent value="ctx">
-          <HolographicPanel accent="amber" className="space-y-3 p-5">
+          <SciFiPanel accent="amber" className="space-y-3 p-5">
             <p className="text-xs text-zinc-400">Enable the projects you want AI ДЖАРВИС to optimize scoring for.</p>
             {([
               ["projectAgentOs", "Agent OS"],
@@ -220,7 +284,7 @@ export default function SettingsPage() {
                 </div>
               </label>
             ))}
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
       </Tabs>
     </div>

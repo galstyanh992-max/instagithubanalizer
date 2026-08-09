@@ -1,12 +1,12 @@
 "use client";
+import { SciFiPanel, SciFiBadge } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState } from "react";
 import {
   DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors,
   useDroppable, useDraggable,
 } from "@dnd-kit/core";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
-import { VerdictBadge } from "@/components/futuristic/neon-badge";
 import { toast } from "sonner";
 import { VERDICT_META } from "@/lib/constants";
 import type { Verdict } from "@/lib/types";
@@ -37,7 +37,7 @@ function DraggableRepo({ repo }: { repo: BoardRepo }) {
     : undefined;
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={`cursor-grab ${isDragging ? "ring-2 ring-cyan-400" : ""}`}>
-      <HolographicPanel accent="cyan" className="p-3 mb-2">
+      <SciFiPanel accent="cyan" className="p-3 mb-2">
         <div className="flex items-start gap-2">
           <GripVertical className="mt-0.5 h-3 w-3 text-zinc-500" />
           <div className="min-w-0 flex-1">
@@ -51,7 +51,7 @@ function DraggableRepo({ repo }: { repo: BoardRepo }) {
             </div>
           </div>
         </div>
-      </HolographicPanel>
+      </SciFiPanel>
     </div>
   );
 }
@@ -67,7 +67,7 @@ function DroppableColumn({ column }: { column: Column }) {
       }`}
     >
       <div className="flex items-center justify-between">
-        <VerdictBadge verdict={column.verdict} size="md" />
+        <SciFiBadge verdict={column.verdict} size="md" />
         <span className="text-xs text-zinc-500">{column.repos.length}</span>
       </div>
       <div className="text-[10px] text-zinc-500">{meta.description}</div>

@@ -1,10 +1,11 @@
 import { ExecutorAdapter, JarvisTask, ExecutionResult, ExecutionReport } from "./types";
-import { runAllowedCommand } from "../local-control/command-runner";
 import { writeTaskFile, readTaskFile } from "../local-control/tasks";
 import { assertPathAllowed } from "../local-control/sandbox";
+import { codexSubscriptionProvider } from "@/lib/ai-provider/codex-subscription";
 
 export class CodexCliAdapter implements ExecutorAdapter {
   name = "codex_cli";
+  private readonly running = new Map<string, { threadId: string; turnId: string }>();
 
   async prepare(task: JarvisTask): Promise<void> {
     assertPathAllowed(task.repoPath, task.repoPath); // Ensure sandbox exists
@@ -23,14 +24,25 @@ export class CodexCliAdapter implements ExecutorAdapter {
     }
 
     try {
-      // In a real scenario, Codex CLI would be an allowlisted command
-      // However, for the sake of the prompt requirements "Codex is not allowed to run arbitrary shell commands on its own without going through the JARVIS Command Allowlist."
-      // Since Codex CLI itself is an execution, we mock it via a dummy call or assume it's part of the allowlist
-      
-      // We will simulate it generating a report for now
-      await writeTaskFile(task.taskId, task.repoPath, "report.md", "Simulated Codex CLI Execution Report.");
-      
-      return { success: true, message: "Codex CLI run completed" };
+      const prompt = await readTaskFile(task.taskId, task.repoPath, "prompt.md");
+      const thread = await codexSubscriptionProvider.startThread({
+        cwd: task.repoPath,
+        sandbox: "workspace-write",
+      });
+      const turn = await codexSubscriptionProvider.startTurn(thread.threadId, prompt);
+      this.running.set(task.taskId, { threadId: thread.threadId, turnId: turn.turnId });
+      await writeTaskFile(
+        task.taskId,
+        task.repoPath,
+        "codex-execution.json",
+        JSON.stringify({
+          providerId: codexSubscriptionProvider.id,
+          threadId: thread.threadId,
+          turnId: turn.turnId,
+          status: turn.status,
+        }, null, 2),
+      );
+      return { success: true, message: `Codex turn ${turn.turnId} started` };
     } catch (e: any) {
       return { success: false, message: e.message };
     }
@@ -38,10 +50,10 @@ export class CodexCliAdapter implements ExecutorAdapter {
 
   async collectReport(task: JarvisTask): Promise<ExecutionReport> {
     try {
-      const content = await readTaskFile(task.taskId, task.repoPath, "report.md");
+      const content = await readTaskFile(task.taskId, task.repoPath, "codex-execution.json");
       return {
         taskId: task.taskId,
-        filesChanged: ["unknown"], // In reality parsed from report
+        filesChanged: [],
         stdout: content,
         stderr: ""
       };
@@ -51,6 +63,9 @@ export class CodexCliAdapter implements ExecutorAdapter {
   }
 
   async stop(taskId: string): Promise<void> {
-    // Kill running process logic here
+    const active = this.running.get(taskId);
+    if (!active) return;
+    await codexSubscriptionProvider.cancelTurn(active.threadId, active.turnId);
+    this.running.delete(taskId);
   }
 }

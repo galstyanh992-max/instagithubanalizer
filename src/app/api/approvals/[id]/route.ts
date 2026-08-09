@@ -1,39 +1,22 @@
-import { NextResponse } from "next/server";
-import { recordAuditEvent } from "@/lib/safety";
+import { z } from 'zod';
+import { err, ok, parseJson, safe } from '@/lib/api';
+import { approvalSystem } from '@/lib/approval';
+import { requireJarvisOwner } from '@/lib/jarvis/owner-guard';
+import { phaseBStateStore } from '@/lib/jarvis/phase-b/state-store';
 
-export const runtime = "nodejs";
+export const runtime='nodejs';
+const schema=z.object({action:z.enum(['approve','reject'])});
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params;
-    const body = await req.json();
-    
-    if (body.action === "approve") {
-      recordAuditEvent({
-        type: "approval.approved",
-        message: `Подтверждение ${id} одобрено пользователем.`,
-        actor: "user"
-      });
-      return NextResponse.json({
-        ok: true,
-        message: "Запрос подтверждения одобрен (fallback).",
-        approval: { id, status: "approved" }
-      });
-    } else if (body.action === "reject") {
-      recordAuditEvent({
-        type: "approval.rejected",
-        message: `Подтверждение ${id} отклонено пользователем.`,
-        actor: "user"
-      });
-      return NextResponse.json({
-        ok: true,
-        message: "Запрос подтверждения отклонён (fallback).",
-        approval: { id, status: "rejected" }
-      });
-    }
-
-    return NextResponse.json({ ok: false, message: "Неизвестное действие." }, { status: 400 });
-  } catch (error) {
-    return NextResponse.json({ ok: false, message: "Ошибка обработки запроса" }, { status: 500 });
+export const PATCH=safe(async(request:Request,context?:{params:Promise<Record<string,string>>})=>{
+  const accessError=await requireJarvisOwner(); if(accessError) return accessError;
+  const id=(await context?.params)?.id; if(!id) return err('Не указан id подтверждения',400);
+  const parsed=schema.safeParse(await parseJson(request)); if(!parsed.success) return err('Неизвестное действие',400);
+  if(id.startsWith('phase-b-approval-')) {
+    const status=parsed.data.action==='approve' ? 'approved':'rejected';
+    const approval=await phaseBStateStore.patch(id,{status,data:{decision:status,sideEffectExecuted:false}});
+    if(!approval) return err('Подтверждение Phase B не найдено',404);
+    return ok({approval,fallbackUsed:true,sideEffectExecuted:false});
   }
-}
+  const approval=parsed.data.action==='approve' ? await approvalSystem.approve(id):await approvalSystem.reject(id);
+  return ok({approval,fallbackUsed:false});
+});

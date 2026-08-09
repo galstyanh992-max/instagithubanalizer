@@ -45,7 +45,29 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
-  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "examples/**", "skills"]
+  ignores: [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    ".jarvis/**",
+    "artifacts/**",
+    "temp_extract/**",
+    "src/generated/**",
+    "public/dashboard-recovery-baseline/**",
+    "vendor/**",
+    "measure.cjs",
+    "tests/*.js",
+    "next-env.d.ts",
+    "examples/**",
+    "skills",
+    // Checked-in third-party dashboard runtime and retired one-off scripts are
+    // not application source; lint first-party code separately from vendors.
+    "public/dashboard/vendor/**",
+    "scripts/*.js",
+    "scripts/*.cjs",
+    "scripts/*.mjs",
+  ]
 }];
 
 export default eslintConfig;

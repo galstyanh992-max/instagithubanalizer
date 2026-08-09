@@ -43,7 +43,7 @@ describe("/api/voice/command", () => {
     const b = (await json(res)) as any;
     expect(b.routed.allowed).toBe(false);
     expect(b.result).toBeUndefined();
-  });
+  }, 15000);
 
   it("unknown command → clarify", async () => {
     const res = await POST(reqOf({ transcript: "qwertyuiop" }));

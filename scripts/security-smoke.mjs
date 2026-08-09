@@ -47,8 +47,8 @@ if (/ignoreBuildErrors:\s*true/.test(nc)) bad("next.config.ts has ignoreBuildErr
 else okmsg("no ignoreBuildErrors");
 
 // 7. auth not disabled-by-default in prod
-const mw = existsSync("src/middleware.ts") ? readFileSync("src/middleware.ts", "utf8") : "";
-if (/IS_PROD\s*\?\s*RAW\s*!==\s*"false"/.test(mw)) okmsg("prod auth fails closed");
+const mw = existsSync("src/lib/supabase/middleware.ts") ? readFileSync("src/lib/supabase/middleware.ts", "utf8") : "";
+if (/supabase\.auth\.getUser\(\)/.test(mw) && /user\s*&&\s*!ownerId/.test(mw) && /user\.id\s*!==\s*ownerId/.test(mw)) okmsg("prod auth fails closed");
 else bad("production auth policy not fail-closed");
 
 if (fail) { console.error(`\nSECURITY SMOKE: ${fail} issue(s)`); process.exit(1); }

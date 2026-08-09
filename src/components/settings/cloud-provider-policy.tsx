@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Lock, Cloud, ShieldCheck, AlertTriangle, ExternalLink } from "lucide-react";
 
 interface PolicyData {
@@ -40,7 +41,7 @@ export function CloudProviderPolicy() {
   if (!data) return <div className="text-cyan-300 text-sm">Loading...</div>;
 
   return (
-    <HolographicPanel accent="magenta" className="space-y-4 p-5">
+    <SciFiPanel accent="magenta" className="space-y-4 p-5">
       <div className="flex items-center gap-2 text-fuchsia-300">
         <Cloud className="h-4 w-4" />
         <h2 className="font-mono text-xs uppercase tracking-wider">Cloud Provider Policy</h2>
@@ -112,6 +113,6 @@ export function CloudProviderPolicy() {
           ))}
         </div>
       </details>
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

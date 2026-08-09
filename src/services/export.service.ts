@@ -1,6 +1,6 @@
 // AI Jarwisyan — Export service
 
-import type { Repository } from "@prisma/client";
+import type { Repository } from "@/generated/prisma";
 
 type RepoWithRelations = Repository & {
   analyses?: { summary: string; finalRecommendation: string }[];

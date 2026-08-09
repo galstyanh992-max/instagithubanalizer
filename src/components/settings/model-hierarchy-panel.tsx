@@ -1,7 +1,9 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
+
 import { CheckCircle2, XCircle, Crown, Code2, Wrench, Palette, ShieldCheck, Search, Globe, Brain, Scale, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -82,23 +84,23 @@ export function ModelHierarchyPanel() {
 
   if (loading || !roles) {
     return (
-      <HolographicPanel accent="magenta" className="p-5">
+      <SciFiPanel accent="magenta" className="p-5">
         <div className="h-6 w-48 animate-pulse rounded bg-muted" />
         <div className="mt-3 grid gap-2 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
           ))}
         </div>
-      </HolographicPanel>
+      </SciFiPanel>
     );
   }
 
   return (
-    <HolographicPanel accent="magenta" className="space-y-4 p-5">
+    <SciFiPanel accent="magenta" className="space-y-4 p-5">
       <div>
-        <h3 className="font-mono text-sm uppercase text-fuchsia-300">Model Hierarchy</h3>
+        <h3 className="font-mono text-sm uppercase text-fuchsia-300">Иерархия моделей</h3>
         <p className="text-xs text-zinc-400 mt-1">
-          Multi-model architecture — each role uses a specialized model. Configure keys in <code className="text-cyan-300">.env.local</code>.
+          Мульти‑модельная архитектура: для каждой роли используется своя специализированная модель. Ключи настраиваются в <code className="text-cyan-300">.env.local</code>.
         </p>
       </div>
 
@@ -109,9 +111,9 @@ export function ModelHierarchyPanel() {
       </div>
 
       <div className="mt-3 rounded-lg border border-fuchsia-400/20 bg-fuchsia-400/[0.04] p-3 text-[11px] text-zinc-400">
-        <div className="font-mono text-fuchsia-300 mb-1">Design Critic Loop</div>
+        <div className="font-mono text-fuchsia-300 mb-1">Цикл проверки дизайна</div>
         Designer (GLM 5.2) generates → Critic (GPT-5.5) audits → Designer improves. POST <code className="text-cyan-300">/api/jarvis/design-critic</code> with <code>{`{ brief, context?, maxRounds }`}</code>.
       </div>
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

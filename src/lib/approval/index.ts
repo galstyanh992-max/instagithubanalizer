@@ -1,3 +1,4 @@
+
 // ─── Agent OS — Approval System ─────────────────────────────
 // Human-in-the-loop approval workflow for risky operations.
 // Stage 4 audit: Wired approval.approved → ToolExecution resume.
@@ -13,6 +14,10 @@ class ApprovalSystem {
 
   private constructor() {}
 
+  private ownerId() {
+    return process.env.JARVIS_OWNER_ID?.trim() || null;
+  }
+
   static getInstance(): ApprovalSystem {
     if (!ApprovalSystem.instance) {
       ApprovalSystem.instance = new ApprovalSystem();
@@ -26,7 +31,6 @@ class ApprovalSystem {
   async requestApproval(input: CreateApprovalInput) {
     const request = await db.approvalRequest.create({
       data: {
-        taskId: input.taskId ?? null,
         workspaceId: input.workspaceId ?? null,
         agentId: input.agentId,
         actionType: input.actionType,
@@ -34,6 +38,7 @@ class ApprovalSystem {
         risk: input.risk ?? 'medium',
         payload: input.payload ? JSON.stringify(input.payload) : null,
         status: 'pending',
+        ownerUserId: this.ownerId(),
       },
     });
 
@@ -58,18 +63,20 @@ class ApprovalSystem {
    * Approve a request
    */
   async approve(approvalId: string) {
-    const request = await db.approvalRequest.findUnique({ where: { id: approvalId } });
+    const ownerUserId = this.ownerId();
+    const request = await db.approvalRequest.findFirst({ where: { id: approvalId, ...(ownerUserId ? { ownerUserId } : {}) } });
     if (!request) throw new Error(`Approval request not found: ${approvalId}`);
     if (request.status !== 'pending') throw new Error(`Request is not pending: ${request.status}`);
 
-    const updated = await db.approvalRequest.update({
-      where: { id: approvalId },
-      data: { status: 'approved' },
+    const decision = await db.approvalRequest.updateMany({
+      where: { id: approvalId, status:'pending', ...(ownerUserId ? { ownerUserId } : {}) },
+      data: { status: 'approved', decidedAt:new Date() },
     });
+    if(decision.count!==1) throw new Error('Approval decision was not applied atomically');
+    const updated = await db.approvalRequest.findUniqueOrThrow({where:{id:approvalId}});
 
     await eventBus.emit(EventTypes.APPROVAL_APPROVED, {
       approvalId,
-      taskId: request.taskId ?? undefined,
       workspaceId: request.workspaceId ?? undefined,
       timestamp: Date.now(),
       source: 'approval-system',
@@ -85,18 +92,20 @@ class ApprovalSystem {
    * Reject a request
    */
   async reject(approvalId: string) {
-    const request = await db.approvalRequest.findUnique({ where: { id: approvalId } });
+    const ownerUserId = this.ownerId();
+    const request = await db.approvalRequest.findFirst({ where: { id: approvalId, ...(ownerUserId ? { ownerUserId } : {}) } });
     if (!request) throw new Error(`Approval request not found: ${approvalId}`);
     if (request.status !== 'pending') throw new Error(`Request is not pending: ${request.status}`);
 
-    const updated = await db.approvalRequest.update({
-      where: { id: approvalId },
-      data: { status: 'rejected' },
+    const decision = await db.approvalRequest.updateMany({
+      where: { id: approvalId, status:'pending', ...(ownerUserId ? { ownerUserId } : {}) },
+      data: { status: 'rejected', decidedAt:new Date() },
     });
+    if(decision.count!==1) throw new Error('Approval decision was not applied atomically');
+    const updated = await db.approvalRequest.findUniqueOrThrow({where:{id:approvalId}});
 
     await eventBus.emit(EventTypes.APPROVAL_REJECTED, {
       approvalId,
-      taskId: request.taskId ?? undefined,
       workspaceId: request.workspaceId ?? undefined,
       timestamp: Date.now(),
       source: 'approval-system',
@@ -113,6 +122,8 @@ class ApprovalSystem {
    */
   async getPending(workspaceId?: string, limit = 50) {
     const where: Record<string, unknown> = { status: 'pending' };
+    const ownerUserId = this.ownerId();
+    if(ownerUserId) where.ownerUserId=ownerUserId;
 
     if (workspaceId) {
       // Filter by either direct workspaceId or via agent's workspace
@@ -143,7 +154,8 @@ class ApprovalSystem {
    * Get a single approval request
    */
   async get(approvalId: string) {
-    const request = await db.approvalRequest.findUnique({ where: { id: approvalId } });
+    const ownerUserId=this.ownerId();
+    const request = await db.approvalRequest.findFirst({ where: { id: approvalId, ...(ownerUserId ? { ownerUserId } : {}) } });
     if (!request) return null;
 
     return {
@@ -156,15 +168,7 @@ class ApprovalSystem {
    * Get approvals by task
    */
   async getByTask(taskId: string) {
-    const requests = await db.approvalRequest.findMany({
-      where: { taskId },
-      orderBy: { createdAt: 'desc' },
-    }); // Note: taskId can be null for task-independent approvals
-
-    return requests.map((r) => ({
-      ...r,
-      payload: r.payload ? JSON.parse(r.payload) : null,
-    }));
+    throw new Error('UNSUPPORTED: ApprovalRequest no longer tracks taskId directly. Use getLinkedToolExecutionId to correlate.');
   }
 
   /**
@@ -181,3 +185,4 @@ class ApprovalSystem {
 }
 
 export const approvalSystem = ApprovalSystem.getInstance();
+

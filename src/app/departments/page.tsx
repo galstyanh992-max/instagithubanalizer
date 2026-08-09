@@ -6,17 +6,13 @@ import { DepartmentClient } from "./client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { handoffService } from "@/services/handoff.service";
 
+export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Департаменты | ДЖАРВИС",
   description: "Управление департаментами и передачей задач.",
 };
 
 export default async function DepartmentsPage() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect("/login");
-  }
-
   const departments = await db.department.findMany({
     orderBy: { createdAt: "desc" },
   });

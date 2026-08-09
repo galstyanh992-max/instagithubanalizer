@@ -1,8 +1,9 @@
 "use client";
+import { SciFiPanel, SciFiBadge } from "@/components/ui/sci-fi-panel";
+import { GithubTabs } from "@/components/ui/github-tabs";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
-import { VerdictBadge } from "@/components/futuristic/neon-badge";
 import { Button } from "@/components/ui/button";
 import { Swords, Trophy, Zap, Shield, Star, Search, Cpu, Cloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -94,7 +95,8 @@ export default function ComparePage() {
   })) ?? [];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-4">
+      <GithubTabs />
       <div className="flex items-center gap-2">
         <Swords className="h-6 w-6 text-fuchsia-300" />
         <div>
@@ -105,7 +107,7 @@ export default function ComparePage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Selector */}
-        <HolographicPanel accent="cyan" className="p-4 lg:col-span-1">
+        <SciFiPanel accent="cyan" className="p-4 lg:col-span-1">
           <div className="relative mb-3">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <Input placeholder="Search repos..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 bg-zinc-900/60 border-cyan-400/20" />
@@ -131,21 +133,21 @@ export default function ComparePage() {
           <Button className="mt-2 w-full" disabled={selected.length < 2 || loading} onClick={compare}>
             <Swords className="mr-1 h-4 w-4" /> {loading ? "Battling..." : "BATTLE"}
           </Button>
-        </HolographicPanel>
+        </SciFiPanel>
 
         {/* Result */}
         <div className="space-y-4 lg:col-span-2">
           {!result && (
-            <HolographicPanel accent="magenta" className="p-12 text-center">
+            <SciFiPanel accent="magenta" className="p-12 text-center">
               <Swords className="mx-auto h-10 w-10 text-fuchsia-400/50" />
               <p className="mt-3 text-sm text-zinc-400">Select repos and click BATTLE to compare</p>
-            </HolographicPanel>
+            </SciFiPanel>
           )}
           {result && (
             <>
               {/* Winner */}
               {result.winner && (
-                <HolographicPanel accent="lime" className="p-5">
+                <SciFiPanel accent="lime" className="p-5">
                   <div className="flex items-center gap-3">
                     <Trophy className="h-8 w-8 text-lime-300" />
                     <div>
@@ -154,12 +156,12 @@ export default function ComparePage() {
                       <div className="text-xs text-zinc-400">{result.winner.reason}</div>
                     </div>
                   </div>
-                </HolographicPanel>
+                </SciFiPanel>
               )}
 
               {/* Chart */}
               {chartData.length > 0 && (
-                <HolographicPanel accent="cyan" className="p-5">
+                <SciFiPanel accent="cyan" className="p-5">
                   <h3 className="mb-2 font-mono text-xs uppercase text-cyan-300">Score Radar</h3>
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
@@ -174,7 +176,7 @@ export default function ComparePage() {
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
-                </HolographicPanel>
+                </SciFiPanel>
               )}
 
               {/* Best-for (extended per spec — includes My PC compatibility dimensions) */}
@@ -188,13 +190,13 @@ export default function ComparePage() {
               </div>
 
               {/* Policy notice */}
-              <HolographicPanel accent="magenta" className="p-3 text-[10px] text-fuchsia-200">
+              <SciFiPanel accent="magenta" className="p-3 text-[10px] text-fuchsia-200">
                 Cloud provider policy: only <b>Ollama Cloud</b> is allowed. Repos requiring CUDA-only workloads
                 without Ollama fallback are down-ranked. AMD Radeon RX 580 (8 GB, no CUDA) is the active GPU profile.
-              </HolographicPanel>
+              </SciFiPanel>
 
               {/* Table */}
-              <HolographicPanel accent="cyan" className="overflow-hidden">
+              <SciFiPanel accent="cyan" className="overflow-hidden">
                 <table className="w-full text-xs">
                   <thead className="border-b border-cyan-400/20 text-[10px] uppercase text-zinc-500">
                     <tr>
@@ -220,18 +222,18 @@ export default function ComparePage() {
                           <td className="px-2 py-2 text-right text-zinc-300">{r.metrics.difficulty}</td>
                           <td className="px-2 py-2 text-right">{r.metrics.gpuRequired ? <span className="text-amber-400">✓</span> : <span className="text-zinc-600">—</span>}</td>
                           <td className="px-2 py-2 text-right font-mono text-lime-300">{r.scores.finalPriority}</td>
-                          <td className="px-2 py-2"><VerdictBadge verdict={r.verdict} size="sm" /></td>
+                          <td className="px-2 py-2"><SciFiBadge verdict={r.verdict} size="sm" /></td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
-              </HolographicPanel>
+              </SciFiPanel>
 
-              <HolographicPanel accent="magenta" className="p-4 text-sm text-fuchsia-100">
+              <SciFiPanel accent="magenta" className="p-4 text-sm text-fuchsia-100">
                 <div className="text-[10px] uppercase text-zinc-500">Final Recommendation</div>
                 <p className="mt-1">{result.finalRecommendation}</p>
-              </HolographicPanel>
+              </SciFiPanel>
             </>
           )}
         </div>
@@ -248,10 +250,10 @@ function BestForCard({ icon: Icon, label, value, accent }: { icon: typeof Zap; l
     amber: "text-amber-300",
   };
   return (
-    <HolographicPanel accent={accent} className="p-3">
+    <SciFiPanel accent={accent} className="p-3">
       <Icon className={`h-4 w-4 ${colors[accent]}`} />
       <div className="mt-1 text-[10px] uppercase text-zinc-500">{label}</div>
       <div className="truncate text-xs text-zinc-200">{value}</div>
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

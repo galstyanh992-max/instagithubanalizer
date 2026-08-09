@@ -1,11 +1,10 @@
 "use client";
+import { SciFiPanel, SciFiRing, SciFiBadge } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
-import { VerdictBadge, CommercialBadge } from "@/components/futuristic/neon-badge";
-import { ScoreRing } from "@/components/futuristic/score-ring";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +20,8 @@ import { RunOptionsPanel } from "@/components/repo/run-options-panel";
 import { GithubAlternativesPanel } from "@/components/repo/github-alternatives-panel";
 import { OllamaCloudOptionsPanel } from "@/components/repo/ollama-cloud-options-panel";
 import { IntegrationPlanPanel } from "@/components/projects/integration-plan-panel";
+
+import { GithubTabs } from "@/components/ui/github-tabs";
 
 interface RepoDetail {
   repo: {
@@ -176,11 +177,11 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
       return;
     }
     const text = `${data.repo.fullName}. Вердикт: ${data.repo.verdict}. ${a.summary} ${a.finalRecommendation}`;
-    // Use Edge TTS via /api/tts (female voice ru-RU-SvetlanaNeural)
+    // Use Edge TTS via /api/tts (female voice ru-RU-DarinaNeural)
     fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voice: 'ru-RU-SvetlanaNeural' }),
+      body: JSON.stringify({ text, voice: 'ru-RU-DarinaNeural' }),
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`TTS error: ${res.status}`);
@@ -207,7 +208,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
   if (loading) return <div className="mx-auto max-w-6xl text-cyan-300">Загрузка...</div>;
   if (error || !data) return (
     <div className="mx-auto max-w-6xl">
-      <HolographicPanel accent="magenta" className="p-6 text-red-300">{error || "Ошибка загрузки"}</HolographicPanel>
+      <SciFiPanel accent="magenta" className="p-6 text-red-300">{error || "Ошибка загрузки"}</SciFiPanel>
     </div>
   );
 
@@ -222,17 +223,20 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
-      <Link href="/repos" className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-cyan-300">
-        <ArrowLeft className="h-3 w-3" /> НАЗАД К РЕПОЗИТОРИЯМ
-      </Link>
+      <GithubTabs />
+      <div className="mb-2">
+        <Link href="/repos" className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-cyan-300">
+          <ArrowLeft className="h-3 w-3" /> НАЗАД К РЕПОЗИТОРИЯМ
+        </Link>
+      </div>
 
       {/* Header */}
-      <HolographicPanel accent="cyan" className="p-6">
+      <SciFiPanel accent="cyan" className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
               <h1 className="font-mono text-2xl font-bold text-cyan-200">{r.fullName}</h1>
-              <VerdictBadge verdict={r.verdict as "USE_NOW"} />
+              <SciFiBadge verdict={r.verdict as "USE_NOW"} />
             </div>
             <p className="mt-2 text-sm text-zinc-400">{r.description || "(нет описания)"}</p>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
@@ -257,73 +261,73 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={reanalyze}>
-              <RefreshCw className="mr-1 h-3 w-3" /> Re-analyze
+              <RefreshCw className="mr-1 h-3 w-3" /> Повторить анализ
             </Button>
             <Button size="sm" variant="outline" onClick={generateInstallPlan} disabled={generatingPlan}>
-              <Terminal className="mr-1 h-3 w-3" /> {generatingPlan ? "..." : "Install Plan"}
+              <Terminal className="mr-1 h-3 w-3" /> {generatingPlan ? "Подготовка…" : "План установки"}
             </Button>
             <Button size="sm" variant="outline" onClick={toggleWatch}>
               {r.isWatchlisted ? <EyeOff className="mr-1 h-3 w-3" /> : <Eye className="mr-1 h-3 w-3" />}
-              {r.isWatchlisted ? "Unwatch" : "Watch"}
+              {r.isWatchlisted ? "Не следить" : "Следить"}
             </Button>
             <Button size="sm" variant="outline" onClick={() => router.push("/compare")}>
-              <Swords className="mr-1 h-3 w-3" /> Compare
+              <Swords className="mr-1 h-3 w-3" /> Сравнить
             </Button>
             <Button size="sm" variant="outline" onClick={speakSummary}>
-              <Volume2 className="mr-1 h-3 w-3" /> Speak
+              <Volume2 className="mr-1 h-3 w-3" /> Озвучить
             </Button>
             <Button size="sm" variant="outline" onClick={exportReport}>
-              <Download className="mr-1 h-3 w-3" /> Export
+              <Download className="mr-1 h-3 w-3" /> Экспорт
             </Button>
           </div>
         </div>
-      </HolographicPanel>
+      </SciFiPanel>
 
       {/* Scores */}
       <div className="grid grid-cols-3 gap-3 md:grid-cols-5 lg:grid-cols-9">
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.usefulnessScore} label="Польза" size={70} color="#22d3ee" />
-        </HolographicPanel>
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.healthScore} label="Здоровье" size={70} color="#a3e635" />
-        </HolographicPanel>
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.compatibilityScore} label="Совмест." size={70} color="#e879f9" />
-        </HolographicPanel>
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.agentOsScore} label="AgentOS" size={70} color="#22d3ee" />
-        </HolographicPanel>
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.aiLegalScore} label="AI-legal" size={70} color="#fbbf24" />
-        </HolographicPanel>
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.securityScore} label="Безопасн." size={70} color="#a3e635" />
-        </HolographicPanel>
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.costScore} label="Стоим." size={70} color="#e879f9" />
-        </HolographicPanel>
-        <HolographicPanel accent="cyan" className="flex flex-col items-center p-3">
-          <ScoreRing value={r.commercialRiskScore} label="Риск" size={70} color="#f87171" />
-        </HolographicPanel>
-        <HolographicPanel accent="lime" className="flex flex-col items-center justify-center p-3">
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.usefulnessScore} label="Польза" size={70} color="#22d3ee" />
+        </SciFiPanel>
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.healthScore} label="Здоровье" size={70} color="#a3e635" />
+        </SciFiPanel>
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.compatibilityScore} label="Совмест." size={70} color="#e879f9" />
+        </SciFiPanel>
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.agentOsScore} label="AgentOS" size={70} color="#22d3ee" />
+        </SciFiPanel>
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.aiLegalScore} label="AI-legal" size={70} color="#fbbf24" />
+        </SciFiPanel>
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.securityScore} label="Безопасн." size={70} color="#a3e635" />
+        </SciFiPanel>
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.costScore} label="Стоим." size={70} color="#e879f9" />
+        </SciFiPanel>
+        <SciFiPanel accent="cyan" className="flex flex-col items-center p-3">
+          <SciFiRing value={r.commercialRiskScore} label="Риск" size={70} color="#f87171" />
+        </SciFiPanel>
+        <SciFiPanel accent="lime" className="flex flex-col items-center justify-center p-3">
           <div className="font-mono text-3xl text-lime-300">{r.finalPriorityScore}</div>
           <div className="text-[10px] uppercase text-zinc-500">Итог</div>
-        </HolographicPanel>
+        </SciFiPanel>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="overview">
-        <TabsList className="flex flex-wrap gap-1 bg-zinc-900/60">
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 bg-zinc-900/60 p-1.5">
           <TabsTrigger value="overview">Обзор</TabsTrigger>
           <TabsTrigger value="integration">Интеграция</TabsTrigger>
-          <TabsTrigger value="sandbox">Sandbox</TabsTrigger>
+          <TabsTrigger value="sandbox">Песочница</TabsTrigger>
           <TabsTrigger value="patch">План патча</TabsTrigger>
           <TabsTrigger value="risk">Риск-гейт</TabsTrigger>
           <TabsTrigger value="health">Здоровье</TabsTrigger>
           <TabsTrigger value="community">Сообщество</TabsTrigger>
           <TabsTrigger value="compat">Совместимость с ПК</TabsTrigger>
           <TabsTrigger value="run-options">Варианты запуска</TabsTrigger>
-          <TabsTrigger value="ollama-cloud">Ollama Cloud</TabsTrigger>
+          <TabsTrigger value="ollama-cloud">Облако Ollama</TabsTrigger>
           <TabsTrigger value="alternatives">Альтернативы</TabsTrigger>
           <TabsTrigger value="analysis">Анализ</TabsTrigger>
           <TabsTrigger value="install">Установка</TabsTrigger>
@@ -331,14 +335,17 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           <TabsTrigger value="ideas">Идеи</TabsTrigger>
           <TabsTrigger value="security">Безопасность</TabsTrigger>
           <TabsTrigger value="cost">Стоимость</TabsTrigger>
-          <TabsTrigger value="readme">README</TabsTrigger>
+          <TabsTrigger value="readme">Документация</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <HolographicPanel accent="cyan" className="p-5 space-y-3">
+          <SciFiPanel accent="cyan" className="p-5 space-y-3">
             <div className="flex items-center gap-2 text-cyan-300">
               <FileText className="h-4 w-4" />
               <h2 className="font-mono text-xs uppercase">Обзор</h2>
+            </div>
+            <div className="rounded-md border border-cyan-400/25 bg-cyan-500/5 p-3 text-sm leading-relaxed text-cyan-100">
+              <b>Простое объяснение:</b> это репозиторий {r.fullName}. Я сразу проверил его структуру: {r.hasDocker ? "есть Docker" : "Docker не найден"}, {r.hasPackageJson ? "есть Node.js-конфигурация" : "Node.js-конфигурация не найдена"}, {r.hasRequirements || r.hasPyproject ? "есть Python-конфигурация" : "Python-конфигурация не найдена"}. Далее откройте «Варианты запуска», чтобы увидеть самый подходящий способ запуска на вашем ПК.
             </div>
             {a ? (
               <>
@@ -350,25 +357,24 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
                 <div>
                   <div className="text-[10px] uppercase text-zinc-500">Итоговая рекомендация</div>
                   <p className="text-sm text-cyan-200">{a.finalRecommendation}</p>
-                  {a.mock && <span className="text-[10px] text-amber-400">(анализ-заглушка — проверьте OLLAMA_CLOUD_API_KEY и HEAVY_AI_PROVIDER)</span>}
                 </div>
               </>
             ) : (
-              <p className="text-sm text-zinc-500">Анализ ещё не выполнен. Нажмите Re-analyze.</p>
+              <p className="text-sm text-zinc-500">Подробный анализ ещё не готов. Нажмите «Повторить анализ».</p>
             )}
             <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
               <div><span className="text-zinc-500">Docker:</span> {r.hasDocker ? "✓" : "—"}</div>
-              <div><span className="text-zinc-500">Compose:</span> {r.hasDockerCompose ? "✓" : "—"}</div>
-              <div><span className="text-zinc-500">Package.json:</span> {r.hasPackageJson ? "✓" : "—"}</div>
-              <div><span className="text-zinc-500">Requirements:</span> {r.hasRequirements ? "✓" : "—"}</div>
-              <div><span className="text-zinc-500">Pyproject:</span> {r.hasPyproject ? "✓" : "—"}</div>
+              <div><span className="text-zinc-500">Docker Compose:</span> {r.hasDockerCompose ? "✓" : "—"}</div>
+              <div><span className="text-zinc-500">Конфигурация Node.js:</span> {r.hasPackageJson ? "✓" : "—"}</div>
+              <div><span className="text-zinc-500">Зависимости Python:</span> {r.hasRequirements ? "✓" : "—"}</div>
+              <div><span className="text-zinc-500">Проект Python:</span> {r.hasPyproject ? "✓" : "—"}</div>
               <div><span className="text-zinc-500">.env.example:</span> {r.hasEnvExample ? "✓" : "—"}</div>
               <div><span className="text-zinc-500">Сложность:</span> {r.difficulty}</div>
               <div><span className="text-zinc-500">Локальный запуск:</span> {r.localRunPossible ? "✓" : "—"}</div>
               <div><span className="text-zinc-500">Требуется GPU:</span> {r.gpuRequired ? <span className="text-amber-300">✓</span> : "—"}</div>
               <div><span className="text-zinc-500">Риск CUDA:</span> {r.gpuRequired ? <span className="text-red-300">ВЫСОКИЙ (AMD GPU, нет CUDA)</span> : <span className="text-lime-300">нет</span>}</div>
             </div>
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         <TabsContent value="sandbox">
@@ -412,7 +418,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
         </TabsContent>
 
         <TabsContent value="analysis">
-          <HolographicPanel accent="cyan" className="p-5">
+          <SciFiPanel accent="cyan" className="p-5">
             {a ? (
               <div className="space-y-3 text-sm text-zinc-300">
                 <div><span className="text-zinc-500">Польза:</span> {a.usefulness || a.summary}</div>
@@ -425,11 +431,11 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
                 <div><span className="text-zinc-500">Стоимость:</span> {a.costReview}</div>
               </div>
             ) : <p className="text-sm text-zinc-500">Анализ ещё не выполнен.</p>}
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         <TabsContent value="install">
-          <HolographicPanel accent="lime" className="p-5">
+          <SciFiPanel accent="lime" className="p-5">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-lime-300">
                 <Terminal className="h-4 w-4" />
@@ -446,11 +452,11 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
             ) : (
               <p className="text-sm text-zinc-500">План установки ещё не создан. Нажмите Сгенерировать.</p>
             )}
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         <TabsContent value="test">
-          <HolographicPanel accent="cyan" className="p-5">
+          <SciFiPanel accent="cyan" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-cyan-300">
               <FlaskConical className="h-4 w-4" />
               <h2 className="font-mono text-xs uppercase">Тест-план</h2>
@@ -477,11 +483,11 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
               </div>
             ) : <p className="text-sm text-zinc-500">Тест-план ещё не создан.</p>}
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         <TabsContent value="ideas">
-          <HolographicPanel accent="magenta" className="p-5">
+          <SciFiPanel accent="magenta" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-fuchsia-300">
               <Lightbulb className="h-4 w-4" />
               <h2 className="font-mono text-xs uppercase">Извлечённые идеи</h2>
@@ -496,15 +502,15 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
                 ))}
               </ul>
             ) : <p className="text-sm text-zinc-500">Идеи не извлечены.</p>}
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         <TabsContent value="security">
-          <HolographicPanel accent={r.securityStatus === "RISK" ? "magenta" : "lime"} className="p-5">
+          <SciFiPanel accent={r.securityStatus === "RISK" ? "magenta" : "lime"} className="p-5">
             <div className="mb-3 flex items-center gap-2">
               {r.securityStatus === "SAFE" ? <ShieldCheck className="h-4 w-4 text-lime-300" /> : <AlertTriangle className="h-4 w-4 text-amber-300" />}
               <h2 className="font-mono text-xs uppercase">Скан безопасности</h2>
-              <span className="ml-auto"><CommercialBadge status={r.securityStatus === "SAFE" ? "SAFE" : r.securityStatus === "REVIEW" ? "WARNING" : "HIGH_RISK"} /></span>
+              <span className="ml-auto"><SciFiBadge status={r.securityStatus === "SAFE" ? "SAFE" : r.securityStatus === "REVIEW" ? "WARNING" : "HIGH_RISK"} /></span>
             </div>
             <ul className="space-y-1 text-sm text-zinc-300">
               {secNotes.length > 0 ? secNotes.map((n, i) => <li key={i} className="flex gap-2">• {n}</li>) : <li className="text-zinc-500">Нет заметок по безопасности.</li>}
@@ -517,25 +523,25 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
                 </ul>
               </div>
             )}
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         <TabsContent value="cost">
-          <HolographicPanel accent="amber" className="p-5">
+          <SciFiPanel accent="amber" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-amber-300">
               <DollarSign className="h-4 w-4" />
               <h2 className="font-mono text-xs uppercase">Стоимость и риски</h2>
             </div>
             <p className="text-sm text-zinc-300">{r.costNotes || "Анализ стоимости не проведён."}</p>
             <div className="mt-3 text-xs">
-              <span className="text-zinc-500">Коммерческое использование:</span> <CommercialBadge status={r.commercialUseStatus as "SAFE"} />
+              <span className="text-zinc-500">Коммерческое использование:</span> <SciFiBadge status={r.commercialUseStatus as "SAFE"} />
             </div>
             <div className="mt-2 text-xs text-zinc-400">{r.commercialNotes}</div>
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
 
         <TabsContent value="readme">
-          <HolographicPanel accent="cyan" className="p-5">
+          <SciFiPanel accent="cyan" className="p-5">
             <div className="mb-3 flex items-center gap-2 text-cyan-300">
               <BookOpen className="h-4 w-4" />
               <h2 className="font-mono text-xs uppercase">README (исходник)</h2>
@@ -543,7 +549,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
             <div className="max-h-96 overflow-y-auto rounded bg-zinc-900/60 p-3">
               <pre className="whitespace-pre-wrap text-[11px] text-zinc-300">{r.readmeText || "(readme не загружен)"}</pre>
             </div>
-          </HolographicPanel>
+          </SciFiPanel>
         </TabsContent>
       </Tabs>
     </div>
@@ -562,23 +568,22 @@ function InstallPlanView({ raw }: { raw: RepoDetail["repo"]["installPlans"][numb
   };
   return (
     <div className="space-y-4 text-sm">
-      {raw.mock && <div className="text-[10px] text-amber-400">Mock plan — set GLM_API_KEY for AI-generated plan.</div>}
-      <Section title="Prerequisites" items={p.prerequisites} />
+      <Section title="Требования" items={p.prerequisites} />
       {p.dockerCommands.length > 0 && (
         <div>
-          <div className="text-xs text-lime-300">Docker commands</div>
+          <div className="text-xs text-lime-300">Команды Docker</div>
           <pre className="mt-1 overflow-x-auto rounded bg-zinc-900/80 p-3 text-[11px] text-lime-200">{p.dockerCommands.join("\n")}</pre>
         </div>
       )}
       {p.manualCommands.length > 0 && (
         <div>
-          <div className="text-xs text-cyan-300">Manual commands</div>
+          <div className="text-xs text-cyan-300">Ручные команды</div>
           <pre className="mt-1 overflow-x-auto rounded bg-zinc-900/80 p-3 text-[11px] text-cyan-200">{p.manualCommands.join("\n")}</pre>
         </div>
       )}
       {p.envVars.length > 0 && (
         <div>
-          <div className="text-xs text-fuchsia-300">Env vars</div>
+          <div className="text-xs text-fuchsia-300">Переменные окружения</div>
           <div className="mt-1 space-y-1">
             {p.envVars.map((e, i) => (
               <div key={i} className="rounded border border-fuchsia-400/20 bg-fuchsia-500/5 p-2 text-xs">
@@ -590,9 +595,9 @@ function InstallPlanView({ raw }: { raw: RepoDetail["repo"]["installPlans"][numb
           </div>
         </div>
       )}
-      <Section title="Verification" items={p.verificationSteps} />
-      <Section title="Common errors" items={p.commonErrors} />
-      <Section title="Cleanup" items={p.cleanupSteps} />
+      <Section title="Проверка" items={p.verificationSteps} />
+      <Section title="Частые ошибки" items={p.commonErrors} />
+      <Section title="Очистка" items={p.cleanupSteps} />
     </div>
   );
 }
@@ -624,9 +629,9 @@ function SandboxPanel({ repoId }: { repoId: string }) {
   const [loading, setLoading] = useState(false);
   const run = async () => { setLoading(true); try { const r = await fetch(`/api/repos/${repoId}/sandbox-test-plan`, { method: "POST" }); const d = await r.json(); setData(d.plan); } finally { setLoading(false); } };
   return (
-    <HolographicPanel accent="cyan" className="space-y-4 p-5">
+    <SciFiPanel accent="cyan" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-cyan-300">Sandbox Test Plan</h2>
+        <h2 className="font-mono text-xs uppercase text-cyan-300">План безопасного теста</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}><Loader2 className={loading ? "mr-1 h-3 w-3 animate-spin" : "hidden"} /> Создать план</Button>
       </div>
       {data && (
@@ -648,7 +653,7 @@ function SandboxPanel({ repoId }: { repoId: string }) {
         </div>
       )}
       {!data && !loading && <div className="text-sm text-zinc-500">Нажмите «Создать план» для генерации sandbox test plan.</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -661,9 +666,9 @@ function PatchPlanPanel({ repoId }: { repoId: string }) {
   useEffect(() => { fetch("/api/projects").then(r => r.json()).then(d => setProjects(d.projects ?? [])).catch(() => void 0); }, []);
   const run = async () => { if (!projectId) return; setLoading(true); try { const r = await fetch(`/api/repos/${repoId}/generate-patch-plan`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId }) }); const d = await r.json(); setData(d.plan); } finally { setLoading(false); } };
   return (
-    <HolographicPanel accent="lime" className="space-y-4 p-5">
+    <SciFiPanel accent="lime" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-lime-300">Integration Patch Plan</h2>
+        <h2 className="font-mono text-xs uppercase text-lime-300">План внедрения изменений</h2>
         <div className="flex gap-2">
           <Select value={projectId} onValueChange={setProjectId}>
             <SelectTrigger className="w-[180px] bg-zinc-900/60 border-lime-400/20"><SelectValue placeholder="Проект" /></SelectTrigger>
@@ -675,7 +680,6 @@ function PatchPlanPanel({ repoId }: { repoId: string }) {
       {data && (
         <div className="space-y-3 text-xs">
           <div className="rounded border border-lime-400/20 bg-lime-500/5 p-3"><div className="font-mono text-sm text-lime-200">{String(data.summary)}</div></div>
-          {Boolean(data.mock) && <div className="text-[10px] text-amber-400">Mock-режим — добавьте GLM_API_KEY</div>}
           {Array.isArray(data.filesToCreate) && data.filesToCreate.length > 0 && <ListSection title="Файлы для создания" items={data.filesToCreate as string[]} accent="cyan" />}
           {Array.isArray(data.filesToModify) && data.filesToModify.length > 0 && <ListSection title="Файлы для изменения" items={data.filesToModify as string[]} accent="lime" />}
           {Array.isArray(data.dependenciesToAdd) && data.dependenciesToAdd.length > 0 && <ListSection title="Зависимости" items={data.dependenciesToAdd as string[]} accent="amber" />}
@@ -686,7 +690,7 @@ function PatchPlanPanel({ repoId }: { repoId: string }) {
         </div>
       )}
       {!data && !loading && <div className="text-sm text-zinc-500">Выберите проект и нажмите «Сгенерировать».</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -698,9 +702,9 @@ function RiskGatePanel({ repoId }: { repoId: string }) {
   const level = data?.riskLevel as string;
   const accent = level === "HIGH" ? "magenta" : level === "MEDIUM" ? "amber" : "lime";
   return (
-    <HolographicPanel accent={accent as "lime"} className="space-y-4 p-5">
+    <SciFiPanel accent={accent as "lime"} className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-cyan-300">Risk Gate</h2>
+        <h2 className="font-mono text-xs uppercase text-cyan-300">Проверка рисков</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}><Loader2 className={loading ? "mr-1 h-3 w-3 animate-spin" : "hidden"} /> Проверить</Button>
       </div>
       {data && (
@@ -718,7 +722,7 @@ function RiskGatePanel({ repoId }: { repoId: string }) {
         </div>
       )}
       {!data && !loading && <div className="text-sm text-zinc-500">Нажмите «Проверить» для оценки рисков интеграции.</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -732,9 +736,9 @@ function HealthPanel({ repoId }: { repoId: string }) {
   useEffect(() => { void load(); }, [repoId]);
   const createSnap = async () => { setCreating(true); try { await fetch(`/api/repos/${repoId}/health-snapshot`, { method: "POST" }); void load(); } finally { setCreating(false); } };
   return (
-    <HolographicPanel accent="cyan" className="space-y-4 p-5">
+    <SciFiPanel accent="cyan" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-cyan-300">Health Timeline</h2>
+        <h2 className="font-mono text-xs uppercase text-cyan-300">Динамика состояния</h2>
         <Button size="sm" variant="outline" onClick={createSnap} disabled={creating}>{creating ? <Loader2 className="h-3 w-3 animate-spin" /> : "Снимок"}</Button>
       </div>
       {trend && (
@@ -756,7 +760,7 @@ function HealthPanel({ repoId }: { repoId: string }) {
           ))}
         </div>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -766,9 +770,9 @@ function CommunityPanel({ repoId }: { repoId: string }) {
   const [loading, setLoading] = useState(false);
   const run = async () => { setLoading(true); try { const r = await fetch(`/api/repos/${repoId}/community-signals`, { method: "POST" }); const d = await r.json(); setData(d.signals); } finally { setLoading(false); } };
   return (
-    <HolographicPanel accent="magenta" className="space-y-4 p-5">
+    <SciFiPanel accent="magenta" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-xs uppercase text-fuchsia-300">Community Signals</h2>
+        <h2 className="font-mono text-xs uppercase text-fuchsia-300">Активность сообщества</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}><Loader2 className={loading ? "mr-1 h-3 w-3 animate-spin" : "hidden"} /> Загрузить</Button>
       </div>
       {data && (
@@ -784,7 +788,7 @@ function CommunityPanel({ repoId }: { repoId: string }) {
         </div>
       )}
       {!data && !loading && <div className="text-sm text-zinc-500">Нажмите «Загрузить» для анализа issues и releases.</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 

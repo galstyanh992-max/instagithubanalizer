@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Loader2, Cloud, ExternalLink, Lock } from "lucide-react";
 import type { OllamaCloudOption } from "@/lib/types";
@@ -27,7 +28,7 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
   const opt = data?.ollamaCloudOption;
 
   return (
-    <HolographicPanel accent="magenta" className="space-y-4 p-5">
+    <SciFiPanel accent="magenta" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-fuchsia-300">
           <Cloud className="h-4 w-4" />
@@ -111,6 +112,6 @@ export function OllamaCloudOptionsPanel({ repoId }: { repoId: string }) {
           )}
         </>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

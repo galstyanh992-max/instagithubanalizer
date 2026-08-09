@@ -1,8 +1,10 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
+
 
 type Task = {
   id: string;
@@ -69,7 +71,7 @@ export function TaskListSidebar() {
   };
 
   return (
-    <HolographicPanel accent="cyan" className="p-4 flex flex-col h-full max-h-[600px]">
+    <SciFiPanel accent="cyan" className="p-4 flex flex-col h-full max-h-[600px]">
       <h2 className="cyber-panel-header mb-4">Дела (To-Do)</h2>
       
       <form onSubmit={addTask} className="flex gap-2 mb-4">
@@ -116,6 +118,6 @@ export function TaskListSidebar() {
           ))
         )}
       </div>
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

@@ -1,159 +1,267 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
-import { StatCard } from "@/components/futuristic/stat-card";
-import { VerdictBadge } from "@/components/futuristic/neon-badge";
-import { JarwisyanAICore } from "@/components/three/JarwisyanAICore";
-import { Button } from "@/components/ui/button";
-import {
-  FolderGit2, Rocket, FlaskConical, Bookmark, XCircle, Eye,
-  ShieldAlert, Cpu,
-} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { OllamaModelDetails, ProgramRecord, RegistrySummary } from '@/lib/jarvis/platform/types';
+import type { RepositoryKnowledgeRecord } from '@/lib/jarvis/capability-intelligence';
+import styles from './program-dashboard.module.css';
 
-interface DashboardData {
-  total: number;
-  byVerdict: { USE_NOW: number; TEST: number; SAVE: number; SKIP: number };
-  watchlist: number;
-  risky: number;
-  gpuRequired: number;
-  top10: Array<{
-    id: string; fullName: string; finalPriorityScore: number; verdict: string;
-    stars: number; primaryLanguage: string;
-  }>;
+interface DashboardPayload {
+  programs: ProgramRecord[];
+  summary: RegistrySummary;
+  refreshedAt: string;
 }
 
-export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface CapabilityCenterPayload {
+  summary: {
+    physicalCapabilityRecords: number;
+    genericCapabilityIdentifiers: number;
+    repositoryKnowledge: { total: number; verified: number; referenceOnly: number; candidates: number; quarantined: number; rejected: number };
+    automaticInstalls: number;
+    automaticActivations: number;
+    dashboardReality: { matched: number; checked: number };
+  };
+  repositories: RepositoryKnowledgeRecord[];
+  safeguards: { singleOrchestrator: string; existingCapabilitiesFirst: boolean; autoInstallAllowed: false; autoActivationAllowed: false };
+}
 
-  useEffect(() => {
-    fetch("/api/repos?limit=500")
-      .then((r) => r.json())
-      .then((d) => {
-        const repos = d.repos ?? [];
-        const top10 = [...repos]
-          .sort((a: { finalPriorityScore: number }, b: { finalPriorityScore: number }) => b.finalPriorityScore - a.finalPriorityScore)
-          .slice(0, 10);
-        setData({
-          total: repos.length,
-          byVerdict: {
-            USE_NOW: repos.filter((r: { verdict: string }) => r.verdict === "USE_NOW").length,
-            TEST: repos.filter((r: { verdict: string }) => r.verdict === "TEST").length,
-            SAVE: repos.filter((r: { verdict: string }) => r.verdict === "SAVE").length,
-            SKIP: repos.filter((r: { verdict: string }) => r.verdict === "SKIP").length,
-          },
-          watchlist: repos.filter((r: { isWatchlisted: boolean }) => r.isWatchlisted).length,
-          risky: repos.filter((r: { commercialUseStatus: string }) => ["HIGH_RISK", "WARNING"].includes(r.commercialUseStatus)).length,
-          gpuRequired: repos.filter((r: { gpuRequired: boolean }) => r.gpuRequired).length,
-          top10,
-        });
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Ошибка загрузки"))
-      .finally(() => setLoading(false));
+const STATUS_LABELS: Record<string, string> = {
+  DISCOVERED: 'ОБНАРУЖЕНО', CONFIGURED: 'НАСТРОЕНО', QUARANTINED: 'КАРАНТИН',
+  ONLINE: 'В СЕТИ', OFFLINE: 'НЕ В СЕТИ', STOPPED: 'ОСТАНОВЛЕНО',
+  DISABLED: 'ОТКЛЮЧЕНО', MISSING: 'НЕ НАЙДЕНО', UNKNOWN: 'НЕИЗВЕСТНО',
+  NOT_INSTALLED: 'НЕ УСТАНОВЛЕНО', INSTALLING: 'УСТАНОВКА', INSTALLED: 'УСТАНОВЛЕНО',
+  READY: 'ГОТОВО', RUNNING: 'РАБОТАЕТ', DEGRADED: 'ОГРАНИЧЕНО', BLOCKED: 'ЗАБЛОКИРОВАНО',
+};
+
+function formatBytes(value: number | null): string {
+  if (!value) return '—';
+  const units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+  let size = value;
+  let index = 0;
+  while (size >= 1024 && index < units.length - 1) { size /= 1024; index += 1; }
+  return `${size.toFixed(index > 1 ? 1 : 0)} ${units[index]}`;
+}
+
+export default function Dashboard() {
+  const [payload, setPayload] = useState<DashboardPayload | null>(null);
+  const [capabilityCenter, setCapabilityCenter] = useState<CapabilityCenterPayload | null>(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [actionOutput, setActionOutput] = useState<Record<string, string>>({});
+
+  const load = useCallback(async (force = false) => {
+    setBusy(force ? 'refresh' : null);
+    try {
+      const [response, intelligenceResponse] = await Promise.all([
+        force
+          ? fetch('/api/jarvis/programs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'refresh' }) })
+          : fetch('/api/jarvis/programs', { cache: 'no-store' }),
+        fetch('/api/jarvis/capability-center', { cache: 'no-store' }),
+      ]);
+      if (!response.ok || !intelligenceResponse.ok) throw new Error(`Dashboard API returned ${response.status}/${intelligenceResponse.status}`);
+      const [data, intelligence] = await Promise.all([response.json(), intelligenceResponse.json()]);
+      setPayload(force ? { programs: data.programs, summary: data.summary, refreshedAt: new Date().toISOString() } : data);
+      setCapabilityCenter(intelligence);
+      setError('');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally { setBusy(null); }
   }, []);
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-7xl space-y-4">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />
-          ))}
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    void load();
+    const timer = window.setInterval(() => void load(), 15_000);
+    return () => window.clearInterval(timer);
+  }, [load]);
+
+  const groups = useMemo(() => {
+    const result = new Map<string, ProgramRecord[]>();
+    for (const program of payload?.programs ?? []) {
+      const list = result.get(program.category) ?? [];
+      list.push(program);
+      result.set(program.category, list);
+    }
+    return Array.from(result.entries());
+  }, [payload]);
+
+  async function toggle(program: ProgramRecord) {
+    setBusy(program.id);
+    try {
+      const response = await fetch('/api/jarvis/programs', {
+        method: 'PATCH', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: program.id, enabled: !program.enabled }),
+      });
+      if (!response.ok) throw new Error('Не удалось изменить состояние');
+      await load();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
+    finally { setBusy(null); }
   }
 
-  if (error || !data) {
-    return (
-      <div className="mx-auto flex max-w-2xl items-center justify-center p-6">
-        <div className="glass-panel w-full p-8 text-center">
-          <div className="mb-4 flex items-center justify-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-amber-400">Fallback-режим</span>
-          </div>
-          <h2 className="font-mono text-xl font-bold text-cyan-200">Панель управления</h2>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-            Панель временно работает в fallback-режиме. Данные пока недоступны.
-            Проверьте базу данных, seed или настройки API.
-          </p>
-          {error && (
-            <p className="mt-2 text-[10px] text-zinc-600 font-mono">{error}</p>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => window.location.reload()}
-            className="mt-5"
-          >
-            Повторить загрузку
-          </Button>
-        </div>
-      </div>
-    );
+  async function test(program: ProgramRecord) {
+    setBusy(program.id);
+    try {
+      const response = await fetch('/api/jarvis/programs', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'test', id: program.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.result?.ok) throw new Error(data.result?.error?.message ?? data.error ?? 'Проверка не пройдена');
+      setError('');
+      await load();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
+    finally { setBusy(null); }
   }
+
+  async function lifecycle(program: ProgramRecord, action: 'start' | 'stop' | 'restart') {
+    setBusy(program.id);
+    try {
+      const response = await fetch('/api/jarvis/programs', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, id: program.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.result?.ok) throw new Error(data.result?.error?.message ?? data.error ?? 'Действие не выполнено');
+      setError('');
+      await load(true);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
+    finally { setBusy(null); }
+  }
+
+  async function inspect(program: ProgramRecord, action: 'logs' | 'configuration') {
+    setBusy(program.id);
+    try {
+      const response=await fetch('/api/jarvis/programs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,id:program.id})});
+      const data=await response.json();
+      if(!response.ok || !data.result?.ok) throw new Error(data.result?.error?.message ?? data.error ?? 'Данные недоступны');
+      setActionOutput((current)=>({...current,[program.id]:typeof data.result.output==='string'?data.result.output:JSON.stringify(data.result.output,null,2)}));
+      setExpanded(program.id);
+    } catch(reason){setError(reason instanceof Error?reason.message:String(reason));}
+    finally{setBusy(null);}
+  }
+
+  const summary = payload?.summary;
 
   return (
-    <div className="cosmic-page-shell mx-auto max-w-7xl space-y-6">
-      <div>
-        <h1 className="font-mono text-2xl font-bold neon-text">ПАНЕЛЬ</h1>
-        <p className="text-xs text-zinc-500">Обзор сетки интеллектуального анализа репозиториев</p>
-      </div>
-
-      {/* KPI grid */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
-        <StatCard label="Всего репо" value={data.total} icon={FolderGit2} accent="cyan" />
-        <StatCard label="Использовать" value={data.byVerdict.USE_NOW} icon={Rocket} accent="lime" />
-        <StatCard label="Тест" value={data.byVerdict.TEST} icon={FlaskConical} accent="cyan" />
-        <StatCard label="Сохранить" value={data.byVerdict.SAVE} icon={Bookmark} accent="magenta" />
-        <StatCard label="Пропустить" value={data.byVerdict.SKIP} icon={XCircle} accent="red" />
-        <StatCard label="Избранное" value={data.watchlist} icon={Eye} accent="cyan" />
-        <StatCard label="Рисковые" value={data.risky} icon={ShieldAlert} accent="amber" />
-        <StatCard label="GPU" value={data.gpuRequired} icon={Cpu} accent="magenta" />
-      </div>
-
-      {/* AI Core + Top 10 */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="relative flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-[220px]">
-            <JarwisyanAICore size="md" active />
-          </div>
-          <div className="mt-2 text-center">
-            <div className="font-mono text-sm text-cyan-300">ЯДРО ДЖАРВИС</div>
-            <div className="text-[10px] text-zinc-500">онлайн</div>
-          </div>
+    <main className={styles.shell}>
+      <header className={styles.header}>
+        <div>
+          <p className={styles.eyebrow}>J.A.R.V.I.S. / ЦЕНТР ВОЗМОЖНОСТЕЙ</p>
+          <h1>Панель программ</h1>
+          <p className={styles.subtitle}>Живой реестр локальных программ, провайдеров, агентов и сервисов</p>
         </div>
-        <HolographicPanel accent="cyan" className="p-4 lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="font-mono text-xs uppercase tracking-wider text-cyan-300">Топ-10 по приоритету</h2>
-            <Link href="/repos" className="text-[10px] text-zinc-400 hover:text-cyan-300">ВСЕ →</Link>
+        <button className={styles.refresh} onClick={() => void load(true)} disabled={busy === 'refresh'}>
+          {busy === 'refresh' ? 'СКАНИРОВАНИЕ…' : 'ОБНОВИТЬ РЕЕСТР'}
+        </button>
+      </header>
+
+      <section className={styles.summary} aria-label="Сводка">
+        {[
+          ['ВСЕГО', summary?.total ?? 0], ['УСТАНОВЛЕНО', summary?.installed ?? 0],
+          ['ВКЛЮЧЕНО', summary?.enabled ?? 0], ['РАБОТАЕТ', summary?.running ?? 0],
+          ['ИСПРАВНО', summary?.healthy ?? 0], ['НЕ НАЙДЕНО', summary?.missing ?? 0],
+        ].map(([label, value]) => <div key={String(label)}><span>{label}</span><strong>{value}</strong></div>)}
+      </section>
+
+      {error && <div className={styles.error} role="alert">ОШИБКА: {error}</div>}
+      {!payload && !error && <div className={styles.loading}>ОБНАРУЖЕНИЕ КОМПОНЕНТОВ…</div>}
+
+      {capabilityCenter && (
+        <section className={styles.capabilityCenter} aria-label="Capability Center">
+          <div className={styles.centerHeader}>
+            <div>
+              <p className={styles.eyebrow}>PHASE C / CAPABILITY INTELLIGENCE</p>
+              <h2>Capability Center</h2>
+              <p>Сначала существующие реализации. Репозитории проходят проверку, staging и ручное одобрение.</p>
+            </div>
+            <span className={styles.orchestrator}>ORCHESTRATOR · {capabilityCenter.safeguards.singleOrchestrator}</span>
           </div>
-          <div className="mt-3 space-y-1.5 max-h-72 overflow-y-auto">
-            {data.top10.length === 0 && (
-              <div className="py-8 text-center text-sm text-zinc-500">Репо пока нет</div>
-            )}
-            {data.top10.map((r, i) => (
-              <Link
-                key={r.id}
-                href={`/repos/${r.id}`}
-                className="group flex items-center gap-3 rounded-md border border-transparent px-2 py-2 hover:border-cyan-400/30 hover:bg-cyan-500/5"
-              >
-                <div className="font-mono text-xs text-cyan-400 w-6">#{i + 1}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="truncate text-sm text-zinc-100 group-hover:text-cyan-200">{r.fullName}</div>
-                  <div className="text-[10px] text-zinc-500">★ {r.stars} · {r.primaryLanguage || "—"}</div>
-                </div>
-                <VerdictBadge verdict={r.verdict as "USE_NOW"} size="sm" />
-                <div className="font-mono text-sm text-cyan-300">{r.finalPriorityScore}</div>
-              </Link>
+          <div className={styles.intelligenceSummary}>
+            <div><span>ФИЗИЧЕСКИЕ ЗАПИСИ</span><strong>{capabilityCenter.summary.physicalCapabilityRecords}</strong></div>
+            <div><span>GENERIC CAPABILITIES</span><strong>{capabilityCenter.summary.genericCapabilityIdentifiers}</strong></div>
+            <div><span>REPOSITORY KB</span><strong>{capabilityCenter.summary.repositoryKnowledge.total}</strong></div>
+            <div><span>REFERENCE ONLY</span><strong>{capabilityCenter.summary.repositoryKnowledge.referenceOnly}</strong></div>
+            <div><span>AUTO INSTALL</span><strong>{capabilityCenter.summary.automaticInstalls}</strong></div>
+            <div><span>AUTO ACTIVATE</span><strong>{capabilityCenter.summary.automaticActivations}</strong></div>
+            <div><span>REALITY CHECK</span><strong>{capabilityCenter.summary.dashboardReality.matched}/{capabilityCenter.summary.dashboardReality.checked}</strong></div>
+          </div>
+          <div className={styles.repositoryStrip}>
+            {capabilityCenter.repositories.slice(0, 12).map((repository) => (
+              <article key={repository.id}>
+                <div><b>{repository.name}</b><span data-lifecycle={repository.lifecycle}>{repository.lifecycle}</span></div>
+                <p>{repository.capabilities.slice(0, 2).join(' · ')}</p>
+                <small>{repository.license} · {repository.integrationMode.toUpperCase()} · {repository.tier}</small>
+              </article>
             ))}
           </div>
-        </HolographicPanel>
-      </div>
+        </section>
+      )}
 
-    </div>
+      <div className={styles.groups}>
+        {groups.map(([category, programs]) => (
+          <section className={styles.group} key={category}>
+            <div className={styles.groupTitle}><span>{category}</span><b>{programs.length}</b></div>
+            <div className={styles.grid}>
+              {programs.map((program) => {
+                const models = program.id === 'ollama-local' && Array.isArray(program.metadata.models)
+                  ? program.metadata.models as OllamaModelDetails[] : [];
+                const configuration = program.metadata.configuration && typeof program.metadata.configuration === 'object'
+                  ? program.metadata.configuration as Record<string, unknown> : null;
+                const managedLifecycle = configuration?.lifecycle === 'DOCKER_ON_DEMAND' && program.id === 'n8n';
+                return (
+                  <article className={`${styles.card} ${!program.enabled ? styles.disabled : ''}`} key={program.id}>
+                    <div className={styles.cardHead}>
+                      <div>
+                        <h2>{program.name}</h2>
+                        <p>{program.type.replaceAll('_', ' ')}</p>
+                      </div>
+                      <span className={styles.status} data-status={program.status}>{STATUS_LABELS[program.status] ?? program.status}</span>
+                    </div>
+                    <p className={styles.description}>{program.description}</p>
+                    <div className={styles.health}><i data-health={program.health} />{program.health_message}</div>
+                    <dl className={styles.facts}>
+                      <div><dt>Версия</dt><dd>{program.version ?? '—'}</dd></div>
+                      <div><dt>Режим</dt><dd>{program.endpoint?.startsWith('http://127.') || program.install_path ? 'Локальный' : 'Облачный'}</dd></div>
+                      <div><dt>Задачи</dt><dd>{program.task_count}</dd></div>
+                      <div><dt>Успех</dt><dd>{program.task_count ? `${program.success_rate}%` : '—'}</dd></div>
+                    </dl>
+                    <div className={styles.capabilities}>
+                      {program.capabilities.slice(0, 5).map((item) => <span key={item}>{item.replaceAll('_', ' ')}</span>)}
+                      {program.capabilities.length > 5 && <span>+{program.capabilities.length - 5}</span>}
+                    </div>
+                    {expanded === program.id && (
+                      <div className={styles.details}>
+                        <p><b>Путь:</b> {program.install_path ?? '—'}</p>
+                        <p><b>Точка доступа:</b> {program.endpoint ?? '—'}{program.port ? ` · порт ${program.port}` : ''}</p>
+                        <p><b>Процесс/контейнер:</b> {program.pid ?? program.docker_container_id ?? '—'}</p>
+                        <p><b>CPU / RAM:</b> {program.cpu_usage ?? '—'}% / {program.ram_usage == null ? '—' : `${program.ram_usage}%`}</p>
+                        <p><b>Последнее использование:</b> {program.last_used ? new Date(program.last_used).toLocaleString('ru-RU') : '—'}</p>
+                        {program.error && <p className={styles.detailError}><b>Ошибка:</b> {program.error}</p>}
+                        {models.length > 0 && <div className={styles.models}>
+                          <b>Модели Ollama</b>
+                          {models.map((model) => <div key={model.name}>
+                            <span>{model.name}</span><small>{model.parameter_size ?? '—'} · {model.quantization ?? '—'} · {formatBytes(model.size)}{model.loaded ? ' · ЗАГРУЖЕНА' : ''}</small>
+                          </div>)}
+                        </div>}
+                        {actionOutput[program.id] && <pre className={styles.actionOutput}>{actionOutput[program.id]}</pre>}
+                      </div>
+                    )}
+                    <div className={styles.actions}>
+                      <button onClick={() => setExpanded(expanded === program.id ? null : program.id)}>{expanded === program.id ? 'СВЕРНУТЬ' : 'ПОДРОБНЕЕ'}</button>
+                      <button onClick={() => void test(program)} disabled={busy === program.id || !program.installed}>ТЕСТ</button>
+                      {managedLifecycle && !program.running && <button onClick={() => void lifecycle(program, 'start')} disabled={busy === program.id}>ЗАПУСТИТЬ</button>}
+                      {managedLifecycle && program.running && <button onClick={() => void lifecycle(program, 'stop')} disabled={busy === program.id}>ОСТАНОВИТЬ</button>}
+                      {managedLifecycle && program.running && <button onClick={() => void lifecycle(program, 'restart')} disabled={busy === program.id}>ПЕРЕЗАПУСТИТЬ</button>}
+                      {program.endpoint && <button onClick={() => window.open(program.endpoint!, '_blank', 'noopener,noreferrer')}>ОТКРЫТЬ</button>}
+                      <button onClick={() => void inspect(program, 'configuration')} disabled={busy === program.id}>НАСТРОЙКА</button>
+                      {managedLifecycle && <button onClick={() => void inspect(program, 'logs')} disabled={busy === program.id}>ЛОГИ</button>}
+                      <button onClick={() => void toggle(program)} disabled={busy === program.id}>{program.enabled ? 'ОТКЛЮЧИТЬ' : 'ВКЛЮЧИТЬ'}</button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </main>
   );
 }

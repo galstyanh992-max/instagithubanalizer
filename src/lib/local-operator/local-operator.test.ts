@@ -33,6 +33,10 @@ describe("workspace policy", () => {
     const r = checkPathAllowed(".env", ws);
     expect(r.ok).toBe(false);
   });
+  it("sibling path sharing the workspace prefix is denied", () => {
+    const ws = { id: "d", name: "d", rootPath: "/tmp/ws", allowedOperations: [], requiresApprovalForWrite: true } as any;
+    expect(checkPathAllowed("/tmp/ws-private/secret.txt", ws).ok).toBe(false);
+  });
 });
 
 describe("planner", () => {

@@ -1,0 +1,39 @@
+name: jarvis-phase-b
+
+services:
+  n8n:
+    image: n8nio/n8n@sha256:3989d9b8ebb77b4ee8f604519eb73e44f4384bfaa689526e0104eed79a237d30
+    container_name: jarvis-phase-b-n8n
+    profiles: [automation]
+    restart: "no"
+    ports:
+      - "127.0.0.1:15678:5678"
+    environment:
+      N8N_HOST: 127.0.0.1
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_HIRING_BANNER_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+      GENERIC_TIMEZONE: Asia/Yerevan
+    volumes:
+      - jarvis_phase_b_n8n_data:/home/node/.n8n
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5678/healthz/readiness"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 25s
+    networks: [jarvis_phase_b]
+
+networks:
+  jarvis_phase_b:
+    name: jarvis-phase-b
+    internal: false
+
+volumes:
+  jarvis_phase_b_n8n_data:
+    name: ${JARVIS_PHASE_B_N8N_VOLUME:-jarvis-phase-b-n8n-data}

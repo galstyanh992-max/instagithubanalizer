@@ -1,7 +1,9 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+import { GithubTabs } from "@/components/ui/github-tabs";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, RefreshCw, Star, GitFork, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
@@ -57,22 +59,23 @@ export default function WatchlistPage() {
   if (loading) return <div className="text-cyan-300">Loading watchlist...</div>;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4 p-4">
+      <GithubTabs />
       <div>
         <h1 className="font-mono text-2xl font-bold neon-text">WATCHLIST</h1>
         <p className="text-xs text-zinc-500">{repos.length} repos being tracked</p>
       </div>
       {repos.length === 0 && (
-        <HolographicPanel accent="amber" className="p-12 text-center">
+        <SciFiPanel accent="amber" className="p-12 text-center">
           <EyeOff className="mx-auto h-10 w-10 text-amber-400/50" />
           <p className="mt-2 text-sm text-zinc-400">No watched repos yet. Open any repo and click Watch.</p>
-        </HolographicPanel>
+        </SciFiPanel>
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {repos.map((r) => {
           const lastSnap = r.watchlistSnapshots[0];
           return (
-            <HolographicPanel key={r.id} accent="magenta" className="p-4">
+            <SciFiPanel key={r.id} accent="magenta" className="p-4">
               <div className="flex items-start justify-between">
                 <Link href={`/repos/${r.id}`} className="font-mono text-sm text-fuchsia-200 hover:underline">{r.fullName}</Link>
                 <div className="flex gap-1">
@@ -120,7 +123,7 @@ export default function WatchlistPage() {
               <div className="mt-2 text-[10px] text-zinc-600">
                 Last checked: {r.lastCheckedAt ? new Date(r.lastCheckedAt).toLocaleString() : "—"}
               </div>
-            </HolographicPanel>
+            </SciFiPanel>
           );
         })}
       </div>

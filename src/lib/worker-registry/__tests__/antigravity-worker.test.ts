@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 import { describe, expect, it } from 'vitest';
 import { AntigravityWorkerAdapter, ALLOWED_ANTIGRAVITY_MODELS, MODEL_PROFILE_MAP, ANTIGRAVITY_MODEL_CONFIG } from '../adapters/antigravity-cli';
 import { WorkerWorkspaceManager } from '../workspace';
@@ -317,6 +319,258 @@ describe('AntigravityWorkerAdapter & Execution Security', () => {
     expect(result.modelCliValue).toBe(ANTIGRAVITY_MODEL_CONFIG.fast.cliValue);
   });
 
+  // ─── Terminal-state precedence regressions (Phase 06B) ─────────────────
+
+  it('16c. null exit code without cancellation or timeout => FAILED, never coerced to 0', async () => {
+    const testAdapter = new TestableAntigravityAdapter();
+    const mockChild: any = new EventEmitter();
+    mockChild.stdout = new Readable({ read() {} });
+    mockChild.stderr = new Readable({ read() {} });
+    mockChild.kill = () => {};
+    testAdapter.mockChildProcess = mockChild;
+
+    const promise = testAdapter.execute(
+      {
+        taskId: 't-null-exit',
+        runId: 'r-null-exit',
+        projectRoot: 'D:\\JARVIS_WORKSPACES',
+        instructions: 'task that dies without an exit code',
+        files: [],
+        requestedProfile: 'FAST'
+      },
+      'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test'
+    );
+
+    process.nextTick(() => {
+      mockChild.stdout.push(null);
+      mockChild.stderr.push(null);
+      // No signal either: the process simply never reported an exit code.
+      mockChild.emit('close', null, null);
+    });
+
+    const result = await promise;
+    expect(result.status).toBe('FAILED');
+    expect(result.status).not.toBe('SUCCESS');
+    expect(result.exitCode).not.toBe(0);
+    expect(result.terminalReason).toBe('NO_EXIT_CODE');
+  });
+
+  it('16d. signal-only close (null exit + SIGKILL) without timeout => FAILED', async () => {
+    const testAdapter = new TestableAntigravityAdapter();
+    const mockChild: any = new EventEmitter();
+    mockChild.stdout = new Readable({ read() {} });
+    mockChild.stderr = new Readable({ read() {} });
+    mockChild.kill = () => {};
+    testAdapter.mockChildProcess = mockChild;
+
+    const promise = testAdapter.execute(
+      {
+        taskId: 't-signal-only',
+        runId: 'r-signal-only',
+        projectRoot: 'D:\\JARVIS_WORKSPACES',
+        instructions: 'externally killed task',
+        files: [],
+        requestedProfile: 'FAST'
+      },
+      'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test'
+    );
+
+    process.nextTick(() => {
+      mockChild.stdout.push(null);
+      mockChild.stderr.push(null);
+      mockChild.emit('close', null, 'SIGKILL');
+    });
+
+    const result = await promise;
+    expect(result.status).toBe('FAILED');
+    expect(result.status).not.toBe('SUCCESS');
+    expect(result.status).not.toBe('CANCELLED');
+    expect(result.terminalReason).toBe('NO_EXIT_CODE');
+    expect(result.terminalSignal).toBe('SIGKILL');
+  });
+
+  it('16e. an external SIGTERM without an owner cancel is FAILED, not CANCELLED', async () => {
+    const testAdapter = new TestableAntigravityAdapter();
+    const mockChild: any = new EventEmitter();
+    mockChild.stdout = new Readable({ read() {} });
+    mockChild.stderr = new Readable({ read() {} });
+    mockChild.kill = () => {};
+    testAdapter.mockChildProcess = mockChild;
+
+    const promise = testAdapter.execute(
+      {
+        taskId: 't-external-sigterm',
+        runId: 'r-external-sigterm',
+        projectRoot: 'D:\\JARVIS_WORKSPACES',
+        instructions: 'task killed by something other than cancel()',
+        files: [],
+        requestedProfile: 'FAST'
+      },
+      'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test'
+    );
+
+    process.nextTick(() => {
+      mockChild.stdout.push(null);
+      mockChild.stderr.push(null);
+      mockChild.emit('close', null, 'SIGTERM');
+    });
+
+    const result = await promise;
+    // Cancellation is tracked explicitly, never inferred from the OS signal.
+    expect(result.status).toBe('FAILED');
+    expect(result.terminalReason).toBe('NO_EXIT_CODE');
+  });
+
+  it('16f. cancellation followed by a later timeout stays CANCELLED', async () => {
+    const testAdapter = new TestableAntigravityAdapter();
+    const mockChild: any = new EventEmitter();
+    mockChild.stdout = new Readable({ read() {} });
+    mockChild.stderr = new Readable({ read() {} });
+    mockChild.kill = () => {};
+    testAdapter.mockChildProcess = mockChild;
+
+    const promise = testAdapter.execute(
+      {
+        taskId: 't-cancel-then-timeout',
+        runId: 'r-cancel-then-timeout',
+        projectRoot: 'D:\\JARVIS_WORKSPACES',
+        instructions: 'long task',
+        files: [],
+        requestedProfile: 'FAST'
+      },
+      'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test',
+      { timeoutMs: 40 }
+    );
+
+    // execute() awaits prepareExecutionPlan before the run is registered, so
+    // poll until cancel() actually finds the active process.
+    let cancelled = false;
+    for (let i = 0; i < 200 && !cancelled; i++) {
+      cancelled = await testAdapter.cancel('r-cancel-then-timeout');
+      if (!cancelled) await new Promise((r) => setTimeout(r, 1));
+    }
+    expect(cancelled).toBe(true);
+
+    // Let the timeout timer fire AFTER cancellation was recorded.
+    await new Promise((r) => setTimeout(r, 80));
+    mockChild.stdout.push(null);
+    mockChild.stderr.push(null);
+    mockChild.emit('close', null, 'SIGKILL');
+
+    const result = await promise;
+    expect(result.status).toBe('CANCELLED');
+    expect(result.status).not.toBe('TIMEOUT');
+    expect(result.terminalReason).toBe('CANCELLED_BY_OWNER');
+  });
+
+  it('16g. timeout followed by a later close(0) stays TIMEOUT', async () => {
+    const testAdapter = new TestableAntigravityAdapter();
+    const mockChild: any = new EventEmitter();
+    mockChild.stdout = new Readable({ read() {} });
+    mockChild.stderr = new Readable({ read() {} });
+    mockChild.kill = () => {};
+    testAdapter.mockChildProcess = mockChild;
+
+    const promise = testAdapter.execute(
+      {
+        taskId: 't-timeout-then-zero',
+        runId: 'r-timeout-then-zero',
+        projectRoot: 'D:\\JARVIS_WORKSPACES',
+        instructions: 'long task',
+        files: [],
+        requestedProfile: 'FAST'
+      },
+      'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test',
+      { timeoutMs: 15 }
+    );
+
+    await new Promise((r) => setTimeout(r, 45));
+    mockChild.stdout.push(null);
+    mockChild.stderr.push(null);
+    mockChild.emit('close', 0, null);
+
+    const result = await promise;
+    expect(result.status).toBe('TIMEOUT');
+    expect(result.status).not.toBe('SUCCESS');
+  });
+
+  it('16h. a duplicate close event produces exactly one terminal result', async () => {
+    const testAdapter = new TestableAntigravityAdapter();
+    const mockChild: any = new EventEmitter();
+    mockChild.stdout = new Readable({ read() {} });
+    mockChild.stderr = new Readable({ read() {} });
+    mockChild.kill = () => {};
+    testAdapter.mockChildProcess = mockChild;
+
+    const promise = testAdapter.execute(
+      {
+        taskId: 't-double-close',
+        runId: 'r-double-close',
+        projectRoot: 'D:\\JARVIS_WORKSPACES',
+        instructions: 'task',
+        files: [],
+        requestedProfile: 'FAST'
+      },
+      'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test'
+    );
+
+    process.nextTick(() => {
+      mockChild.stdout.push(null);
+      mockChild.stderr.push(null);
+      mockChild.emit('close', 0, null);
+      mockChild.emit('close', 1, null);
+    });
+
+    const result = await promise;
+    expect(result.status).toBe('SUCCESS');
+    expect(result.exitCode).toBe(0);
+    expect(await promise).toBe(result);
+  });
+
+  it('16i. SUCCESS is gated on a strict exit code of 0 and nothing else', async () => {
+    const cases: Array<{ code: number | null; signal: string | null; expected: string }> = [
+      { code: 0, signal: null, expected: 'SUCCESS' },
+      { code: 1, signal: null, expected: 'FAILED' },
+      { code: 127, signal: null, expected: 'FAILED' },
+      { code: null, signal: null, expected: 'FAILED' },
+      { code: null, signal: 'SIGKILL', expected: 'FAILED' },
+      { code: null, signal: 'SIGTERM', expected: 'FAILED' }
+    ];
+
+    for (const testCase of cases) {
+      const testAdapter = new TestableAntigravityAdapter();
+      const mockChild: any = new EventEmitter();
+      mockChild.stdout = new Readable({ read() {} });
+      mockChild.stderr = new Readable({ read() {} });
+      mockChild.kill = () => {};
+      testAdapter.mockChildProcess = mockChild;
+
+      const promise = testAdapter.execute(
+        {
+          taskId: 't-gate',
+          runId: `r-gate-${testCase.code}-${testCase.signal}`,
+          projectRoot: 'D:\\JARVIS_WORKSPACES',
+          instructions: 'task',
+          files: [],
+          requestedProfile: 'FAST'
+        },
+        'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test'
+      );
+
+      process.nextTick(() => {
+        mockChild.stdout.push(null);
+        mockChild.stderr.push(null);
+        mockChild.emit('close', testCase.code, testCase.signal);
+      });
+
+      const result = await promise;
+      expect(
+        result.status,
+        `exitCode=${testCase.code} signal=${testCase.signal}`
+      ).toBe(testCase.expected);
+    }
+  });
+
   it('17. filesystem-write task is rejected before spawn', async () => {
     const testAdapter = new TestableAntigravityAdapter();
     let spawnCalled = false;
@@ -455,6 +709,95 @@ describe('AntigravityWorkerAdapter & Execution Security', () => {
       expect(caps.FILES_CREATE).toBe(false);
       expect(caps.FILES_MODIFY).toBe(false);
       expect(caps.PROCESS_RUN_TESTS).toBe(false);
+    });
+
+    it('M9. model diagnostics survive FAILED / TIMEOUT / CANCELLED terminal states', async () => {
+      // FAILED (non-zero exit)
+      const failAdapter = new TestableAntigravityAdapter();
+      const failChild: any = new EventEmitter();
+      failChild.stdout = new Readable({ read() {} });
+      failChild.stderr = new Readable({ read() {} });
+      failChild.kill = () => {};
+      failAdapter.mockChildProcess = failChild;
+
+      const failPromise = failAdapter.execute(
+        {
+          taskId: 't-diag-fail',
+          runId: 'r-diag-fail',
+          projectRoot: 'D:\\JARVIS_WORKSPACES',
+          instructions: 'diag task',
+          files: [],
+          requestedProfile: 'DEEP_REASONING'
+        },
+        'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test'
+      );
+      process.nextTick(() => {
+        failChild.stdout.push(null);
+        failChild.stderr.push(null);
+        failChild.emit('close', 4);
+      });
+      const failResult = await failPromise;
+      expect(failResult.status).toBe('FAILED');
+      expect(failResult.modelCliValue).toBe(ANTIGRAVITY_MODEL_CONFIG.primary.cliValue);
+      expect(failResult.modelFallbackUsed).toBe(false);
+      expect(failResult.permissionPolicy).toBe('READ_ONLY_FAIL_CLOSED');
+
+      // TIMEOUT
+      const timeoutAdapter = new TestableAntigravityAdapter();
+      const timeoutChild: any = new EventEmitter();
+      timeoutChild.stdout = new Readable({ read() {} });
+      timeoutChild.stderr = new Readable({ read() {} });
+      timeoutChild.kill = () => {
+        process.nextTick(() => timeoutChild.emit('close', null, 'SIGKILL'));
+      };
+      timeoutAdapter.mockChildProcess = timeoutChild;
+
+      const timeoutResult = await timeoutAdapter.execute(
+        {
+          taskId: 't-diag-timeout',
+          runId: 'r-diag-timeout',
+          projectRoot: 'D:\\JARVIS_WORKSPACES',
+          instructions: 'diag task',
+          files: [],
+          requestedProfile: 'FAST'
+        },
+        'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test',
+        { timeoutMs: 10 }
+      );
+      expect(timeoutResult.status).toBe('TIMEOUT');
+      expect(timeoutResult.modelCliValue).toBe(ANTIGRAVITY_MODEL_CONFIG.fast.cliValue);
+      expect(timeoutResult.modelFallbackUsed).toBe(false);
+
+      // CANCELLED
+      const cancelAdapter = new TestableAntigravityAdapter();
+      const cancelChild: any = new EventEmitter();
+      cancelChild.stdout = new Readable({ read() {} });
+      cancelChild.stderr = new Readable({ read() {} });
+      cancelChild.kill = () => {};
+      cancelAdapter.mockChildProcess = cancelChild;
+
+      const cancelPromise = cancelAdapter.execute(
+        {
+          taskId: 't-diag-cancel',
+          runId: 'r-diag-cancel',
+          projectRoot: 'D:\\JARVIS_WORKSPACES',
+          instructions: 'diag task',
+          files: [],
+          requestedProfile: 'DEEP_REASONING'
+        },
+        'D:\\JARVIS_WORKSPACES\\phase05-e2e\\test'
+      );
+      process.nextTick(async () => {
+        await cancelAdapter.cancel('r-diag-cancel');
+        cancelChild.stdout.push(null);
+        cancelChild.stderr.push(null);
+        cancelChild.emit('close', null, 'SIGTERM');
+      });
+      const cancelResult = await cancelPromise;
+      expect(cancelResult.status).toBe('CANCELLED');
+      expect(cancelResult.modelCliValue).toBe(ANTIGRAVITY_MODEL_CONFIG.primary.cliValue);
+      expect(cancelResult.modelFallbackUsed).toBe(false);
+      expect(cancelResult.dangerousPermissionsUsed).toBe(false);
     });
 
     it('M8. diagnostics carry the actual resolved model (primary)', async () => {

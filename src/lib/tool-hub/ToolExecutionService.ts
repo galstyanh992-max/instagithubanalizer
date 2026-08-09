@@ -1,3 +1,4 @@
+
 // ─── Agent OS — Tool Execution Service ───────────────────────
 // Handles tool execution: logging, approval, status tracking.
 
@@ -54,7 +55,6 @@ class ToolExecutionService {
       data: {
         workspaceId: params.workspaceId,
         agentId: params.agentId ?? null,
-        taskId: params.taskId ?? null,
         toolId: params.toolId,
         action: params.action,
         correlationId: params.correlationId ?? null,
@@ -280,7 +280,6 @@ class ToolExecutionService {
   }) {
     const approvalRequest = await db.approvalRequest.create({
       data: {
-        taskId: params.taskId ?? null,
         workspaceId: params.workspaceId,
         agentId: params.agentId,
         actionType: 'execute',
@@ -450,3 +449,4 @@ class ToolExecutionService {
 }
 
 export const toolExecutionService = ToolExecutionService.getInstance();
+

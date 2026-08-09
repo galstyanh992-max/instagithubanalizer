@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Loader2, Terminal, Cloud, Cpu, Container, ListChecks } from "lucide-react";
 import type { RunOptionsResult } from "@/lib/types";
@@ -25,7 +26,7 @@ export function RunOptionsPanel({ repoId }: { repoId: string }) {
   }
 
   return (
-    <HolographicPanel accent="lime" className="space-y-4 p-5">
+    <SciFiPanel accent="lime" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-lime-300">
           <Terminal className="h-4 w-4" />
@@ -99,7 +100,7 @@ export function RunOptionsPanel({ repoId }: { repoId: string }) {
           </div>
         </div>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 

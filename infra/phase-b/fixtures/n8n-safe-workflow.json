@@ -1,0 +1,44 @@
+{
+  "id": "jarvisPhaseBSmoke001",
+  "versionId": "1e0e4827-d27a-4e78-bb52-4bea513d28de",
+  "name": "JARVIS Phase B Safe Smoke",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "83f8eb26-2a41-4e36-8c23-3438d2e0c591",
+      "name": "Ручной запуск",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "72b044bb-7897-487e-a14d-94f048571859",
+              "name": "status",
+              "value": "JARVIS_PHASE_B_OK",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "714af616-4349-4f03-8d17-789b5733f299",
+      "name": "Безопасный результат",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 0]
+    }
+  ],
+  "connections": {
+    "Ручной запуск": {
+      "main": [[{"node": "Безопасный результат", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "pinData": {},
+  "tags": []
+}

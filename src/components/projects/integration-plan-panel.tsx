@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Wrench, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
@@ -68,18 +69,18 @@ export function IntegrationPlanPanel({ repoId }: { repoId: string }) {
 
   if (projects.length === 0) {
     return (
-      <HolographicPanel accent="amber" className="p-5 text-center">
+      <SciFiPanel accent="amber" className="p-5 text-center">
         <AlertTriangle className="mx-auto h-8 w-8 text-amber-400/60" />
         <p className="mt-2 text-sm text-zinc-300">Нет подключённых проектов</p>
         <p className="text-xs text-zinc-500">
           Перейдите на <a href="/projects" className="text-cyan-300 underline">/projects</a>, чтобы подключить проект для плана интеграции.
         </p>
-      </HolographicPanel>
+      </SciFiPanel>
     );
   }
 
   return (
-    <HolographicPanel accent="lime" className="space-y-4 p-5">
+    <SciFiPanel accent="lime" className="space-y-4 p-5">
       <div className="flex items-center gap-2 text-lime-300">
         <Wrench className="h-4 w-4" />
         <h2 className="font-mono text-xs uppercase tracking-wider">План интеграции с моим проектом</h2>
@@ -104,11 +105,6 @@ export function IntegrationPlanPanel({ repoId }: { repoId: string }) {
 
       {plan && (
         <div className="space-y-3">
-          {plan.mock && (
-            <div className="rounded border border-amber-400/30 bg-amber-500/10 p-2 text-[10px] text-amber-300">
-              Mock-режим — проверьте OLLAMA_CLOUD_API_KEY и HEAVY_AI_PROVIDER для реального AI-плана
-            </div>
-          )}
 
           <div className="rounded-md border border-lime-400/30 bg-lime-500/5 p-3">
             <div className="font-mono text-sm text-lime-200">{plan.title}</div>
@@ -140,7 +136,7 @@ export function IntegrationPlanPanel({ repoId }: { repoId: string }) {
           </div>
         </div>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 

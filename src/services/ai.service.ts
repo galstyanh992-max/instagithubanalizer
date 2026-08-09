@@ -1,7 +1,7 @@
 // AI Jarwisyan — AI service (GLM 5.2 via z.ai SDK, with mock fallback)
 // v2 — system prompt includes user PC profile + cloud provider policy.
 
-import { env, isAiConfigured } from "@/lib/env";
+import { env } from "@/lib/env";
 import { aiProviderRouter, AiIntent } from "./ai-provider-router.service";
 import type {
   RepoMetadata,
@@ -49,24 +49,16 @@ class RoutedProvider implements AIProvider {
       "Верни ТОЛЬКО валидный JSON объект. Без прозы, без markdown ограждений. " +
       "JSON keys — английские, но все человекочитаемые значения — на русском.";
     const prompt = buildAnalysisPrompt(meta, ctx);
-    try {
-      const raw = await this.chat("repo_analysis", prompt, system);
-      return parseAnalysisJson(raw, meta);
-    } catch {
-      return mockAnalyze(meta, ctx);
-    }
+    const raw = await this.chat("repo_analysis", prompt, system);
+    return parseAnalysisJson(raw, meta);
   }
 
   async generateInstallPlan(meta: RepoMetadata, _analysis: RepoAnalysisResult): Promise<InstallPlanData> {
     const system =
       "Ты — DevOps инженер. ВСЕГДА отвечай на русском. Верни ТОЛЬКО валидный JSON с планом установки. Без прозы. JSON keys — английские, значения — на русском.";
     const prompt = buildInstallPlanPrompt(meta);
-    try {
-      const raw = await this.chat("integration_plan", prompt, system);
-      return parseInstallPlanJson(raw, meta);
-    } catch {
-      return mockInstallPlan(meta);
-    }
+    const raw = await this.chat("integration_plan", prompt, system);
+    return parseInstallPlanJson(raw, meta);
   }
 }
 
@@ -84,15 +76,7 @@ class MockProvider implements AIProvider {
 }
 
 export function getAiProvider(): AIProvider {
-  if (isAiConfigured()) {
-    try {
-      return new RoutedProvider();
-    } catch (e) {
-      console.warn("[ai] Provider init failed, using mock:", e);
-      return new MockProvider();
-    }
-  }
-  return new MockProvider();
+  return new RoutedProvider();
 }
 
 // -------- Prompt builders --------
@@ -230,20 +214,9 @@ function parseAnalysisJson(raw: string, meta: RepoMetadata): RepoAnalysisResult 
     const cleaned = raw.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
     json = JSON.parse(cleaned);
   } catch {
-    console.warn("[ai] failed to parse AI JSON, falling back to mock");
-    return mockAnalyze(meta, {
-      agentOs: true,
-      aiLegalArmenia: true,
-      ragOcr: true,
-      videoAutomation: true,
-      saasBusiness: true,
-      tradingFinance: true,
-    });
+    throw new Error("Подключённый AI-провайдер вернул некорректный ответ для анализа.");
   }
-  if (!json) return mockAnalyze(meta, {
-    agentOs: true, aiLegalArmenia: true, ragOcr: true,
-    videoAutomation: true, saasBusiness: true, tradingFinance: true
-  });
+  if (!json) throw new Error("Подключённый AI-провайдер не вернул результат анализа.");
   return normalizeAnalysis(json, meta);
 }
 
@@ -253,9 +226,9 @@ function parseInstallPlanJson(raw: string, meta: RepoMetadata): InstallPlanData 
     const cleaned = raw.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
     json = JSON.parse(cleaned);
   } catch {
-    return mockInstallPlan(meta);
+    throw new Error("Подключённый AI-провайдер вернул некорректный план установки.");
   }
-  if (!json) return mockInstallPlan(meta);
+  if (!json) throw new Error("Подключённый AI-провайдер не вернул план установки.");
   const arr = (v: unknown): string[] =>
     Array.isArray(v) ? v.map((x) => String(x)) : [];
   return {
@@ -713,5 +686,5 @@ export const aiService = {
   analyze: (meta: RepoMetadata, ctx: ProjectContextFlags) => getAiProvider().analyze(meta, ctx),
   generateInstallPlan: (meta: RepoMetadata, analysis: RepoAnalysisResult) =>
     getAiProvider().generateInstallPlan(meta, analysis),
-  isMock: () => !isAiConfigured(),
+  isMock: () => false,
 };

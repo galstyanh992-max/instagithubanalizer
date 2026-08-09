@@ -1,15 +1,16 @@
 'use client'
 
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { Loader2, Search, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageContainer, PageHeader } from '@/components/layout/page-utils'
-import { HolographicPanel } from '@/components/futuristic/holographic-panel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SEED_REPOS } from '@/lib/constants'
+import { GithubTabs } from "@/components/ui/github-tabs";
 
 export default function AnalyzeRepoPage() {
   const router = useRouter()
@@ -22,14 +23,28 @@ export default function AnalyzeRepoPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName }),
       })
-      if (!r.ok) throw new Error('Analyze failed')
-      return r.json()
+      const contentType = r.headers.get('content-type') ?? ''
+      if (r.redirected || !contentType.includes('application/json')) {
+        throw new Error('Сессия истекла. Войдите в систему и повторите анализ.')
+      }
+      const data = await r.json()
+      if (!r.ok) {
+        const detail = typeof data?.error === 'string' ? data.error : ''
+        if (detail === 'MockMode') {
+          throw new Error('ИИ-провайдер не ответил. Проверьте подключение модели в настройках.')
+        }
+        throw new Error(detail || 'Не удалось выполнить анализ репозитория.')
+      }
+      if (!data?.repositoryId) {
+        throw new Error('Сервер вернул неполный результат анализа. Повторите попытку.')
+      }
+      return data
     },
     onSuccess: (data) => {
-      toast.success('Analysis complete')
+      toast.success('Анализ завершён')
       router.push(`/repos/${data.repoId}`)
     },
-    onError: () => toast.error('Analysis failed'),
+    onError: (error) => toast.error(error instanceof Error ? error.message : 'Не удалось выполнить анализ репозитория.'),
   })
 
   const submit = () => {
@@ -38,7 +53,7 @@ export default function AnalyzeRepoPage() {
     // Accept "owner/repo" or full URL
     const m = v.match(/(?:github\.com\/)?([^/\s]+)\/([^/\s]+)/)
     if (!m) {
-      toast.error('Use format: owner/repo')
+      toast.error('Используйте формат: владелец/репозиторий')
       return
     }
     analyze.mutate(`${m[1]}/${m[2]}`)
@@ -46,17 +61,18 @@ export default function AnalyzeRepoPage() {
 
   return (
     <PageContainer>
+      <GithubTabs />
       <PageHeader
-        title="Analyze Repository"
-        subtitle="Enter a GitHub repository (owner/repo or full URL). Pipeline: resolve → fetch → analyze → score → verdict."
+        title="Анализ репозитория"
+        subtitle="Укажите GitHub-репозиторий в формате владелец/репозиторий или полную ссылку. Этапы: поиск → загрузка → анализ → оценка → вывод."
       />
-      <HolographicPanel accent="cyan">
-        <div className="mb-3 text-xs font-bold tracking-widest text-cyan-400/80 uppercase">INPUT</div>
+      <SciFiPanel accent="cyan">
+        <div className="mb-3 text-xs font-bold tracking-widest text-cyan-400/80 uppercase">РЕПОЗИТОРИЙ</div>
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g. docling-project/docling"
+            placeholder="Например: docling-project/docling"
             className="bg-black/40 border-cyan-400/30 text-foreground placeholder:text-muted-foreground/60"
             onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
@@ -66,13 +82,13 @@ export default function AnalyzeRepoPage() {
             className="gap-2 bg-cyan-400/15 border border-cyan-400/40 text-cyan-200 hover:bg-cyan-400/25"
           >
             {analyze.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-            Analyze
+            Анализировать
           </Button>
         </div>
-      </HolographicPanel>
+      </SciFiPanel>
 
-      <HolographicPanel accent="magenta" className="mt-6">
-        <div className="mb-3 text-xs font-bold tracking-widest text-fuchsia-400/80 uppercase">QUICK PICKS</div>
+      <SciFiPanel accent="magenta" className="mt-6">
+        <div className="mb-3 text-xs font-bold tracking-widest text-fuchsia-400/80 uppercase">БЫСТРЫЙ ВЫБОР</div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {SEED_REPOS.slice(0, 12).map((r) => (
             <button
@@ -88,7 +104,7 @@ export default function AnalyzeRepoPage() {
             </button>
           ))}
         </div>
-      </HolographicPanel>
+      </SciFiPanel>
     </PageContainer>
   )
 }

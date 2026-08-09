@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="theme-color" content="#01050c" />
+    <title>JARVIS OS — Volumetric Silence</title>
+    <link rel="stylesheet" href="./styles.css?v=27" />
+    <link rel="stylesheet" href="./ui.css?v=57" />
+    <link rel="stylesheet" href="./cockpit-reference.css?v=30" />
+    <link rel="stylesheet" href="./cockpit-fixed-stage.css?v=4" />
+    <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  </head>
+  <body>
+    <div class="jarvis-shell cockpit-shell" id="jarvisApp" data-state="idle" data-chat-style="vector" data-layout-mode="fixed-1920">
+
+      <!-- ════════════════════════════════════════════════════════════════
+           SVG definitions: clipPath для боковых панелей.
+           clipPathUnits="objectBoundingBox" → координаты 0..1.
+           Контур получен из luminance-профиля user-background.png
+           и адаптирован под наклонную форму боковых проёмов кокпита.
+           ════════════════════════════════════════════════════════════════ -->
+      <svg class="cockpit-sidebar-definitions" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+        <defs>
+          <clipPath id="jarvis-left-sidebar-clip" clipPathUnits="objectBoundingBox">
+            <path d="M 0,0 L 0.85,0 L 1,0.08 L 1,0.92 L 0.85,1 L 0,1 Z" />
+          </clipPath>
+          <clipPath id="jarvis-right-sidebar-clip" clipPathUnits="objectBoundingBox">
+            <path d="M 0.15,0 L 1,0 L 1,1 L 0.15,1 L 0,0.92 L 0,0.08 Z" />
+          </clipPath>
+        </defs>
+      </svg>
+
+      <!-- Декоративные фоновые слои (скрыты внутри fixed-1920, см. CSS).
+           Оставлены в DOM для совместимости с legacy responsive режимом. -->
+      <div class="space-field" aria-hidden="true"></div>
+      <canvas class="particle-field" id="particleCanvas" aria-hidden="true"></canvas>
+      <div class="cockpit-hull" aria-hidden="true">
+        <i class="cockpit-canopy-rail cockpit-canopy-rail-outer"></i>
+        <i class="cockpit-canopy-rail cockpit-canopy-rail-middle"></i>
+        <i class="cockpit-canopy-rail cockpit-canopy-rail-inner"></i>
+        <i class="cockpit-wing-frame cockpit-wing-frame-left"></i>
+        <i class="cockpit-wing-frame cockpit-wing-frame-right"></i>
+        <i class="cockpit-viewport-frame"></i>
+        <i class="cockpit-console-frame cockpit-console-frame-outer"></i>
+        <i class="cockpit-console-frame cockpit-console-frame-inner"></i>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           FIXED 1920×1080 STAGE
+           Все видимые элементы positioned inside this stage.
+           Scale применяется к stage целиком через transform (см. live.js).
+           ════════════════════════════════════════════════════════════════ -->
+      <div id="jarvis-stage">
+
+        <!-- ── HEADER (y 16..108) ───────────────────────────────────────── -->
+        <header class="stage-header" aria-label="Панель управления">
+          <nav class="stage-nav hotspots unified-hotspots" aria-label="Главное меню">
+            <div class="hotspots-group hotspots-left">
+              <button data-nav="dashboard" class="is-on" aria-label="Дашборд">ДАШБОРД</button>
+              <button data-nav="memory" aria-label="База и Память">ПАМЯТЬ</button>
+              <button data-nav="analytics" aria-label="Аналитика и GitHub">GITHUB</button>
+              <button data-nav="system" aria-label="Система">СИСТЕМА</button>
+              <button data-tool="terminal" aria-label="Терминал">ТЕРМИНАЛ</button>
+            </div>
+
+            <div class="hotspots-center">
+              <div class="stage-brand"><span class="stage-brand__eyebrow">AI CORE</span><span>J.A.R.V.I.S.</span></div>
+            </div>
+
+            <div class="hotspots-group hotspots-right">
+              <div class="tool-dropdown development-dropdown" data-tool="development">
+                <button data-tool="development" aria-label="Разработка" aria-haspopup="true" aria-expanded="false">DEV</button>
+                <div class="dropdown-menu development-menu" role="menu" aria-label="Разработка">
+                  <button type="button" role="menuitem" data-code-target="vscode">VS Code Web</button>
+                  <button type="button" role="menuitem" data-code-target="zai">Z.ai</button>
+                  <button type="button" role="menuitem" data-code-target="aistudio">Google AI Studio</button>
+                  <div class="dropdown-divider"></div>
+                  <button type="button" role="menuitem" data-dev-action="prompt">Промпт</button>
+                  <button type="button" role="menuitem" data-dev-action="plan">План</button>
+                  <button type="button" role="menuitem" data-dev-action="implementation">Реализация</button>
+                  <button type="button" role="menuitem" data-dev-action="agents">Агенты</button>
+                  <button type="button" role="menuitem" data-dev-action="mcp">MCP</button>
+                  <button type="button" role="menuitem" data-dev-action="plugins">Плагины</button>
+                  <button type="button" role="menuitem" data-dev-action="tools">Инструменты</button>
+                  <button type="button" role="menuitem" data-dev-action="skills">Навыки</button>
+                </div>
+              </div>
+              <button data-tool="web" aria-label="Веб">ВЕБ</button>
+              <button data-tool="tasks" aria-label="Задачи">ЗАДАЧИ</button>
+
+              <div class="tool-dropdown social-dropdown" data-tool="social">
+                <button data-tool="social" aria-label="Соцсети" aria-haspopup="true" aria-expanded="false">СОЦСЕТИ</button>
+                <div class="dropdown-menu social-menu" role="menu" aria-label="Соцсети">
+                  <button type="button" role="menuitem" data-tool="whatsapp" aria-label="WhatsApp">
+                    <svg viewBox="0 0 24 24" class="futuristic-icon"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12c0 2.17.7 4.19 1.94 5.83L3 22l4.24-.91A9.97 9.97 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.5 13.5c-.25.75-1.5 1.5-2.25 1.5-.75 0-2-.25-4.5-1.75s-4-4.25-4.25-4.5.25-1.5.5-2c.25-.5.5-.75.75-1 .25-.25.5-.25.75-.25s.5.5.75 1.25c.25.75.75 2 .75 2.25 0 .25-.25.5-.5.75-.25.25-.5.5-.75.75-.25.25.5.75 1 1.25s1.25 1 1.75 1.25c.5.25.75.25 1 .25.25 0 .5-.25.75-.5.25-.25 1-1.25 1.25-1.5.25-.25.75-.25 1 0 .25.25 2 1 2.25 1.25.25.25.25.5.25.75z"/></svg>WA
+                  </button>
+                  <button type="button" role="menuitem" data-tool="telegram" aria-label="Telegram">
+                    <svg viewBox="0 0 24 24" class="futuristic-icon"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.53 7.18c-.12.54-.44.67-.9.41l-2.48-1.83-1.2 1.15c-.13.13-.24.24-.5.24l.18-2.52 4.59-4.14c.2-.18-.04-.28-.31-.1l-5.67 3.57-2.44-.76c-.53-.17-.54-.53.11-.79l9.53-3.67c.44-.16.82.1.69.75z"/></svg>TG
+                  </button>
+                  <button type="button" role="menuitem" data-tool="instagram" aria-label="Instagram">
+                    <svg viewBox="0 0 24 24" class="futuristic-icon"><path fill="currentColor" d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.4 5.6 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.6 18.4 4 16.4 4H7.6zm4.4 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm5.3-3.8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>IG
+                  </button>
+                </div>
+              </div>
+
+              <button data-nav="settings" aria-label="Настройки">НАСТРОЙКИ</button>
+            </div>
+          </nav>
+
+          <div class="stage-meta">
+            <span>CPU <b id="navCpu">—</b></span>
+            <span>RAM <b id="navRam">—</b></span>
+            <span>МОДЕЛЬ <b id="navProvider">—</b></span>
+            <span><em>●</em> <b id="navState">ОНЛАЙН</b></span>
+          </div>
+        </header>
+
+        <!-- ── LEFT SIDEBAR — Системное ядро (y 175..870, x 30..460) ─────── -->
+        <aside class="cockpit-sidebar cockpit-sidebar--left left-sidebar-anchor" aria-label="Панель Системы">
+          <div class="left-sidebar-plane">
+            <div class="cockpit-sidebar__shape left-sidebar-glass" aria-hidden="true"></div>
+            <div class="cockpit-sidebar__content left-sidebar-content">
+              <div class="cockpit-sidebar__scroll">
+                <!-- Содержимое переносится из legacy .system-panel.
+                     Классы .metrics/.stat/.metric/.providers/.net-wrap/.counters
+                     повторно стилизованы в cockpit-fixed-stage.css. -->
+                <div class="p-title sidebar-system-header"><i></i>СИСТЕМНОЕ ЯДРО<b id="coreLive">LIVE</b></div>
+                <div class="metrics sidebar-resource-list">
+                  <div class="metric" data-m="cpu"><span>CPU</span><div class="track"><i></i></div><b>—</b></div>
+                  <div class="metric" data-m="gpu"><span>GPU</span><div class="track"><i></i></div><b>—</b></div>
+                  <div class="metric" data-m="ram"><span>RAM</span><div class="track"><i></i></div><b>—</b></div>
+                  <div class="metric" data-m="vram"><span>VRAM</span><div class="track"><i></i></div><b>—</b></div>
+                </div>
+                <div class="stats-row sidebar-metrics">
+                  <div class="stat" data-card="temp"><b>—</b><span>Темп.</span></div>
+                  <div class="stat" data-card="fan"><b>—</b><span>Кулеры</span></div>
+                  <div class="stat" data-card="net"><b>—</b><span>Сеть ↓</span></div>
+                </div>
+                <div class="core3d sidebar-core-visual"><canvas id="coreCanvas"></canvas>
+                  <div class="core-legend">ЯДРО <em id="coreRpm">—</em><br>ТАКТ <em id="coreTick">—</em></div>
+                </div>
+                <div class="p-title sidebar-models"><i></i>НЕЙРОМОДЕЛИ<b id="provCount">---</b></div>
+                <div class="providers sidebar-models" id="providers"></div>
+                <div class="p-title sidebar-network"><i></i>СЕТЕВАЯ АКТИВНОСТЬ</div>
+                <div class="net-wrap sidebar-network"><canvas id="netCanvas"></canvas></div>
+                <div class="counters sidebar-footer-stats" id="counters"></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- ── RIGHT SIDEBAR — Проекты / Задачи / Агенты (y 175..870, x 1460..1890) ── -->
+        <aside class="cockpit-sidebar cockpit-sidebar--right right-sidebar-anchor" aria-label="Проекты, задачи, агенты">
+          <div class="right-sidebar-plane">
+            <div class="cockpit-sidebar__shape right-sidebar-glass" aria-hidden="true"></div>
+            <div class="cockpit-sidebar__content right-sidebar-content">
+              <div class="cockpit-sidebar__scroll">
+                <div class="p-title sidebar-right-header"><i></i>ПРОЕКТЫ И ДЕЙСТВИЯ<b id="rightPanelMode">ACTIVE</b></div>
+                <div class="tabs" id="tabs">
+                  <button data-tab="projects" class="is-on">Проекты</button>
+                  <button data-tab="tasks">Задачи</button>
+                  <button data-tab="agents">Агенты</button>
+                </div>
+                <div class="entities" id="entities"></div>
+                <div class="panel-foot">
+                  <input type="file" id="tasksUploadInput" class="tasks-file-input" accept=".txt,.md,.json,.csv" hidden />
+                  <button id="tasksUploadBtn" style="display: none;">Загрузить список</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- ── CENTRAL PORTAL — Голограмма (y 160..800, x 460..1460) ────── -->
+        <main class="avatar-stage" id="avatarStage" data-state="idle" aria-label="Живая голограмма девушки">
+          <div class="avatar-aura" aria-hidden="true"></div>
+          <img class="avatar-fallback" src="./assets/model/new-girl-visible-v12.jpg?v=16" alt="Голографическая девушка JARVIS" draggable="false" />
+          <canvas class="avatar-canvas" id="avatarWebgl"></canvas>
+          <div class="scan-layer" aria-hidden="true"></div>
+          <button class="model-toggle" id="toggle3d" type="button" aria-pressed="true" aria-label="Включить или выключить живую 3D-модель">
+            <i></i><span id="modelState">FULL 3D ЗАГРУЗКА</span>
+          </button>
+          <div class="avatar-status"><i></i><span id="assistantStatus">ГОТОВА</span></div>
+        </main>
+
+        <!-- ── BOTTOM COMMAND CONSOLE (y 820..1040, x 280..1640) ───────── -->
+        <section class="chat-panel panel-asset glass" id="chatConsole" aria-label="Чат с Джарвисом">
+          <div class="chat-head">
+            <div class="modes" id="modes">
+              <button data-jmode="auto" class="is-on">Авто</button>
+              <button data-jmode="media">Медиа</button>
+              <button data-jmode="transcription">Транскрипция</button>
+              <button data-jmode="analysis">Анализ</button>
+              <button data-jmode="more">···</button>
+            </div>
+            <section class="chat-music-player" id="musicPlayer" aria-label="Локальный музыкальный плеер">
+              <button type="button" data-mp="prev" aria-label="Предыдущий трек">◄</button>
+              <button type="button" data-mp="play" aria-label="Играть / Пауза">▶</button>
+              <button type="button" data-mp="next" aria-label="Следующий трек">►</button>
+              <canvas class="mp-visualizer" id="mpVisualizer" aria-hidden="true"></canvas>
+              <span class="mp-track" id="mpTrack" aria-live="polite">Локальная музыка</span>
+              <audio id="mpAudio" preload="metadata"></audio>
+            </section>
+            <div class="chat-icons">
+              <button data-jicon="wave" title="Тест голоса">∿</button>
+              <button data-jicon="mic" title="Непрерывный голос">◉</button>
+              <button data-jicon="eq" title="Настройки голоса">≡</button>
+              <button data-jicon="logtoggle" title="История">⇢</button>
+              <button type="button" id="chatMinimize" title="Свернуть чат" aria-label="Свернуть чат">−</button>
+            </div>
+          </div>
+          <form class="command-form" id="commandForm">
+            <input id="commandInput" autocomplete="off" placeholder="Скажи ДЖАРВИСУ что сделать..." aria-label="Команда для Джарвиса" />
+            <input id="chatAttachmentInput" class="chat-file-input" type="file" multiple accept="image/*,video/*,.pdf,.txt,.md,.json,.jsonl,.csv,.js,.jsx,.ts,.tsx,.py,.css,.html" />
+            <button class="attach-zone" id="chatAttachmentButton" type="button" aria-label="Добавить вложения">＋</button>
+            <button class="mic-zone" id="micButton" type="button" aria-label="Голосовой ввод"></button>
+            <button class="send-zone" type="submit" aria-label="Отправить"></button>
+          </form>
+          <div class="chat-attachments" id="chatAttachments" aria-live="polite"></div>
+        </section>
+
+        <div class="toast" id="toast" role="status" aria-live="polite">СИСТЕМА ГОТОВА</div>
+      </div>
+      <!-- /#jarvis-stage -->
+
+    </div>
+
+    <script type="module" src="./avatar3d.js?v=17"></script>
+    <script src="./app.js?v=17"></script>
+    <script type="module" src="./core3d.js?v=44"></script>
+    <script src="./live.js?v=60"></script>
+  </body>
+</html>

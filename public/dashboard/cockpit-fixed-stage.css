@@ -1,0 +1,1431 @@
+/*
+ * JARVIS OS — Fixed 1920×1080 Stage с cockpit sidebars.
+ *
+ * Принципы (по ТЗ):
+ *   1. Сцена #jarvis-stage имеет фиксированные 1920×1080 px и масштабируется
+ *      целиком через transform: scale. При resize меняется только scale,
+ *      индивидуальные панели не пере-позиционируются.
+ *   2. Боковые панели — это .cockpit-sidebar с двумя слоями:
+ *        - .cockpit-sidebar__shape   — точная маска (SVG clipPath) + полупрозрачная поверхность
+ *        - .cockpit-sidebar__content — padding/safe-area + внутренний scroll
+ *      Контур берётся из формы фонового кокпита (user-background.png),
+ *      не из DOM предыдущей реализации.
+ *   3. Запрещены viewport-relative единицы (vw/vh/dvh/clamp с viewport)
+ *      и JS-позиционирование отдельных панелей по window.innerWidth.
+ *   4. Внутри fixed-1920 скрыты: music-player, cockpit-hull overlays,
+ *      space-field, particle-field, дублирующие widgets.
+ *
+ * Файл подключается ПОСЛЕ cockpit-reference.css и override-ит его правила.
+ */
+
+/* ════════════════════════════════════════════════════════════════════════
+   1. Outer shell → вместилище для fixed 1920×1080 stage
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #01040b !important;
+  background-image: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* 3D-perspective vars for left sidebar */
+  --left-sidebar-lift: -6px;
+  --left-sidebar-roll: -0.5deg;
+  --left-sidebar-yaw: 30deg;
+  /* Right sidebar 3D vars (rotate toward center) */
+  --right-sidebar-lift: -6px;
+  --right-sidebar-roll: 0.5deg;
+  --right-sidebar-yaw: 30deg;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"]::before,
+#jarvisApp[data-layout-mode="fixed-1920"]::after {
+  display: none !important;
+  content: none !important;
+  background: transparent !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   2. Fixed Stage 1920×1080
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvis-stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  flex: 0 0 auto;
+  transform-origin: center center;
+  /* Scale применяется инлайн через JS: transform: scale(min(vw/1920, vh/1080)) */
+  overflow: hidden;
+  isolation: isolate;
+  /* Фон кокпита — новый AI-core фон (1672×941, AR ≈ 1.7768), сцена 1920×1080 (1.7778).
+     Растягиваем 100% 100%, чтобы рамки боковых проёмов точно совпадали
+     с нашими координатами в системе 1920×1080. cache-bust: ?v=bg-ai-core-1 */
+  background-color: #03070e;
+  background-image: url("./assets/backgrounds/user-background.png?v=bg-new-1");
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  z-index: 0;
+}
+
+/* Лёгкий vignette для читаемости foreground поверх фоновых рамок.
+   Под HUD-grid фон: только мягкое радиальное затемнение по углам сцены,
+   без жёстких боковых градиентов (иначе чистая сетка выглядит «грязно»).
+   Центр со структурой кокпита остаётся нетронутым. */
+#jarvis-stage::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 86% 88% at 50% 50%, transparent 0 62%, rgba(0, 2, 8, .30) 100%);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   3. Скрытие декоративных / дублирующих слоёв внутри fixed-1920
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-hull,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-hull *,
+#jarvisApp[data-layout-mode="fixed-1920"] .space-field,
+#jarvisApp[data-layout-mode="fixed-1920"] .particle-field,
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player,
+#jarvisApp[data-layout-mode="fixed-1920"] .unified-top-panel,
+#jarvisApp[data-layout-mode="fixed-1920"] .navigation-panel,
+#jarvisApp[data-layout-mode="fixed-1920"] .tools-panel {
+  display: none !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   4. Header zone — тонкая верхняя META-полоса внутри stage
+   (видимая зона: y 16..108, кнопки навигации центрируются)
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header {
+  position: absolute;
+  z-index: 30;
+  top: 64px; /* опущено вниз дополнительно на ~2 мм */
+  left: 480px;
+  right: 480px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #f4ffff;
+  font: 800 21px/1 "Segoe UI", Arial, sans-serif;
+  letter-spacing: .32em;
+  text-shadow: 0 0 14px rgba(57, 231, 255, .85), 0 0 2px rgba(255, 255, 255, .45);
+  white-space: nowrap;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-brand__eyebrow {
+  color: #8ff4ff;
+  font: 800 8px/1 "SF Mono", "JetBrains Mono", Consolas, monospace;
+  letter-spacing: .38em;
+  text-shadow: 0 0 7px rgba(79, 227, 255, .95), 0 0 15px rgba(79, 227, 255, .52);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-brand .brand-ring {
+  width: 22px; height: 22px;
+  border: 2px solid rgba(57, 231, 255, .7);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(57, 231, 255, .7), inset 0 0 7px rgba(57, 231, 255, .7);
+  position: relative;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-brand .brand-ring::after {
+  content: ""; position: absolute; inset: 6px; border-radius: 50%;
+  background: rgba(57, 231, 255, .9); box-shadow: 0 0 8px rgba(57, 231, 255, 1);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: nowrap;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-left,
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-left {
+  margin-left: -20px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-right {
+  margin-right: -20px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav button,
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .tool-dropdown > button {
+  height: 54px; /* больше кнопок */
+  padding: 0 20px;
+  color: #f9ffff; /* ярче */
+  font: 700 14px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, rgba(20, 88, 132, .96), rgba(8, 32, 48, .98));
+  border: 1px solid rgba(104, 255, 255, .72);
+  border-radius: 12px;
+  box-shadow: 0 0 18px rgba(57, 231, 255, 0.28), inset 0 0 14px rgba(57, 231, 255, 0.16);
+  text-shadow: 0 0 11px rgba(0, 0, 0, 0.30);
+  cursor: pointer;
+  transition: color .16s, border-color .16s, background .16s, box-shadow .16s, transform .12s;
+  white-space: nowrap;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-left button[data-nav="memory"] {
+  margin-left: 20px;
+}
+
+/* Shift only the Dashboard and Memory header controls 2 cm to the left. */
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-left > button[data-nav="dashboard"],
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-left > button[data-nav="memory"] {
+  position: relative;
+  left: calc(-2cm / var(--jarvis-stage-scale, 1));
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-right .tool-dropdown.social-dropdown > button {
+  margin-right: 32px;
+}
+
+/* Reclined command console: 30° tilt and an extra 4.5 cm on both sides. */
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel,
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel:hover {
+  --chat-side-extension: calc(4.5cm / var(--jarvis-stage-scale, 1));
+  width: calc(720px + var(--chat-side-extension) + var(--chat-side-extension)) !important;
+  max-width: calc(720px + var(--chat-side-extension) + var(--chat-side-extension)) !important;
+  min-height: calc(180px + (0.5cm / var(--jarvis-stage-scale, 1))) !important;
+  bottom: calc(7px + (1cm / var(--jarvis-stage-scale, 1))) !important;
+  transform: translateX(-50%) perspective(1500px) rotateX(30deg) !important;
+  transform-origin: 50% 100%;
+}
+
+/* Brighter legibility for all text and glyphs in chat controls. */
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .modes button,
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .chat-icons button,
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .attach-zone,
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .mic-zone,
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .send-zone,
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-music-player button {
+  color: #d9f8ff !important;
+  text-shadow: 0 0 7px rgba(106, 231, 255, .54);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .modes button.is-on {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, .6);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .modes button {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
+/* Compact local player inserted between chat modes and action buttons. */
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-panel .chat-head {
+  flex-wrap: nowrap;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-music-player {
+  display: grid;
+  grid-template-columns: 28px 28px 28px minmax(62px, 1fr) minmax(72px, 118px);
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 280px;
+  min-width: 210px;
+  max-width: 340px;
+  height: 32px;
+  margin-left: auto;
+  padding: 3px 5px;
+  border: 1px solid rgba(82, 221, 255, .22);
+  border-radius: 6px;
+  background: rgba(1, 12, 24, .56);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-music-player button {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(91, 223, 255, .22);
+  border-radius: 4px;
+  background: rgba(5, 28, 45, .72);
+  color: #bceffc;
+  cursor: pointer;
+  font: 600 10px/1 "Segoe UI", Arial, sans-serif;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-music-player button:hover {
+  border-color: rgba(118, 239, 255, .68);
+  color: #fff;
+  background: rgba(12, 62, 86, .82);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-music-player .mp-visualizer {
+  display: block;
+  width: 100%;
+  height: 22px;
+  border: 0;
+  background: linear-gradient(180deg, rgba(15, 69, 90, .16), rgba(0, 8, 17, .28));
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-music-player .mp-track {
+  min-width: 0;
+  overflow: hidden;
+  color: #c9f3fb;
+  font: 600 8px/1 "SF Mono", Consolas, monospace;
+  letter-spacing: .04em;
+  text-align: left;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .chat-music-player audio {
+  display: none;
+}
+
+/* Every opened module extends 2 cm beyond the central bay on three sides. */
+#jarvisApp[data-layout-mode="fixed-1920"] .module-overlay {
+  position: absolute;
+  z-index: 60;
+  top: 150px;
+  right: calc(500px - (2cm / var(--jarvis-stage-scale, 1)));
+  bottom: calc(300px - (1.2cm / var(--jarvis-stage-scale, 1)));
+  left: calc(500px - (2cm / var(--jarvis-stage-scale, 1)));
+  width: auto !important;
+  max-width: none !important;
+  overflow: hidden;
+  border: 1px solid rgba(105, 228, 255, .34);
+  border-radius: 14px;
+  clip-path: none;
+  background:
+    linear-gradient(145deg, rgba(7, 18, 30, .76), rgba(0, 5, 13, .68)),
+    radial-gradient(ellipse at 50% 0, rgba(54, 210, 255, .12), transparent 66%) !important;
+  backdrop-filter: blur(18px) saturate(1.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.16);
+  box-shadow: inset 0 1px 0 rgba(212, 250, 255, .16), inset 0 0 44px rgba(12, 151, 205, .08), 0 18px 48px rgba(0, 0, 0, .38);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .module-overlay.is-maximized {
+  top: 92px;
+  right: 28px;
+  bottom: 92px;
+  left: 28px;
+  box-shadow: inset 0 1px 0 rgba(229, 253, 255, .24), inset 0 0 54px rgba(14, 182, 235, .12), 0 28px 70px rgba(0, 0, 0, .55);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .module-head {
+  color: #a8f5ff;
+  text-shadow: 0 0 8px rgba(79, 227, 255, .68);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .module-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .module-actions button {
+  color: #dffaff;
+  border-color: rgba(117, 235, 255, .58);
+  background: rgba(3, 26, 43, .82);
+  text-shadow: 0 0 6px rgba(79, 227, 255, .55);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .module-actions button:hover,
+#jarvisApp[data-layout-mode="fixed-1920"] .module-actions button[aria-pressed="true"] {
+  color: #fff;
+  border-color: rgba(164, 247, 255, .9);
+  background: rgba(10, 72, 101, .86);
+  box-shadow: 0 0 13px rgba(79, 227, 255, .32);
+}
+
+/* Shift only the Social and Settings header controls 2 cm to the right. */
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-right .social-dropdown,
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .hotspots-right > button[data-nav="settings"] {
+  position: relative;
+  left: calc(2cm / var(--jarvis-stage-scale, 1));
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav button:hover,
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav button.active,
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav button.is-on,
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .tool-dropdown.is-open > button {
+  color: #ffffff;
+  border-color: rgba(135, 255, 255, .85);
+  background: linear-gradient(180deg, rgba(32, 110, 155, .98), rgba(8, 42, 65, 1));
+  box-shadow: 0 0 20px rgba(79, 245, 255, 0.35), inset 0 0 14px rgba(65, 220, 255, 0.15);
+  box-shadow: 0 0 28px rgba(57, 231, 255, 0.55), inset 0 0 14px rgba(57, 231, 255, 0.32);
+  text-shadow: 0 0 10px rgba(120, 240, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-meta {
+  display: none !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   5. Центральный портал — зона голограммы (между сайдбарами)
+   y 160..800, x 460..1460 (по anchors.json reference-b.png)
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .avatar-stage {
+  position: absolute !important;
+  z-index: 16;
+  top: 150px;
+  right: 500px;
+  bottom: 250px;
+  left: 500px;
+  width: auto !important;
+  height: auto !important;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  perspective: 1100px;
+  pointer-events: none;
+}
+
+/* Reduce core 3D visual so it fits neatly inside the sidebar without overflowing */
+#jarvisApp[data-layout-mode="fixed-1920"] .core3d.sidebar-core-visual {
+  position: relative;
+  height: 110px; /* tighter box */
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* visual only */
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .core3d.sidebar-core-visual canvas,
+#jarvisApp[data-layout-mode="fixed-1920"] .core3d.sidebar-core-visual #coreCanvas {
+  position: relative !important;
+  width: 180px !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Integrate lower sidebar parts into background: remove heavy panel chrome */
+#jarvisApp[data-layout-mode="fixed-1920"] .net-wrap,
+#jarvisApp[data-layout-mode="fixed-1920"] .counters.sidebar-footer-stats,
+#jarvisApp[data-layout-mode="fixed-1920"] .providers.sidebar-models {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+/* Slightly offset lower elements to visually sit on the background 'frame' */
+#jarvisApp[data-layout-mode="fixed-1920"] .net-wrap {
+  transform: translateX(10px) translateY(6px);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .counters.sidebar-footer-stats {
+  transform: translateX(10px) translateY(8px);
+}
+
+/* Ensure metrics and provider list remain interactive while visually merged */
+#jarvisApp[data-layout-mode="fixed-1920"] .providers.sidebar-models,
+#jarvisApp[data-layout-mode="fixed-1920"] .metrics.sidebar-resource-list {
+  pointer-events: auto;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .avatar-stage::before,
+#jarvisApp[data-layout-mode="fixed-1920"] .avatar-stage::after {
+  display: none !important;
+}
+
+/* Keep the 2D fallback aligned with the 10% smaller WebGL hologram. */
+#jarvisApp[data-layout-mode="fixed-1920"] .avatar-fallback {
+  transform: scale(.9);
+  transform-origin: 50% 50%;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   6. SIDEBARS — единая структура для левой и правой панели
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar {
+  position: absolute;
+  z-index: 12;
+  width: 470px; /* полностью по рамке */
+  height: 730px;
+  pointer-events: none;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left {
+  top: 150px;
+  left: 20px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right {
+  top: 150px;
+  right: 12px;
+  width: 470px;
+  /* 3D-перспектива для поворота правого сайдбара к голограмме (центр).
+     center center = симметрия с левым сайдбаром, иначе панель выглядит
+     слишком сплющенной из-за большого угла rotateY(-30deg). */
+  perspective: 1600px;
+  perspective-origin: center center;
+  overflow: hidden;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   6a. LEFT SIDEBAR — unified 3D perspective plane (поворот к девушке)
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left.left-sidebar-anchor {
+  perspective: 1600px;
+  perspective-origin: center center;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .left-sidebar-plane {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform:
+    translateY(var(--left-sidebar-lift))
+    rotateZ(var(--left-sidebar-roll))
+    rotateY(var(--left-sidebar-yaw));
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  /* clip-path на плоскости — обрезает и стекло, и контент до transform */
+  clip-path: url("#jarvis-left-sidebar-clip");
+  /* expanded the inner polygon slightly to avoid cutting metrics */
+  -webkit-clip-path: polygon(
+    0% 0%,
+    90% 0%,
+    100% 8%,
+    100% 92%,
+    90% 100%,
+    0% 100%
+  );
+}
+
+/* Единое чёрное стекло внутри повёрнутой плоскости.
+   Затемнено сильнее под новый насыщенный фон для читаемости метрик. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .cockpit-sidebar__shape.left-sidebar-glass {
+  position: absolute;
+  inset: 0;
+  /* fully transparent — let background image show through */
+  background: transparent !important;
+  pointer-events: none;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Контент на общей 3D-плоскости */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .cockpit-sidebar__content.left-sidebar-content {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Слой формы — clip/mask + полупрозрачная поверхность (общий fallback).
+   Новая версия под насыщенный AI-core фон: более тёмное стекло для читаемости
+   текста/метрик, усиленный blur и тонкая cyan-обводка по контуру панелей. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__shape {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: auto;
+  /* remove background so sidebars sit directly on stage background */
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .cockpit-sidebar__shape {
+  clip-path: url("#jarvis-left-sidebar-clip");
+  -webkit-clip-path: polygon(
+    0% 0%,
+    90% 0%,
+    100% 8%,
+    100% 92%,
+    90% 100%,
+    0% 100%
+  );
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__shape {
+  clip-path: url("#jarvis-right-sidebar-clip");
+  -webkit-clip-path: polygon(
+    15% 0%,
+    100% 0%,
+    100% 100%,
+    15% 100%,
+    0% 92%,
+    0% 8%
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   6b. RIGHT SIDEBAR — unified 3D perspective plane (поворот к девушке)
+   Голограмма находится в центре между сайдбарами, поэтому «в сторону
+   девушки» = поворот передней грани панели влево (отрицательный yaw).
+   Используем те же 3D-переменные, что и для левого сайдбара, но с
+   инвертированным знаком и transform-origin: right center — чтобы
+   правый край оставался на месте, а панель разворачивалась к центру.
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .right-sidebar-plane {
+  position: absolute;
+  inset: 0;
+  transform-origin: right center;
+  transform:
+    translateY(var(--right-sidebar-lift))
+    rotateZ(var(--right-sidebar-roll))
+    rotateY(calc(-1 * var(--right-sidebar-yaw)));
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  /* clip-path повторяет контур правого проёма кокпита (зеркально к левому) */
+  clip-path: url("#jarvis-right-sidebar-clip");
+  -webkit-clip-path: polygon(
+    15% 0%,
+    100% 0%,
+    100% 100%,
+    15% 100%,
+    0% 92%,
+    0% 8%
+  );
+}
+
+/* Контент правого сайдбара на общей 3D-плоскости */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__content.right-sidebar-content {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Стеклянная форма правого сайдбара — лежит на той же повёрнутой плоскости */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__shape.right-sidebar-glass {
+  position: absolute;
+  inset: 0;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Override global hiding of music-player inside fixed-1920: keep it visible inside the right sidebar */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player[hidden] {
+  display: block !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+  width: calc(100% - 10px) !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 10px auto 0 !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  background: linear-gradient(180deg, rgba(2,8,14,0.7), rgba(2,8,14,0.55)) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35), inset 0 0 1px rgba(57,231,255,0.04) !important;
+}
+
+/* Внутренний content — padding/safe-area + scroll. Не зеркалируется. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__content {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(54, 178, 208, 0.34) transparent;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__scroll::-webkit-scrollbar { width: 8px; }
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__scroll::-webkit-scrollbar-track { background: transparent; }
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__scroll::-webkit-scrollbar-thumb {
+  background: rgba(54, 178, 208, 0.34);
+  border-radius: 4px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .cockpit-sidebar__scroll {
+  padding: 10px 36px 12px 16px; /* tighter padding for compactness */
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  padding: 20px 24px 20px 36px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  padding: 20px 24px 20px 36px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .sidebar-right-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: #8ad7ff;
+  font: 600 11px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .18em;
+  text-align: center;
+  text-transform: uppercase;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .sidebar-right-header i {
+  position: absolute;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #52d4ff;
+  box-shadow: 0 0 8px rgba(82, 212, 255, .45);
+  flex: 0 0 auto;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .sidebar-right-header b {
+  position: absolute;
+  right: 0;
+  margin-left: 0;
+  color: #d5f6ff;
+  font-size: 10px;
+  letter-spacing: .12em;
+  font-weight: 700;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .entities {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 300px;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .panel-foot {
+  margin-top: auto;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .sidebar-integrations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .integration-pill {
+  border: 1px solid rgba(79, 227, 255, .16);
+  border-radius: 999px;
+  background: rgba(3, 13, 23, .72);
+  color: #b8e9ff;
+  font: 600 9px "Segoe UI", Arial, sans-serif;
+  padding: 8px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .integration-pill:hover {
+  background: rgba(9, 24, 42, .88);
+  border-color: rgba(79, 227, 255, .32);
+  color: #fff;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .quick-actions button {
+  border: 1px solid rgba(79, 227, 255, .14);
+  border-radius: 6px;
+  background: rgba(2, 12, 20, .72);
+  color: #c8efff;
+  font: 600 9px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .08em;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease, background .18s ease;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .quick-actions button:hover {
+  border-color: rgba(79, 227, 255, .45);
+  background: rgba(5, 18, 32, .92);
+  color: #fff;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__shape {
+  background: rgba(3, 9, 18, .18) !important;
+  border: 1px solid rgba(79, 227, 255, .18);
+  box-shadow: inset 0 0 1px rgba(79, 227, 255, .12), 0 0 30px rgba(17, 86, 131, .06);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__shape::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 18% 32%, rgba(79, 227, 255, .12), transparent 42%);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__content {
+  background: linear-gradient(180deg, rgba(2, 10, 18, .32), rgba(2, 9, 16, .62));
+  border-radius: 20px;
+  overflow: hidden;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player {
+  border: 1px solid rgba(57, 231, 255, .18);
+  border-radius: 10px;
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player .mp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #d9f6ff;
+  font: 600 11px "Segoe UI", Arial, sans-serif;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player .mp-title i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #66e0ff;
+  box-shadow: 0 0 8px rgba(102, 224, 255, .45);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player {
+  flex: 0 0 auto;
+  max-height: 240px;
+  min-height: 154px;
+  margin-top: 10px !important;
+  width: calc(100% - 10px) !important;
+  max-width: calc(100% - 10px) !important;
+  margin-right: 0 !important;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player .mp-visualizer {
+  min-height: 50px;
+}
+
+/* Make canvases, images and videos inside sidebars responsive so they
+   don't overflow the sidebar frame and match the background panels. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__scroll canvas,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__scroll img,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar__scroll video {
+  max-width: 100%;
+  width: 100%;
+  height: auto !important;
+  display: block;
+}
+
+/* Ensure core 3D canvas keeps correct aspect and fits inside its visual box */
+#jarvisApp[data-layout-mode="fixed-1920"] .core3d sidebar-core-visual canvas,
+#jarvisApp[data-layout-mode="fixed-1920"] .core3d .sidebar-core-visual canvas,
+#jarvisApp[data-layout-mode="fixed-1920"] .core3d #coreCanvas {
+  max-width: 100%;
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Net graph should also shrink to sidebar width */
+#jarvisApp[data-layout-mode="fixed-1920"] .net-wrap canvas,
+#jarvisApp[data-layout-mode="fixed-1920"] .net-wrap > canvas {
+  max-width: 100%;
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Hide unwanted fallback providers in the providers list to tidy UI */
+#jarvisApp[data-layout-mode="fixed-1920"] #providers .prov[title*="groq"],
+#jarvisApp[data-layout-mode="fixed-1920"] #providers .prov[title*="cerebras"],
+/* hide the heavy-reasoning duplicate of ollama-cloud */
+#jarvisApp[data-layout-mode="fixed-1920"] #providers .prov[title*="heavy-reasoning"] {
+  display: none !important;
+}
+
+/* Limit providers list height so lower parts fit inside sidebar and become scrollable */
+#jarvisApp[data-layout-mode="fixed-1920"] .providers.sidebar-models {
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 6px; /* ensure scrollbar doesn't overlap content */
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   7. Внутренний контент левого сайдбара (Системное ядро)
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #5bcce6;
+  font: 600 12px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #39e7ff; box-shadow: 0 0 6px #39e7ff; flex: 0 0 auto;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title b {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: #2eff76;
+  font-weight: 700;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-system-header,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-models,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-network {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-system-header i,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-models i,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-network i {
+  position: absolute;
+  left: 0;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-system-header b,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title.sidebar-models b {
+  position: absolute;
+  right: 0;
+  margin-left: 0;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .p-title + .p-title { margin-top: 16px; }
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metric {
+  display: grid;
+  grid-template-columns: 36px 1fr 48px; /* tighter columns */
+  align-items: center;
+  gap: 8px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metric > span {
+  color: #88a5b5; font: 600 11px "Segoe UI", Arial, sans-serif; letter-spacing: .08em;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metric > b {
+  color: #e0f7fc; font: 700 12px "Consolas", monospace; text-align: right;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metrics.sidebar-resource-list {
+  position: relative;
+  left: calc(3mm / var(--jarvis-stage-scale, 1));
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metric > span {
+  color: #c9f7ff;
+  text-shadow: 0 0 5px rgba(79, 227, 255, .85), 0 0 12px rgba(79, 227, 255, .3);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metric > b {
+  color: #f2fdff;
+  text-shadow: 0 0 5px rgba(145, 240, 255, .9), 0 0 12px rgba(79, 227, 255, .34);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .metric.crit > b {
+  color: #ff9bac;
+  text-shadow: 0 0 6px rgba(255, 88, 118, .95), 0 0 13px rgba(255, 88, 118, .38);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .metric .track {
+  position: relative; height: 5px; border-radius: 3px;
+  background: rgba(2, 22, 35, .7); overflow: hidden;
+  box-shadow: inset 0 0 4px rgba(0, 80, 120, .18);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .metric .track > i {
+  position: absolute; inset: 0 100% 0 0;
+  background: linear-gradient(90deg, #1e9dff, #67f6ff);
+  box-shadow: 0 0 8px rgba(80, 220, 255, .7);
+  transition: right .4s ease;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .metric[data-m="gpu"] .track > i {
+  background: linear-gradient(90deg, #7a5cff, #c78bff);
+  box-shadow: 0 0 8px rgba(160, 120, 255, .7);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .metric[data-m="ram"] .track > i {
+  background: linear-gradient(90deg, #17c964, #7dffb2);
+  box-shadow: 0 0 8px rgba(60, 230, 140, .7);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .metric[data-m="vram"] .track > i {
+  background: linear-gradient(90deg, #ffb020, #ffe27a);
+  box-shadow: 0 0 8px rgba(255, 190, 60, .7);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .metric.crit .track > i {
+  background: linear-gradient(90deg, #ff3d63, #ff9fb0) !important;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0 0 10px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .stat {
+  padding: 8px 6px;
+  border: 1px solid rgba(57, 231, 255, .12);
+  border-radius: 6px;
+  background: rgba(1, 14, 24, .5);
+  text-align: center;
+  cursor: pointer;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .stat b {
+  display: block; font: 700 14px "Consolas", monospace; color: #e0f7fc;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .stat span {
+  display: block; margin-top: 3px; color: #7e99a8; font: 600 8px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .core3d {
+  position: relative;
+  height: 100px; /* compact */
+  margin: 0 0 10px;
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(20, 80, 120, .12), transparent 70%);
+  overflow: hidden;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .core3d > canvas { max-width: 140px; margin: 0 auto; height: auto; display: block; }
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .core-legend {
+  position: absolute; bottom: 4px; left: 8px; right: 8px;
+  font: 700 8px "Consolas", monospace; color: #748f9e; letter-spacing: .06em;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .core-legend em {
+  color: #bce9ff; font-style: normal;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .providers {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0 0 14px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .prov {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px solid rgba(57, 231, 255, .12);
+  border-radius: 4px;
+  background: rgba(1, 12, 22, .55);
+  cursor: pointer;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .prov u {
+  flex: 1;
+  font: 600 10px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .04em;
+  color: #bce9ff;
+  text-decoration: none;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .prov i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #2eff76; box-shadow: 0 0 6px #2eff76;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .prov.off i {
+  background: #ff596f; box-shadow: 0 0 6px #ff596f;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .net-wrap {
+  position: relative;
+  height: 60px;
+  margin: 0 0 8px;
+  border-radius: 4px;
+  background: rgba(1, 12, 22, .55);
+  overflow: hidden;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .net-wrap > canvas { width: 100%; height: 100%; display: block; }
+
+/* Keep the network graph compact so the remaining sidebar modules stay visible. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .net-wrap {
+  height: 60px !important;
+  margin-bottom: 6px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .net-wrap > canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .counters {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--left .counter {
+  padding: 6px 8px;
+  border: 1px solid rgba(57, 231, 255, .1);
+  border-radius: 4px;
+  background: rgba(1, 12, 22, .5);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .counter b {
+  display: block; font: 700 11px "Consolas", monospace; color: #e0f7fc;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .counter span {
+  display: block; color: #718d9c; font: 600 8px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   8. Внутренний контент правого сайдбара (Проекты/Задачи/Агенты + Медиа)
+   ════════════════════════════════════════════════════════════════════════ */
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .p-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #5bcce6;
+  font: 600 12px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .p-title i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #39e7ff; box-shadow: 0 0 6px #39e7ff; flex: 0 0 auto;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .p-title b {
+  margin-left: auto;
+  color: #d5f6ff;
+  font-size: 10px;
+  letter-spacing: .12em;
+  font-weight: 700;
+}
+
+/* Tabs styling — match left sidebar's sophistication */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 10px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .tabs button {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid rgba(79, 227, 255, .18);
+  border-radius: 6px;
+  background: rgba(3, 13, 23, .68);
+  color: #b8e9ff;
+  font: 700 11px/1.1 "Segoe UI", Arial, sans-serif;
+  letter-spacing: .04em;
+  padding: 8px 3px;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: 0 0 7px rgba(104, 228, 255, .40);
+  white-space: nowrap;
+}
+
+/* Sidebar headings have a consistent optical center; indicators remain at the edges. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar .p-title {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar .p-title i {
+  position: absolute;
+  left: 0;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar .p-title b {
+  position: absolute;
+  right: 0;
+  margin-left: 0;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .tabs button:hover {
+  background: rgba(9, 24, 42, .82);
+  border-color: rgba(79, 227, 255, .35);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(79, 227, 255, .12);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .tabs button.is-on {
+  background: rgba(20, 88, 132, .85);
+  border-color: rgba(57, 231, 255, .55);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(57, 231, 255, .28), inset 0 0 8px rgba(57, 231, 255, .08);
+}
+
+/* Empty state for entities when no data */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .entities:empty::before {
+  content: "Нет записей";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: rgba(138, 215, 255, .45);
+  font: 500 11px "Segoe UI", Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  border: 1px dashed rgba(79, 227, 255, .15);
+  border-radius: 8px;
+  background: rgba(3, 13, 23, .35);
+}
+
+/* Panel foot actions */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .panel-foot {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .panel-foot button {
+  border: 1px solid rgba(79, 227, 255, .14);
+  border-radius: 6px;
+  background: rgba(2, 12, 20, .72);
+  color: #c8efff;
+  font: 600 9px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .08em;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, color .16s ease;
+  text-transform: uppercase;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .panel-foot button:hover {
+  background: rgba(9, 24, 42, .88);
+  border-color: rgba(79, 227, 255, .32);
+  color: #fff;
+}
+
+/* Integration pills — refined styling */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .sidebar-integrations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 10px 0 6px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .integration-pill {
+  border: 1px solid rgba(79, 227, 255, .16);
+  border-radius: 999px;
+  background: rgba(3, 13, 23, .72);
+  color: #b8e9ff;
+  font: 600 9px "Segoe UI", Arial, sans-serif;
+  padding: 7px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+  text-transform: uppercase;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .integration-pill:hover {
+  background: rgba(9, 24, 42, .88);
+  border-color: rgba(79, 227, 255, .32);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(79, 227, 255, .14);
+}
+
+/* Quick actions — refined styling */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 10px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .quick-actions button {
+  border: 1px solid rgba(79, 227, 255, .14);
+  border-radius: 6px;
+  background: rgba(2, 12, 20, .72);
+  color: #c8efff;
+  font: 600 9px "Segoe UI", Arial, sans-serif;
+  letter-spacing: .08em;
+  padding: 9px 6px;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, color .16s ease;
+  text-transform: uppercase;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .quick-actions button:hover {
+  background: rgba(9, 24, 42, .88);
+  border-color: rgba(79, 227, 255, .32);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(79, 227, 255, .10);
+}
+
+/* Music player styling — refined for sidebar */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid rgba(79, 227, 255, .12);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(3, 13, 23, .75), rgba(1, 6, 12, .68));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, .28), inset 0 0 1px rgba(57, 231, 255, .04);
+}
+
+/* Keep the player's right edge aligned while extending it 1 cm to the left. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player {
+  --music-left-extension: calc(1cm / var(--jarvis-stage-scale, 1));
+  --music-downward-shift: calc(2cm / var(--jarvis-stage-scale, 1));
+  width: calc(100% - 10px + var(--music-left-extension)) !important;
+  max-width: calc(100% - 10px + var(--music-left-extension)) !important;
+  margin-left: calc(10px - var(--music-left-extension)) !important;
+  bottom: calc(200px - var(--music-downward-shift)) !important;
+}
+
+/* Local music player — tracks are loaded from public/music. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .music-player {
+  display: flex !important;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  min-height: 0;
+  padding: 12px !important;
+  background: linear-gradient(160deg, rgba(2, 15, 27, .96), rgba(0, 6, 13, .94)) !important;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-controls button {
+  min-height: 32px;
+  border: 1px solid rgba(79, 227, 255, .2);
+  border-radius: 6px;
+  background: rgba(5, 25, 40, .7);
+  color: #d8f8ff;
+  cursor: pointer;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-controls button:hover {
+  border-color: rgba(79, 227, 255, .66);
+  background: rgba(12, 56, 83, .8);
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-time,
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #8ccedf;
+  font: 600 9px/1.25 "SF Mono", Consolas, monospace;
+  letter-spacing: .04em;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-source code { color: #e1fbff; }
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-volume { width: 100%; accent-color: #4fe3ff; }
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-playlist {
+  position: static !important;
+  display: flex !important;
+  flex-direction: column;
+  max-height: 78px;
+  overflow-y: auto;
+  border: 1px solid rgba(79, 227, 255, .12);
+  background: rgba(0, 8, 16, .58);
+  clip-path: none;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-playlist button {
+  min-height: 24px;
+  padding: 5px 8px;
+  border: 0;
+  border-bottom: 1px solid rgba(79, 227, 255, .08);
+  background: transparent;
+  color: #a8dceb;
+  font: 500 9px/1.2 "SF Mono", Consolas, monospace;
+  text-align: left;
+  cursor: pointer;
+}
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-playlist button:hover,
+#jarvisApp[data-layout-mode="fixed-1920"] .music-player .mp-playlist button.is-active {
+  background: rgba(34, 152, 186, .17);
+  color: #f2feff;
+}
+/* Right sidebar: remove the glass surface while keeping its layout and controls. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__shape.right-sidebar-glass,
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__content.right-sidebar-content {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__shape.right-sidebar-glass::before {
+  display: none !important;
+}
+
+/* Move the right sidebar controls left by 0.5 cm without moving the media player. */
+#jarvisApp[data-layout-mode="fixed-1920"] .cockpit-sidebar--right .cockpit-sidebar__scroll > :not(.music-player) {
+  position: relative;
+  left: calc(-0.5cm / var(--jarvis-stage-scale, 1));
+}
+
+/* High-visibility text pass for the fixed dashboard. */
+#jarvisApp[data-layout-mode="fixed-1920"] :is(.cockpit-sidebar, .chat-panel) :is(p, span, b, label, small, a, button):not(.metric i) {
+  color: #dffaff;
+  text-shadow: 0 0 7px rgba(105, 234, 255, .32);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] :is(.cockpit-sidebar, .chat-panel) :is(.p-title, .panel-title, h1, h2, h3) {
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(105, 234, 255, .55), 0 0 20px rgba(105, 234, 255, .18);
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] :is(.cockpit-sidebar, .chat-panel) input::placeholder {
+  color: #c9f5ff !important;
+  opacity: 1;
+}
+
+/* Slim, always-readable controls in the cockpit header. */
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav button,
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .tool-dropdown > button {
+  height: 34px !important;
+  padding-inline: 15px !important;
+  font-size: 12px !important;
+  border-color: rgba(149, 238, 255, .62) !important;
+  background:
+    linear-gradient(180deg, rgba(220, 247, 255, .22) 0%, rgba(83, 143, 174, .18) 8%, transparent 11%),
+    linear-gradient(180deg, #17384d 0%, #0b1c29 46%, #06111b 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(238, 253, 255, .52),
+    inset 0 -1px 0 rgba(0, 0, 0, .92),
+    inset 0 0 11px rgba(82, 198, 233, .12),
+    0 0 10px rgba(57, 231, 255, .20) !important;
+  text-shadow: 0 0 6px rgba(79, 227, 255, .95), 0 0 14px rgba(79, 227, 255, .62), 0 0 1px #fff !important;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-brand__eyebrow {
+  font-size: 11px;
+  letter-spacing: .42em;
+}
+
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav button:is(:hover, .is-on, .active),
+#jarvisApp[data-layout-mode="fixed-1920"] .stage-header .stage-nav .tool-dropdown.is-open > button {
+  background:
+    linear-gradient(180deg, rgba(230, 253, 255, .30) 0%, rgba(86, 179, 214, .25) 9%, transparent 13%),
+    linear-gradient(180deg, #1b506b 0%, #0a2638 50%, #06131f 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(243, 254, 255, .68),
+    inset 0 -1px 0 rgba(0, 0, 0, .95),
+    inset 0 0 14px rgba(88, 222, 255, .20),
+    0 0 14px rgba(57, 231, 255, .36) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   9. Внутренний контент левого сайдбара (Системное ядро)
+   ════════════════════════════════════════════════════════════════════════ */

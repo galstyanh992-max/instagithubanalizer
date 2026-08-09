@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 import { Providers } from "@/components/providers/providers";
 import { initProviders } from "@/lib/ai-provider/server";
 import { ModuleEmbedDetector } from "@/components/os/ModuleEmbedDetector";
+import { RussianInterfaceTranslator } from "@/components/i18n/russian-interface-translator";
 
 export default async function RootLayout({
   children,
@@ -40,6 +41,7 @@ export default async function RootLayout({
         <Providers>
           <JarvisActivityProvider>
             <ModuleEmbedDetector />
+            <RussianInterfaceTranslator />
             <main className="flex-1 w-full h-full relative z-10 overflow-hidden bg-black text-white">
               {children}
             </main>

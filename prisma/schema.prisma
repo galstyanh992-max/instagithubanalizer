@@ -2,6 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -84,6 +85,17 @@ model Setting {
   projectVideo   Boolean @default(true)
   projectSaas    Boolean @default(true)
   projectTrading Boolean @default(true)
+
+  // Integrations (GitHub/Vercel/Supabase tokens stored server-side, masked on read)
+  vercelToken            String @default("")
+  supabaseAccessToken    String @default("")
+  supabaseProjectUrl     String @default("")
+  supabaseServiceRoleKey String @default("")
+
+  // Function → provider routing map (JSON). Used by ai-provider-router to pick
+  // which provider handles chat/analysis/code/etc. Persisted from the Provider
+  // Routing UI panel.
+  providerRoutes String @default("{}")
 
   updatedAt DateTime @updatedAt
 }
@@ -253,6 +265,45 @@ model AnalysisRun {
   finishedAt   DateTime?
   errorMessage String     @default("")
   createdAt    DateTime   @default(now())
+}
+
+// Durable JSON/JSONL repository import queue.  Item-level state lets the UI
+// survive navigation, refresh, and a temporarily interrupted browser request.
+model RepositoryImportBatch {
+  id           String                 @id @default(cuid())
+  storageUrl   String
+  originalName String                 @default("")
+  status       String                 @default("queued") // queued | running | completed | completed_with_errors | failed
+  total        Int
+  completed    Int                    @default(0)
+  succeeded    Int                    @default(0)
+  failed       Int                    @default(0)
+  errorMessage String                 @default("")
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  finishedAt   DateTime?
+  items        RepositoryImportItem[]
+
+  @@index([status, createdAt])
+}
+
+model RepositoryImportItem {
+  id                 String                @id @default(cuid())
+  batchId            String
+  batch              RepositoryImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  ref                String
+  status             String                @default("pending") // pending | analyzing | done | error | cancelled
+  repositoryId       String?
+  verdict            String?
+  finalPriorityScore Int?
+  errorMessage       String                @default("")
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  startedAt          DateTime?
+  finishedAt         DateTime?
+
+  @@unique([batchId, ref])
+  @@index([batchId, status])
 }
 
 model WatchlistSnapshot {
@@ -661,23 +712,34 @@ model MemoryItem {
 // ─── Approval System ─────────────────────────────────────────
 
 model ApprovalRequest {
-  id          String   @id @default(cuid())
-  taskId      String? // Optional: null when approval is for a tool execution without task context
-  workspaceId String? // Direct workspace reference for task-independent approvals
-  agentId     String
-  actionType  String // execute | deploy | delete | modify | spend | access
-  summary     String
-  risk        String   @default("medium") // low | medium | high | critical
-  payload     String? // JSON: action details
-  actorId     String?
-  actorRole   String?
-  actorSource String?
-  commandText String?
-  intent      String?
-  reason      String?
-  status      String   @default("pending") // pending | approved | rejected | expired
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  workspaceId        String? // Direct workspace reference for task-independent approvals
+  agentId            String
+  actionType         String // execute | deploy | delete | modify | spend | access
+  summary            String
+  risk               String    @default("medium") // low | medium | high | critical
+  payload            String? // JSON: action details
+  actorId            String?
+  actorRole          String?
+  actorSource        String?
+  commandText        String?
+  intent             String?
+  reason             String?
+  actionFingerprint  String?
+  status             String    @default("pending") // pending | approved | rejected | expired | consumed
+  consumedAt         DateTime?
+  decidedAt          DateTime?
+  expectedSideEffect String?
+  expiresAt          DateTime?
+  ownerUserId        String?
+  riskClass          String?
+  rollbackSummary    String?
+  target             String?
+  version            Int       @default(1)
+  planId             String?
+  taskId             String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   task           Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
   agent          Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
@@ -687,6 +749,8 @@ model ApprovalRequest {
   @@index([workspaceId, status])
   @@index([agentId])
   @@index([taskId])
+  @@index([planId])
+  @@index([ownerUserId])
   @@index([status])
   @@index([createdAt])
   @@map("approval_requests")
@@ -1539,4 +1603,746 @@ model PromptCostLog {
   @@index([agentId])
   @@index([createdAt])
   @@map("prompt_cost_logs")
+}
+
+model WorkerSession {
+  id            String   @id @default(cuid())
+  runId         String
+  workerId      String
+  taskId        String
+  workspaceRoot String
+  status        String   @default("PENDING")
+  exitCode      Int?
+  patchId       String?
+  stdout        String?
+  stderr        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  patches WorkerPatch[]
+}
+
+model WorkerPatch {
+  id            String   @id @default(cuid())
+  sessionId     String
+  diffContent   String
+  changedFiles  String
+  status        String   @default("PENDING_REVIEW")
+  securityFlags String   @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  session WorkerSession @relation(fields: [sessionId], references: [id])
+}
+
+// ============================================================
+// JARVIS Orchestration — models synced from schema_clean
+// (these tables already exist in the live Supabase DB; the active
+//  schema.prisma was missing their type definitions, which broke
+//  code referencing db.orchestrationRun / db.agentTask / etc.)
+// ============================================================
+
+model OrchestrationRun {
+  id                  String               @id @default(cuid())
+  workspaceId         String?
+  projectId           String?
+  ownerUserId         String?              @map("user_id")
+  goal                String
+  constraints         String               @default("[]")
+  status              String               @default("CREATED")
+  mode                String               @default("balanced")
+  maxAgents           Int                  @default(10)
+  maxTasks            Int                  @default(50)
+  maxRetries          Int                  @default(3)
+  timeoutMs           Int                  @default(300000)
+  context             String               @default("{}")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  version             Int                  @default(0)
+  resumeLeaseOwner    String?
+  resumeLeaseUntil    DateTime?
+  agentExecutions     AgentExecution[]
+  tasks               AgentTask[]
+  checkpoints         Checkpoint[]
+  decisionLogs        DecisionLog[]
+  findings            Finding[]
+  verificationResults VerificationResult[]
+  artifacts           Artifact[]
+
+  @@index([projectId])
+  @@index([resumeLeaseUntil])
+  @@index([status])
+  @@index([workspaceId])
+}
+
+model AgentExecution {
+  id               String           @id @default(cuid())
+  runId            String
+  agentId          String
+  role             String
+  request          String
+  result           String?
+  status           String           @default("in_progress")
+  durationMs       Int?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([runId])
+  @@map("agent_executions")
+}
+
+model AgentTask {
+  id               String           @id @default(cuid())
+  runId            String
+  title            String
+  description      String?
+  agentId          String?
+  role             String
+  toolKeys         String           @default("[]")
+  dependsOn        String           @default("[]")
+  status           String           @default("not_started")
+  priority         String           @default("medium")
+  riskLevel        String           @default("low")
+  retryCount       Int              @default(0)
+  request          String?
+  result           String?
+  artifactIds      String           @default("[]")
+  findingIds       String           @default("[]")
+  checkpointId     String?
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([runId])
+  @@index([runId, status])
+  @@map("agent_tasks")
+}
+
+model Artifact {
+  id        String           @id @default(cuid())
+  runId     String
+  agentId   String?
+  type      String
+  title     String
+  content   String
+  metadata  String           @default("{}")
+  fileRefs  String           @default("[]")
+  createdAt DateTime         @default(now())
+  run       OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@map("artifacts")
+}
+
+model Checkpoint {
+  id               String           @id @default(cuid())
+  runId            String
+  phase            String
+  taskStatuses     String
+  context          String
+  createdAt        DateTime         @default(now())
+  verified         Boolean          @default(false)
+  schemaVersion    Int              @default(1)
+  OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([runId, phase])
+  @@map("checkpoints")
+}
+
+model DecisionLog {
+  id               String           @id @default(cuid())
+  runId            String
+  phase            String
+  decision         String
+  rationale        String
+  alternatives     String           @default("[]")
+  createdAt        DateTime         @default(now())
+  OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@map("decision_logs")
+}
+
+model Finding {
+  id               String           @id @default(cuid())
+  runId            String
+  severity         String
+  status           String           @default("open")
+  evidence         String
+  rootCause        String?
+  fixSummary       String?
+  fixArtifactId    String?
+  verificationId   String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([runId, status])
+  @@index([severity])
+  @@map("findings")
+}
+
+model VerificationResult {
+  id               String           @id @default(cuid())
+  runId            String
+  type             String
+  status           String
+  evidence         String
+  findings         String           @default("[]")
+  durationMs       Int?
+  createdAt        DateTime         @default(now())
+  OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([runId, type])
+  @@map("verification_results")
+}
+
+model CodexProviderSession {
+  id              String   @id @default(cuid())
+  providerId      String   @default("codex-chatgpt-subscription")
+  cliVersion      String?
+  authStatus      String
+  status          String
+  threadId        String?  @unique
+  activeTurnId    String?
+  model           String?
+  reasoningEffort String?
+  cwd             String?
+  lastEvent       String?
+  failureSummary  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([providerId])
+  @@index([status])
+  @@map("codex_provider_sessions")
+}
+
+model Device {
+  id                   String    @id @default(cuid())
+  ownerUserId          String?
+  installationId       String    @unique
+  name                 String
+  platform             String
+  daemonVersion        String
+  status               String    @default("offline")
+  lastHeartbeatAt      DateTime?
+  capabilitiesSnapshot String?
+  revokedAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([ownerUserId])
+  @@index([status])
+  @@map("devices")
+}
+
+model ChatAttachment {
+  id           String   @id @default(cuid())
+  ownerId      String
+  fileName     String
+  originalName String
+  declaredMime String
+  detectedMime String
+  size         Int
+  contentHash  String
+  bucket       String
+  storageKey   String
+  publicUrl    String
+  status       String   @default("READY")
+  metadata     String   @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([ownerId, contentHash])
+  @@index([ownerId, status])
+}
+
+model InfrastructureOperation {
+  id             String                        @id @default(cuid())
+  idempotencyKey String                        @unique
+  name           String
+  localPath      String
+  status         String                        @default("CREATED")
+  requested      String                        @default("{}")
+  approval       String                        @default("{}")
+  compensation   String                        @default("{}")
+  error          String?
+  createdAt      DateTime                      @default(now())
+  updatedAt      DateTime                      @updatedAt
+  steps          InfrastructureOperationStep[]
+
+  @@index([status])
+}
+
+model InfrastructureOperationStep {
+  id                      String                  @id @default(cuid())
+  operationId             String
+  kind                    String
+  status                  String                  @default("PENDING")
+  message                 String                  @default("")
+  evidence                String                  @default("{}")
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  InfrastructureOperation InfrastructureOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+
+  @@index([operationId])
+}
+
+// ============================================================
+// Phase 04 Execution — sandboxed command execution plans.
+// Tables already exist in the live Supabase DB (execution_plans,
+// execution_steps, executable_registry). Synced here so the
+// execution/approval-engine module type-checks against real models.
+// ============================================================
+
+model ExecutionPlan {
+  id            String          @id @default(cuid())
+  version       Int             @default(1)
+  ownerUserId   String
+  taskId        String?
+  runId         String?
+  deviceId      String?
+  workerType    String          @default("system")
+  capabilityIds String          @default("[]")
+  riskLevel     String          @default("R1_LOW")
+  workspaceRoot String
+  limits        String          @default("{}")
+  fingerprint   String
+  expiresAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  steps         ExecutionStep[]
+
+  @@index([ownerUserId])
+  @@index([deviceId])
+  @@index([runId])
+  @@map("execution_plans")
+}
+
+model ExecutionStep {
+  id                 String        @id @default(cuid())
+  planId             String
+  type               String
+  executableId       String
+  args               String        @default("[]")
+  cwdRelative        String        @default(".")
+  environmentProfile String        @default("MINIMAL")
+  timeoutMs          Int           @default(30000)
+  expectedOutputs    String        @default("[]")
+  dependencies       String        @default("[]")
+  sequence           Int           @default(0)
+  plan               ExecutionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([executableId])
+  @@map("execution_steps")
+}
+
+model ExecutableRegistry {
+  id                 String   @id @default(cuid())
+  resolvedPath       String
+  versionCommand     String?
+  allowedArguments   String   @default("[]")
+  allowedCwdRoots    String   @default("[]")
+  environmentProfile String   @default("MINIMAL")
+  networkPolicy      String   @default("DENIED")
+  maxRuntime         Int      @default(60000)
+  enabled            Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([enabled])
+  @@map("executable_registry")
+}
+
+// ============================================================
+// JARVIS Phase B control plane.
+// Provider credentials and authoritative message/call content never live here.
+// JSON-like fields are strings to match the existing Prisma schema convention.
+// ============================================================
+
+model SocialAccount {
+  id                String   @id @default(cuid())
+  ownerUserId       String
+  provider          String
+  externalAccountId String
+  displayName       String?
+  status            String   @default("not_configured")
+  metadata          String   @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([ownerUserId, provider, externalAccountId])
+  @@index([ownerUserId, status])
+  @@map("social_accounts")
+}
+
+model SocialCompetitor {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  platform    String
+  externalRef String
+  label       String
+  enabled     Boolean  @default(true)
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([ownerUserId, platform, externalRef])
+  @@index([ownerUserId, enabled])
+  @@map("social_competitors")
+}
+
+model SocialSource {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  kind        String
+  externalRef String
+  label       String?
+  status      String   @default("active")
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([ownerUserId, kind, externalRef])
+  @@index([ownerUserId, status])
+  @@map("social_sources")
+}
+
+model ContentIdea {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  topic       String
+  status      String   @default("idea")
+  sourceRefs  String   @default("[]")
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerUserId, status])
+  @@map("content_ideas")
+}
+
+model ContentDraft {
+  id                String   @id @default(cuid())
+  ownerUserId       String
+  platform          String
+  title             String
+  body              String
+  status            String   @default("draft")
+  approvalRequestId String?
+  published         Boolean  @default(false)
+  metadata          String   @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([ownerUserId, status])
+  @@index([approvalRequestId])
+  @@map("content_drafts")
+}
+
+model ContentAsset {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  draftId     String?
+  kind        String
+  storageRef  String
+  status      String   @default("ready")
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerUserId, status])
+  @@index([draftId])
+  @@map("content_assets")
+}
+
+model PublicationJob {
+  id                String    @id @default(cuid())
+  ownerUserId       String
+  draftId           String
+  provider          String
+  status            String    @default("approval_required")
+  approvalRequestId String?
+  externalJobRef    String?
+  scheduledAt       DateTime?
+  lastError         String?
+  metadata          String    @default("{}")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([ownerUserId, status])
+  @@index([draftId])
+  @@map("publication_jobs")
+}
+
+model SocialMetric {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  provider    String
+  entityRef   String
+  metric      String
+  value       Float
+  measuredAt  DateTime
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([ownerUserId, provider, measuredAt])
+  @@map("social_metrics")
+}
+
+model MessageAccount {
+  id                String   @id @default(cuid())
+  ownerUserId       String
+  provider          String
+  externalAccountId String
+  displayName       String?
+  status            String   @default("not_configured")
+  metadata          String   @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([ownerUserId, provider, externalAccountId])
+  @@index([ownerUserId, status])
+  @@map("message_accounts")
+}
+
+model MessageReference {
+  id                String   @id @default(cuid())
+  ownerUserId       String
+  provider          String
+  conversationRef   String
+  externalMessageId String
+  direction         String
+  classification    String?
+  status            String   @default("received")
+  metadata          String   @default("{}")
+  occurredAt        DateTime
+  createdAt         DateTime @default(now())
+
+  @@unique([ownerUserId, provider, externalMessageId])
+  @@index([ownerUserId, conversationRef, occurredAt])
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id           String   @id @default(cuid())
+  ownerUserId  String
+  messageRef   String
+  externalRef  String
+  mediaType    String?
+  safetyStatus String   @default("unknown")
+  metadata     String   @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@index([ownerUserId, messageRef])
+  @@map("message_attachments")
+}
+
+model MessageEvent {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  messageRef  String?
+  type        String
+  payload     String   @default("{}")
+  occurredAt  DateTime @default(now())
+
+  @@index([ownerUserId, type, occurredAt])
+  @@map("message_events")
+}
+
+model MessageEscalation {
+  id                String   @id @default(cuid())
+  ownerUserId       String
+  messageRef        String
+  reason            String
+  status            String   @default("pending")
+  approvalRequestId String?
+  metadata          String   @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([ownerUserId, status])
+  @@map("message_escalations")
+}
+
+model CallSession {
+  id                String    @id @default(cuid())
+  ownerUserId       String
+  provider          String
+  externalSessionId String?
+  mode              String    @default("local")
+  status            String    @default("created")
+  approvalRequestId String?
+  metadata          String    @default("{}")
+  startedAt         DateTime?
+  endedAt           DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([ownerUserId, status])
+  @@map("call_sessions")
+}
+
+model CallEvent {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  sessionId   String
+  type        String
+  payload     String   @default("{}")
+  occurredAt  DateTime @default(now())
+
+  @@index([ownerUserId, sessionId, occurredAt])
+  @@map("call_events")
+}
+
+model CallTranscript {
+  id              String   @id @default(cuid())
+  ownerUserId     String
+  sessionId       String
+  contentRef      String
+  redactedPreview String?
+  privacyClass    String   @default("sensitive")
+  metadata        String   @default("{}")
+  createdAt       DateTime @default(now())
+
+  @@index([ownerUserId, sessionId])
+  @@map("call_transcripts")
+}
+
+model CallSummary {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  sessionId   String
+  summary     String
+  actionItems String   @default("[]")
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerUserId, sessionId])
+  @@map("call_summaries")
+}
+
+model AutomationWorkflowRef {
+  id                 String   @id @default(cuid())
+  ownerUserId        String
+  provider           String   @default("n8n")
+  externalWorkflowId String
+  name               String
+  status             String   @default("registered")
+  taskId             String?
+  lastResult         String?
+  lastError          String?
+  metadata           String   @default("{}")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([ownerUserId, provider, externalWorkflowId])
+  @@index([ownerUserId, status])
+  @@map("automation_workflow_refs")
+}
+
+model AutomationRunRef {
+  id            String    @id @default(cuid())
+  ownerUserId   String
+  workflowRefId String
+  externalRunId String?
+  status        String
+  taskId        String?
+  lastResult    String?
+  lastError     String?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  metadata      String    @default("{}")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([ownerUserId, status])
+  @@index([workflowRefId])
+  @@map("automation_run_refs")
+}
+
+// ============================================================
+// JARVIS Phase C capability-intelligence control plane.
+// Only repository/routing/health metadata is persisted. Raw user content,
+// provider responses, credentials and repository source are excluded.
+// ============================================================
+
+model CapabilityRepositoryRecord {
+  id              String    @id @default(cuid())
+  ownerUserId     String
+  repository      String
+  lifecycle       String    @default("UNVERIFIED")
+  tier            String
+  capabilities    String    @default("[]")
+  integrationMode String
+  license         String    @default("UNKNOWN")
+  licensePolicy   String    @default("UNKNOWN")
+  sourceCommit    String?
+  artifactDigest  String?
+  metadata        String    @default("{}")
+  lastVerifiedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([ownerUserId, repository])
+  @@index([ownerUserId, lifecycle])
+  @@map("capability_repository_records")
+}
+
+model RepositoryCuratorAssessment {
+  id             String   @id @default(cuid())
+  ownerUserId    String
+  repository     String
+  verdict        String
+  risk           String
+  licensePolicy  String
+  findingClasses String   @default("[]")
+  stagedRef      String?
+  sourceCommit   String?
+  artifactDigest String?
+  createdAt      DateTime @default(now())
+
+  @@index([ownerUserId, verdict, createdAt])
+  @@map("repository_curator_assessments")
+}
+
+model CapabilityExecutionFeedback {
+  id              String   @id @default(cuid())
+  ownerUserId     String
+  capabilityId    String
+  taskClass       String
+  success         Boolean
+  durationMs      Int
+  failureClass    String?
+  operationalMeta String   @default("{}")
+  occurredAt      DateTime @default(now())
+
+  @@index([ownerUserId, capabilityId, taskClass, occurredAt])
+  @@map("capability_execution_feedback")
+}
+
+model CapabilityRoutingDecision {
+  id                   String   @id @default(cuid())
+  ownerUserId          String
+  taskClass            String
+  requiredCapabilities String   @default("[]")
+  selectedId           String?
+  fallbackChain        String   @default("[]")
+  factorScores         String   @default("{}")
+  status               String   @default("planned")
+  createdAt            DateTime @default(now())
+
+  @@index([ownerUserId, taskClass, createdAt])
+  @@map("capability_routing_decisions")
 }

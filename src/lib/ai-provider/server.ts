@@ -4,17 +4,57 @@ import { logger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { providerRegistry } from './provider-registry';
 import { createConfiguredProviders } from './providers';
-import { MockProvider } from './mock-provider';
 import { resolveDefaultProviderId } from './default-provider';
+import { codexSubscriptionProvider } from './codex-subscription';
+import { CodexChatAdapter } from './codex-subscription/adapter';
+import { OllamaLocalProvider } from './ollama-local/adapter';
 
 let initialized = false;
+
+function isCodexChatEnabled(): boolean {
+  const value = env.JARVIS_CODEX_CHAT_ENABLED;
+  return value !== 'false' && value !== '0' && value !== 'no';
+}
+
+async function registerCodexChatBridge(): Promise<void> {
+  if (!isCodexChatEnabled()) {
+    logger.info('[AI Provider] Codex chat bridge disabled by JARVIS_CODEX_CHAT_ENABLED.');
+    return;
+  }
+  try {
+    const adapter = new CodexChatAdapter();
+    const available = await adapter.isAvailable();
+    if (!available) {
+      const status = await codexSubscriptionProvider.getAvailability();
+      logger.info(`[AI Provider] Codex skipped: ${status.status} (${status.message})`);
+      return;
+    }
+    providerRegistry.register(adapter);
+    logger.info('[AI Provider] Registered Codex (ChatGPT subscription) provider for chat routing.');
+  } catch (error) {
+    // Codex registration must never block the rest of the provider stack.
+    logger.warn({ err: error }, '[AI Provider] Codex chat bridge registration failed.');
+  }
+}
+
+async function registerOllamaLocal(): Promise<void> {
+  try {
+    const provider = new OllamaLocalProvider();
+    if (await provider.isAvailable()) {
+      providerRegistry.register(provider);
+      logger.info('[AI Provider] Registered local Ollama provider.');
+    }
+  } catch (error) {
+    logger.warn({ err: error }, '[AI Provider] Local Ollama registration failed.');
+  }
+}
 
 /**
  * Initialize all AI providers at application startup.
  * Server-only by construction; do not import this from client components.
  *
- * Registers every provider that has an API key configured.
- * If none are configured, registers a mock fallback when allowed.
+ * Registers every configured provider. A missing provider is reported to the
+ * caller instead of producing generated placeholder content.
  */
 export async function initProviders(): Promise<void> {
   if (initialized) return;
@@ -22,18 +62,18 @@ export async function initProviders(): Promise<void> {
   const configured = createConfiguredProviders();
 
   if (configured.length === 0) {
-    if (env.AI_ENABLE_MOCK_FALLBACK === 'true') {
-      providerRegistry.register(new MockProvider());
-      logger.warn('[AI Provider] No real AI providers configured. Mock provider registered as fallback.');
-    } else {
-      logger.warn('[AI Provider] No AI providers configured. Set at least one provider API key in .env');
-    }
+    logger.warn('[AI Provider] No AI providers configured. Set at least one provider API key in .env');
   } else {
     for (const provider of configured) {
       providerRegistry.register(provider);
       logger.info(`[AI Provider] Registered provider: ${provider.id}`);
     }
   }
+
+  // Codex (ChatGPT subscription) is registered as a separate bridge provider.
+  // It runs the official local Codex CLI/app-server, independent of API keys.
+  await registerCodexChatBridge();
+  await registerOllamaLocal();
 
   const registeredIds = providerRegistry.listIds();
   if (registeredIds.length > 0) {

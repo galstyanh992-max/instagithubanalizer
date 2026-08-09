@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useState, useEffect } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
@@ -17,7 +18,7 @@ export function SandboxPanel({ repoId }: { repoId: string }) {
     } finally { setLoading(false); }
   };
   return (
-    <HolographicPanel accent="cyan" className="space-y-4 p-5">
+    <SciFiPanel accent="cyan" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-mono text-xs uppercase text-cyan-300">План sandbox-тестирования</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}>
@@ -40,7 +41,7 @@ export function SandboxPanel({ repoId }: { repoId: string }) {
         </div>
       )}
       {!data && !loading && <div className="text-sm text-zinc-500">Нажмите «Создать план».</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -60,7 +61,7 @@ export function PatchPlanPanel({ repoId }: { repoId: string }) {
     } finally { setLoading(false); }
   };
   return (
-    <HolographicPanel accent="lime" className="space-y-4 p-5">
+    <SciFiPanel accent="lime" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-mono text-xs uppercase text-lime-300">План интеграционного патча</h2>
         <Button size="sm" onClick={run} disabled={!projectId || loading}>{loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Сгенерировать"}</Button>
@@ -77,7 +78,7 @@ export function PatchPlanPanel({ repoId }: { repoId: string }) {
         </div>
       )}
       {!data && !loading && <div className="text-sm text-zinc-500">Выберите проект.</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -87,7 +88,7 @@ export function RiskGatePanel({ repoId }: { repoId: string }) {
   const run = async () => { setLoading(true); try { const r = await fetch(`/api/repos/${repoId}/risk-gate`, { method: "POST" }); const d = await r.json(); setData(d.riskGate); } finally { setLoading(false); } };
   const level = data?.riskLevel as string;
   return (
-    <HolographicPanel accent={level === "HIGH" ? "magenta" : "lime"} className="space-y-4 p-5">
+    <SciFiPanel accent={level === "HIGH" ? "magenta" : "lime"} className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-mono text-xs uppercase text-cyan-300">Риск-гейт</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}>{loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />} Проверить</Button>
@@ -102,7 +103,7 @@ export function RiskGatePanel({ repoId }: { repoId: string }) {
         </div>
       )}
       {!data && !loading && <div className="text-sm text-zinc-500">Нажмите «Проверить».</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -113,7 +114,7 @@ export function HealthPanel({ repoId }: { repoId: string }) {
     fetch(`/api/repos/${repoId}/health-timeline`).then(r => r.json()).then(d => setSnapshots(d.timeline ?? [])).finally(() => setLoading(false));
   }, [repoId]);
   return (
-    <HolographicPanel accent="cyan" className="space-y-4 p-5">
+    <SciFiPanel accent="cyan" className="space-y-4 p-5">
       <h2 className="font-mono text-xs uppercase text-cyan-300">Хронология здоровья</h2>
       {loading ? <div className="text-cyan-300">Загрузка...</div> : snapshots.length === 0 ? <div className="text-sm text-zinc-500">Нет снимков</div> : (
         <div className="space-y-1.5">
@@ -126,7 +127,7 @@ export function HealthPanel({ repoId }: { repoId: string }) {
           ))}
         </div>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }
 
@@ -135,13 +136,13 @@ export function CommunityPanel({ repoId }: { repoId: string }) {
   const [loading, setLoading] = useState(false);
   const run = async () => { setLoading(true); try { const r = await fetch(`/api/repos/${repoId}/community-signals`, { method: "POST" }); const d = await r.json(); setData(d.signals); } finally { setLoading(false); } };
   return (
-    <HolographicPanel accent="magenta" className="space-y-4 p-5">
+    <SciFiPanel accent="magenta" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-mono text-xs uppercase text-fuchsia-300">Сигналы сообщества</h2>
         <Button size="sm" variant="outline" onClick={run} disabled={loading}>{loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />} Загрузить</Button>
       </div>
       {data && <div className="text-xs"><div className="text-cyan-300">Поддержка: {String(data.maintenanceSignal)}</div></div>}
       {!data && !loading && <div className="text-sm text-zinc-500">Нажмите «Загрузить».</div>}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

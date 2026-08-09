@@ -833,6 +833,38 @@ body {
   color: #a5f3fc;
 }
 
+/* High-visibility Russian interface: subdued labels remain secondary, but never fade into glass panels. */
+@layer utilities {
+  main :where(p, span, label, small, li, td, th, button, a):not(pre *):not(code *) {
+    text-shadow: 0 0 7px rgba(139, 239, 255, .20);
+  }
+
+  main .text-muted-foreground,
+  main .text-zinc-300,
+  main .text-zinc-200,
+  main .text-zinc-600,
+  main .text-zinc-500,
+  main .text-zinc-400,
+  main .text-slate-500,
+  main .text-slate-400 {
+    color: #b9e7f2 !important;
+    text-shadow: 0 0 8px rgba(105, 234, 255, .26);
+  }
+
+  main .text-cyan-100\/65,
+  main .text-cyan-100\/60,
+  main .text-cyan-100\/50 {
+    color: #d8faff !important;
+    text-shadow: 0 0 10px rgba(105, 234, 255, .30);
+  }
+
+  main input::placeholder,
+  main textarea::placeholder {
+    color: #b9e7f2 !important;
+    opacity: 1;
+  }
+}
+
 @layer utilities {
   .font-rajdhani {
     font-family: var(--font-rajdhani), sans-serif;
@@ -925,6 +957,18 @@ body.in-module [class*="h-screen"],
 body.in-module [class*="min-h-screen"] {
   height: auto !important;
   min-height: 100% !important;
+}
+
+/* A maximized dashboard module uses the full iframe width. These are page-root
+   wrappers only, so intentional inner reading columns remain constrained. */
+body.in-module main > .cosmic-page-shell,
+body.in-module main > .max-w-\[1400px\],
+body.in-module main > .mx-auto[class*="max-w-"] {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100% !important;
+  margin-inline: 0 !important;
 }
 
 /* ============================================================

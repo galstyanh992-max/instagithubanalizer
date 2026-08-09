@@ -40,17 +40,26 @@ export const orchestratorConfig: AgentConfig = {
     { skillId: 'summarization', enabled: true },],
 
   // ── Stage 3: Tools ───────────────────────────────────────────
+  // Orchestrator has full project access: read/search/write files, run project
+  // checks (lint/typecheck/build), execute terminal commands (admin-gated),
+  // search the web, recall project memory, and drive the browser.
   tools: [
     { toolId: 'calculator', enabled: true, requiredPermission: 'none' },
+    { toolId: 'memory.search', enabled: true, requiredPermission: 'read' },
+    { toolId: 'web.search', enabled: true, requiredPermission: 'read' },
     { toolId: 'http_request', enabled: true, requiredPermission: 'read' },
     { toolId: 'filesystem.read', enabled: true, requiredPermission: 'read' },
+    { toolId: 'file_reader', enabled: true, requiredPermission: 'read' },
     { toolId: 'filesystem.list', enabled: true, requiredPermission: 'read' },
+    { toolId: 'filesystem.search', enabled: true, requiredPermission: 'read' },
+    { toolId: 'filesystem.write', enabled: true, requiredPermission: 'write' },
     { toolId: 'git.status', enabled: true, requiredPermission: 'read' },
     { toolId: 'project.lint', enabled: true, requiredPermission: 'read' },
-    { toolId: 'web.search', enabled: true, requiredPermission: 'read' },
+    { toolId: 'project.typecheck', enabled: true, requiredPermission: 'read' },
+    { toolId: 'project.build', enabled: true, requiredPermission: 'write' },
+    { toolId: 'browser_operator', enabled: true, requiredPermission: 'write' },
     { toolId: 'terminal.exec', enabled: true, requiredPermission: 'admin' },
-    { toolId: 'filesystem.search', enabled: true, requiredPermission: 'read' },
-    { toolId: 'filesystem.write', enabled: true, requiredPermission: 'write' },],
+  ],
 
   hooks: [],
 

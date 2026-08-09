@@ -1,4 +1,4 @@
-import { resolve, isAbsolute } from "path";
+import { resolve, isAbsolute, relative } from "path";
 import type { RiskLevel } from "./permission-checker";
 
 export type TerminalGuardResult = {
@@ -35,6 +35,7 @@ const APPROVAL_PATTERNS: { re: RegExp; risk: RiskLevel; reason: string }[] = [
 ];
 
 const SAFE_PREFIXES = ["ls", "pwd", "npm test", "npm run lint", "npm run typecheck", "echo", "node --version", "git status"];
+const SHELL_CONTROL_SYNTAX = /[;&|><`\r\n]|\$\(|\$\{|\^/;
 
 /**
  * Analyze a terminal command for safety before execution.
@@ -77,7 +78,8 @@ export function analyzeTerminalCommand(command: string, opts?: { workspaceRoot?:
   for (const t of tokens) {
     if (t.includes("..") || isAbsolute(t)) {
       const target = isAbsolute(t) ? resolve(t) : resolve(root, t);
-      if (!target.startsWith(root)) {
+      const rel = relative(root, target);
+      if (rel === ".." || rel.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) || isAbsolute(rel)) {
         return {
           allowed: false,
           requiresApproval: false,
@@ -104,8 +106,19 @@ export function analyzeTerminalCommand(command: string, opts?: { workspaceRoot?:
     return { allowed: false, requiresApproval: true, riskLevel, reasons, cwd: root };
   }
 
+  if (SHELL_CONTROL_SYNTAX.test(cmd)) {
+    return {
+      allowed: false,
+      requiresApproval: false,
+      riskLevel: "CRITICAL",
+      reasons: ["Shell control syntax is forbidden in safe terminal commands."],
+      cwd: root,
+    };
+  }
+
   // Known-safe prefixes → LOW allow.
-  if (SAFE_PREFIXES.some((p) => cmd.toLowerCase().startsWith(p))) {
+  const lower = cmd.toLowerCase();
+  if (SAFE_PREFIXES.some((p) => lower === p || lower.startsWith(`${p} `))) {
     return { allowed: true, requiresApproval: false, riskLevel: "LOW", reasons: ["Известная безопасная команда."], cwd: root };
   }
 

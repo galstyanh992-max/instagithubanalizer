@@ -1,8 +1,8 @@
 "use client";
+import { SciFiPanel, SciFiRing } from "@/components/ui/sci-fi-panel";
+
 
 import { useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
-import { ScoreRing } from "@/components/futuristic/score-ring";
 import { Button } from "@/components/ui/button";
 import { Cpu, Loader2, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import type { CompatibilityResult } from "@/lib/types";
@@ -49,7 +49,7 @@ export function MyPcCompatibilityPanel({ repoId, precomputed }: Props) {
   }
 
   return (
-    <HolographicPanel accent="cyan" className="space-y-4 p-5">
+    <SciFiPanel accent="cyan" className="space-y-4 p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-cyan-300">
           <Cpu className="h-4 w-4" />
@@ -71,7 +71,7 @@ export function MyPcCompatibilityPanel({ repoId, precomputed }: Props) {
         <>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="flex flex-col items-center">
-              <ScoreRing value={data.compatibilityScore} label="Score" size={90} color="#22d3ee" />
+              <SciFiRing value={data.compatibilityScore} label="Score" size={90} color="#22d3ee" />
             </div>
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
@@ -149,6 +149,6 @@ export function MyPcCompatibilityPanel({ repoId, precomputed }: Props) {
           </div>
         </>
       )}
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

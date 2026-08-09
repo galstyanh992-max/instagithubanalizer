@@ -13,9 +13,6 @@ const updateDepartmentSchema = z.object({
 });
 
 export const GET = safe(async (req: Request, ctx) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return err("Unauthorized", 401);
-
   const { id } = await parseParams(ctx);
   if (!id) return err("Missing id", 400);
 
@@ -28,9 +25,6 @@ export const GET = safe(async (req: Request, ctx) => {
 });
 
 export const PATCH = safe(async (req: Request, ctx) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return err("Unauthorized", 401);
-
   const { id } = await parseParams(ctx);
   if (!id) return err("Missing id", 400);
 
@@ -56,9 +50,6 @@ export const PATCH = safe(async (req: Request, ctx) => {
 });
 
 export const DELETE = safe(async (req: Request, ctx) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return err("Unauthorized", 401);
-
   const { id } = await parseParams(ctx);
   if (!id) return err("Missing id", 400);
 

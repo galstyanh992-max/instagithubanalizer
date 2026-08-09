@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -80,14 +81,14 @@ export default function ManualReviewPage() {
         <p className="text-xs text-zinc-500">{candidates.length} candidates need review</p>
       </div>
       {candidates.length === 0 && (
-        <HolographicPanel accent="lime" className="p-12 text-center">
+        <SciFiPanel accent="lime" className="p-12 text-center">
           <ClipboardCheck className="mx-auto h-10 w-10 text-lime-400/50" />
           <p className="mt-2 text-sm text-zinc-400">Queue is empty. Upload screenshots to populate.</p>
-        </HolographicPanel>
+        </SciFiPanel>
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {candidates.map((c) => (
-          <HolographicPanel key={c.id} accent={c.needsManualReview ? "amber" : "cyan"} className="overflow-hidden">
+          <SciFiPanel key={c.id} accent={c.needsManualReview ? "amber" : "cyan"} className="overflow-hidden">
             {c.screenshot && (
               <div className="relative">
                 <img src={c.screenshot.filePath} alt={c.screenshot.filename} className="h-32 w-full object-cover" />
@@ -133,7 +134,7 @@ export default function ManualReviewPage() {
                 RESOLVE & ANALYZE
               </Button>
             </div>
-          </HolographicPanel>
+          </SciFiPanel>
         ))}
       </div>
     </div>

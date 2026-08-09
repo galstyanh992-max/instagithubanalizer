@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="theme-color" content="#010611" />
+    <title>JARVIS OS — Live Hologram</title>
+    <link rel="stylesheet" href="./styles.css?v=16" />
+    <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  </head>
+  <body>
+    <div class="jarvis-shell" id="jarvisApp" data-state="idle">
+      <div class="space-field" aria-hidden="true"></div>
+      <canvas class="particle-field" id="particleCanvas" aria-hidden="true"></canvas>
+
+      <header class="navigation-panel panel-asset">
+        <img src="./assets/skins/navigation.png?v=16" alt="Навигационная панель JARVIS OS" draggable="false" />
+        <nav class="hotspots nav-hotspots" aria-label="Навигация">
+          <button data-nav="dashboard" aria-label="Дайборд"></button>
+          <button data-nav="projects" aria-label="Проекты"></button>
+          <button data-nav="agents" aria-label="Агенты"></button>
+          <button data-nav="memory" aria-label="Память"></button>
+          <button data-nav="analytics" aria-label="Аналитика"></button>
+          <button data-nav="system" aria-label="Система"></button>
+          <button data-nav="settings" aria-label="Настройки"></button>
+        </nav>
+      </header>
+
+      <section class="tools-panel panel-asset" aria-label="Инструменты">
+        <img src="./assets/skins/tools.png?v=16" alt="Панель инструментов JARVIS" draggable="false" />
+        <div class="hotspots tool-hotspots">
+          <button data-tool="terminal" aria-label="Терминал"></button>
+          <button data-tool="agents" aria-label="Агенты"></button>
+          <button data-tool="code" aria-label="Код"></button>
+          <button data-tool="web" aria-label="Веб"></button>
+          <button data-tool="files" aria-label="Файлы"></button>
+          <button data-tool="database" aria-label="База данных"></button>
+          <button data-tool="projects" aria-label="Проекты"></button>
+          <button data-tool="tasks" aria-label="Задачи"></button>
+          <button data-tool="whatsapp" aria-label="WhatsApp"></button>
+          <button data-tool="telegram" aria-label="Telegram"></button>
+          <button data-tool="instagram" aria-label="Instagram"></button>
+          <button data-tool="github-analysis" aria-label="Анализ GitHub"></button>
+        </div>
+      </section>
+
+      <aside class="system-panel panel-asset">
+        <img src="./assets/skins/system.png?v=16" alt="Системное ядро JARVIS" draggable="false" />
+      </aside>
+
+      <aside class="projects-panel panel-asset">
+        <img src="./assets/skins/projects-right.png?v=16" alt="Проекты, задачи и агенты JARVIS" draggable="false" />
+      </aside>
+
+      <main class="avatar-stage" id="avatarStage" data-state="idle" aria-label="Живая голограмма девушки">
+        <div class="avatar-aura" aria-hidden="true"></div>
+        <img class="avatar-fallback" src="./assets/model/new-girl-visible-v12.jpg?v=16" alt="Голографическая девушка JARVIS" draggable="false" />
+        <canvas class="avatar-canvas" id="avatarWebgl"></canvas>
+        <div class="scan-layer" aria-hidden="true"></div>
+        <button class="model-toggle" id="toggle3d" type="button" aria-pressed="true" aria-label="Включить или выключить живую 3D-модель">
+          <i></i><span id="modelState">FULL 3D ЗАГРУЗКА</span>
+        </button>
+        <div class="avatar-status"><i></i><span id="assistantStatus">ГОТОВА</span></div>
+        <div class="emotion-dock" aria-label="Эмоции 3D-девушки">
+          <button type="button" data-emotion="idle" class="is-active" title="Нейтрально" aria-label="Нейтральное выражение">○</button>
+          <button type="button" data-emotion="blink" title="Моргнуть" aria-label="Моргнуть">◉</button>
+          <button type="button" data-emotion="talking" title="Разговор" aria-label="Разговор">◖</button>
+          <button type="button" data-emotion="smiling" title="Улыбка" aria-label="Улыбка">⌣</button>
+          <button type="button" data-emotion="laughing" title="Смех" aria-label="Смех">✦</button>
+          <button type="button" data-emotion="thinking" title="Задумчивость" aria-label="Задумчивость">…</button>
+          <button type="button" data-emotion="sleeping" title="Сон" aria-label="Сон">Zz</button>
+          <button type="button" data-emotion="sad" title="Грусть" aria-label="Грусть">⌢</button>
+          <button type="button" data-emotion="surprised" title="Удивление" aria-label="Удивление">!</button>
+        </div>
+      </main>
+
+      <section class="chat-panel panel-asset" id="chatConsole" aria-label="Чат с Джарвисом">
+        <img src="./assets/skins/chat.png?v=16" alt="Чат JARVIS" draggable="false" />
+        <div class="mode-hotspots hotspots" aria-label="Режим запроса">
+          <button data-mode="auto" aria-label="Авто"></button>
+          <button data-mode="image" aria-label="Изображение"></button>
+          <button data-mode="video" aria-label="Видео"></button>
+          <button data-mode="music" aria-label="Музыка"></button>
+          <button data-mode="transcription" aria-label="Транскрипция"></button>
+          <button data-mode="analysis" aria-label="Анализ"></button>
+        </div>
+        <form class="command-form" id="commandForm">
+          <input id="commandInput" autocomplete="off" placeholder="Скажи ДЖАРВИСУ что сделать..." aria-label="Команда для Джарвиса" />
+          <button class="mic-zone" id="micButton" type="button" aria-label="Голосовой ввод"></button>
+          <button class="send-zone" type="submit" aria-label="Отправить"></button>
+        </form>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite">СИСТЕМА ГОТОВА</div>
+    </div>
+
+    <script type="module" src="./avatar3d.js?v=16"></script>
+    <script src="./app.js?v=16"></script>
+  </body>
+</html>

@@ -61,14 +61,19 @@ export function useJarvis(opts: UseJarvisOptions = {}) {
     [opts.onSpeak]
   );
 
-  const ask = useCallback(async (message: string, preferredType?: string): Promise<JarvisResult> => {
+  const ask = useCallback(async (
+    message: string,
+    preferredType?: string,
+    files: File[] = [],
+    signal?: AbortSignal,
+  ): Promise<JarvisResult> => {
     const chatId = ensureChat();
     addMessage(chatId, { role: "user", content: message });
     setLoading(true);
     try {
       // First check for local UI control commands (fast, no network)
       const uiCommand = parseJarvisCommand(message);
-      if (uiCommand) {
+      if (uiCommand && files.length === 0) {
         let execResult = { success: true, message: uiCommand.confirmation ?? "Выполнено" };
         if (opts.onUiAction) {
           execResult = await opts.onUiAction(uiCommand.action);
@@ -89,10 +94,20 @@ export function useJarvis(opts: UseJarvisOptions = {}) {
         return r;
       }
 
+      let attachmentIds: string[] = [];
+      if (files.length > 0) {
+        const form = new FormData();
+        files.forEach((file) => form.append("files", file));
+        const upload = await fetch("/api/chat/attachments", { method: "POST", body: form, signal });
+        const uploadData = await upload.json().catch(() => ({}));
+        if (!upload.ok) throw new Error(uploadData.error ?? `Upload failed (${upload.status})`);
+        attachmentIds = (uploadData.attachments ?? []).map((attachment: { id: string }) => attachment.id);
+      }
       const res = await fetch("/api/jarvis/orchestrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, preferredType }),
+        body: JSON.stringify({ message, preferredType, attachmentIds }),
+        signal,
       });
       const data = await res.json();
       const r: JarvisResult = {
@@ -138,6 +153,16 @@ export function useJarvis(opts: UseJarvisOptions = {}) {
           error: data.error,
         });
         if (opts.autoSpeak && data.ok) speakText(replyText);
+      }
+
+      // Execute a server-emitted UI action (e.g. navigate to a page). The
+      // orchestrator decides the action; the client performs it.
+      if (data.uiAction && opts.onUiAction) {
+        try {
+          await opts.onUiAction(data.uiAction as UiAction);
+        } catch {
+          // UI action failures must not break the chat flow.
+        }
       }
       return r;
     } catch (e) {

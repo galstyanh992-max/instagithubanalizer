@@ -1,3 +1,4 @@
+
 // ─── Agent OS — Approval Lifecycle Wiring ──────────────────────
 // When an approval is approved, automatically find and resume
 // the linked ToolExecution (if any).
@@ -61,7 +62,6 @@ export function initApprovalLifecycle(): void {
       const result = await toolHub.executeTool({
         workspaceId: execution.workspaceId,
         agentId: execution.agentId ?? '',
-        taskId: execution.taskId ?? undefined,
         toolKey,
         action: execution.action,
         input: parsedInput,
@@ -79,3 +79,4 @@ export function initApprovalLifecycle(): void {
 
   loggers.toolHub.info('[ApprovalLifecycle] Initialized — approval.approved → ToolExecution resume wired');
 }
+

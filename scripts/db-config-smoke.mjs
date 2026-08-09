@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 let fail = 0;
 const bad = (m) => { console.error("FAIL:", m); fail++; };
@@ -7,7 +7,14 @@ const okmsg = (m) => console.log("ok:", m);
 
 // prisma schema validity (dummy non-secret placeholders, no live DB)
 try {
-  execSync('DATABASE_URL="postgresql://u:p@localhost:5432/db" DIRECT_URL="postgresql://u:p@localhost:5432/db" npx prisma validate', { stdio: "pipe" });
+  execFileSync(process.execPath, ["node_modules/prisma/build/index.js", "validate"], {
+    stdio: "pipe",
+    env: {
+      ...process.env,
+      DATABASE_URL: "postgresql://u:p@localhost:5432/db",
+      DIRECT_URL: "postgresql://u:p@localhost:5432/db",
+    },
+  });
   okmsg("prisma schema valid");
 } catch {
   bad("prisma schema invalid");

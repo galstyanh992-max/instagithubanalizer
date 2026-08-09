@@ -1,229 +1,147 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { Cpu, Network, Thermometer, Brain, Droplets, Fan, Activity } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { Cpu, HardDrive, Network, Settings, Activity, Thermometer, Wind, Fingerprint } from "lucide-react";
+import { useEffect, useState } from "react";
 
-type BarProps = {
-  label: string;
-  value: number;
-  color: string;
-};
-
-const PROGRESS_VARIANTS: Record<string, "cyan" | "amber" | "lime"> = {
-  cyan: "cyan",
-  purple: "cyan",
-  lime: "lime",
-  amber: "amber",
-};
-
-function Bar({ label, value, color }: BarProps) {
-  const clamped = Math.min(100, Math.max(0, value));
-  const variant = PROGRESS_VARIANTS[color] ?? "cyan";
+function TechBar({ label, value, max = 100, color = "bg-cyan-500", detail }: { label: string, value: number, max?: number, color?: string, detail?: string }) {
+  const percent = Math.min(100, (value / max) * 100);
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-[10px] font-mono">
-        <span className="text-zinc-500">{label}</span>
-        <span className="text-cyan-100 data-value">{clamped.toFixed(1)}%</span>
+    <div className="flex flex-col gap-1 w-full">
+      <div className="flex justify-between items-center text-[10px] font-mono tracking-widest text-cyan-600 uppercase">
+        <span className="flex items-center gap-2">
+          {label === 'CPU' && <Settings className="w-3 h-3 text-cyan-400" />}
+          {label === 'GPU' && <Cpu className="w-3 h-3 text-cyan-400" />}
+          {label === 'RAM' && <HardDrive className="w-3 h-3 text-[#a3e635]" />}
+          {label === 'VRAM' && <Activity className="w-3 h-3 text-orange-400" />}
+          {label}
+        </span>
+        <div className="flex gap-4">
+          <span className="text-cyan-100">{value.toFixed(0)}%</span>
+          {detail && <span className="text-cyan-700 w-16 text-right">{detail}</span>}
+        </div>
       </div>
-      <Progress value={clamped} variant={variant} className="h-1.5" />
+      <div className="h-1 w-full bg-cyan-950/50 flex">
+        <div 
+          className={`h-full ${color} transition-all duration-500 relative`} 
+          style={{ width: `${percent}%` }}
+        >
+          {/* Glowing dot at the end */}
+          <div className={`absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white shadow-[0_0_8px_#fff]`}></div>
+        </div>
+      </div>
     </div>
   );
 }
 
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  const max = Math.max(1, ...data);
-  const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * 100;
-    const y = 100 - (v / max) * 100;
-    return `${x},${y}`;
-  }).join(" ");
+function MiniGraph({ color, up }: { color: string, up: boolean }) {
   return (
-    <svg className="w-full h-16 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id={`grad-${color}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.5" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon
-        points={`0,100 ${points} 100,100`}
-        fill={`url(#grad-${color})`}
-        opacity="0.25"
-      />
-      <polyline
-        points={points}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ filter: `drop-shadow(0 0 4px ${color})` }}
-      />
-    </svg>
-  );
-}
-
-const models = [
-  { name: "Claude 3.5", status: "online" },
-  { name: "Gemini 1.5", status: "online" },
-  { name: "GPT-4o", status: "busy" },
-  { name: "Codex", status: "offline" },
-  { name: "Grok 3.2", status: "online" },
-  { name: "Qwen 2.5", status: "waiting" },
-  { name: "Llama 3.1 70B", status: "online" },
-  { name: "Local Models", status: "offline" },
-];
-
-const StatusIcon = ({ status }: { status: string }) => {
-  switch (status) {
-    case "online": return <div className="h-2 w-2 rounded-full bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.9)]" />;
-    case "busy": return <div className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)]" />;
-    case "waiting": return <div className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.9)]" />;
-    case "offline": return <div className="h-2 w-2 rounded-full bg-red-500/40" />;
-    default: return null;
-  }
-};
-
-const statusColor = (status: string) => {
-  switch (status) {
-    case "online": return "text-lime-400";
-    case "busy": return "text-amber-400";
-    case "waiting": return "text-cyan-400";
-    case "offline": return "text-red-500/50";
-    default: return "text-zinc-500";
-  }
-};
-
-function MetricTile({
-  icon: Icon,
-  value,
-  color,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  value: string;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 p-2 rounded-md glass-panel-subtle">
-      <Icon className={cn("h-3.5 w-3.5", color)} />
-      <div className={cn("text-[10px] font-mono font-bold", color)}>{value}</div>
+    <div className="w-full h-8 flex items-end justify-between gap-[2px] mt-2 opacity-70">
+      {[...Array(15)].map((_, i) => {
+        const h = Math.random() * 100;
+        return (
+          <div key={i} className={`w-full ${color}`} style={{ height: `${up ? h : 100 - h}%` }}></div>
+        )
+      })}
     </div>
-  );
+  )
 }
 
 export function OsSystemStatus() {
-  const [metrics, setMetrics] = useState({
-    cpu: 0,
-    gpu: 0,
-    ram: 0,
-    totalRam: 64,
-    vram: 0,
-    temp: 40,
-    networkIn: 0,
-    networkOut: 0,
-  });
-
-  const [netHistory, setNetHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const res = await fetch('/api/os-metrics');
-        if (res.ok) {
-          const data = await res.json();
-          setMetrics(data);
-          setNetHistory((prev) => {
-            const next = [...prev, (data.networkIn || 0) + (data.networkOut || 0)];
-            if (next.length > 20) next.shift();
-            return next;
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch OS metrics", err);
-      }
-    };
-
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
+  const [activeModelName, setActiveModelName] = useState("Gemini 1.5");
+  
   return (
-    <div className="h-full flex flex-col glass-panel-strong p-4 space-y-4 relative overflow-hidden border-l-2 border-l-cyan-400">
-      {/* System Core Section */}
-      <div className="panel-header !px-0 !pt-0">
-        <Cpu className="h-3.5 w-3.5" />
-        Системное ядро
-      </div>
-
-      <div className="space-y-3 pt-2">
-        <Bar label="CPU" value={metrics.cpu} color="bg-cyan-400" />
-        <Bar label="GPU" value={metrics.gpu} color="bg-purple-400" />
-        <Bar label="RAM" value={(metrics.ram / metrics.totalRam) * 100 || 0} color="bg-lime-400" />
-        <Bar label="VRAM" value={(metrics.vram / 24) * 100} color="bg-amber-400" />
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-cyan-400/10">
-        <MetricTile icon={Thermometer} value={`${metrics.temp.toFixed(1)}°C`} color="text-red-400" />
-        <MetricTile icon={Fan} value="41%" color="text-cyan-400" />
-        <MetricTile icon={Droplets} value="42%" color="text-blue-400" />
-      </div>
-
-      <div className="flex items-center gap-2 pt-1 border-t border-cyan-400/10">
-        <Network className="h-3.5 w-3.5 text-cyan-400" />
-        <div className="text-[10px] font-mono text-zinc-400 flex justify-between w-full">
-          <span>↓ {metrics.networkIn.toFixed(1)} MB/s</span>
-          <span>↑ {metrics.networkOut.toFixed(1)} MB/s</span>
-        </div>
-      </div>
-
-      {/* Neural Models Section */}
-      <div className="pt-2 border-t border-cyan-400/10">
-        <div className="flex items-center justify-between text-cyan-300 font-mono text-[10px] uppercase tracking-[0.15em] mb-3">
-          <div className="flex items-center gap-2">
-            <Brain className="h-3.5 w-3.5" />
-            Модели
+    <div className="flex flex-col gap-4 h-full">
+      
+      {/* СИСТЕМНЫЙ МОНИТОР */}
+      <div className="sci-fi-panel sci-fi-panel-chamfer-tr p-4 relative">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-2 h-2 rounded-full border border-cyan-400 flex items-center justify-center">
+            <div className="w-1 h-1 bg-cyan-400 rounded-full"></div>
           </div>
-          <span className="text-zinc-500">8/8</span>
+          <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-cyan-500">Системный монитор</span>
+        </div>
+        
+        <div className="flex flex-col gap-4">
+          <TechBar label="CPU" value={18} detail="3.2 GHz" color="bg-cyan-500" />
+          <TechBar label="GPU" value={32} detail="62 °C" color="bg-cyan-500" />
+          <TechBar label="RAM" value={41} detail="13.2 / 32 GB" color="bg-[#a3e635]" />
+          <TechBar label="VRAM" value={48} detail="8.2 / 16 GB" color="bg-orange-500" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {models.map((m, i) => (
-            <div key={i} className="flex items-center justify-between p-1.5 rounded-md glass-panel-subtle border-surface-border-subtle">
-              <span className={`text-[9px] font-mono truncate ${m.status === "offline" ? "text-zinc-600" : "text-cyan-100"}`}>
-                {m.name}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[8px] uppercase tracking-wider ${statusColor(m.status)}`}>
-                  {m.status}
-                </span>
-                <StatusIcon status={m.status} />
+        <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className="flex flex-col gap-1">
+            <span className="text-[8px] uppercase text-cyan-700 tracking-widest">Температура</span>
+            <div className="flex items-center gap-2 text-cyan-100 font-mono text-sm">
+              <Thermometer className="w-4 h-4 text-orange-400" />
+              42 °C
+            </div>
+            <span className="text-[8px] text-[#a3e635] uppercase">Норма</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[8px] uppercase text-cyan-700 tracking-widest">Скорость Вент.</span>
+            <div className="flex items-center gap-2 text-cyan-100 font-mono text-sm">
+              <Wind className="w-4 h-4 text-cyan-400" />
+              1200 RPM
+            </div>
+            <span className="text-[8px] text-cyan-600 uppercase">Тихо</span>
+          </div>
+        </div>
+      </div>
+
+      {/* СЕТЬ */}
+      <div className="sci-fi-panel p-4 relative glow-border">
+        <div className="flex items-center gap-2 mb-4">
+          <Network className="w-3 h-3 text-cyan-500" />
+          <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-cyan-500">Сеть</span>
+        </div>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 text-cyan-100 font-mono text-sm">
+              <span className="text-cyan-500">↓</span> 1.2 <span className="text-cyan-700 text-[10px]">Гбит/с</span>
+            </div>
+            <MiniGraph color="bg-cyan-500" up={false} />
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 text-orange-400 font-mono text-sm">
+              <span className="text-orange-400">↑</span> 0.9 <span className="text-cyan-700 text-[10px]">Гбит/с</span>
+            </div>
+            <MiniGraph color="bg-orange-400" up={true} />
+          </div>
+        </div>
+      </div>
+
+      {/* АКТИВНЫЕ МОДЕЛИ */}
+      <div className="sci-fi-panel sci-fi-panel-chamfer-tl-br p-4 flex-1 flex flex-col relative">
+        <div className="flex items-center gap-2 mb-4">
+          <Fingerprint className="w-3 h-3 text-cyan-500" />
+          <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-cyan-500">Активные модели и сервисы</span>
+        </div>
+        <div className="flex flex-col gap-2 font-mono text-[9px] tracking-widest flex-1 overflow-y-auto custom-scrollbar">
+          {[
+            { n: 'Claude 3.5', s: 'ONLINE', c: 'text-[#a3e635]' },
+            { n: 'GPT-4o', s: 'ACTIVE', c: 'text-cyan-400' },
+            { n: 'Gemini 1.5', s: 'ONLINE', c: 'text-[#a3e635]' },
+            { n: 'GEM.AI 2', s: 'STANDBY', c: 'text-orange-400' },
+            { n: 'Llama 3.1 70B', s: 'ONLINE', c: 'text-[#a3e635]' },
+            { n: 'Qwen 2.5', s: 'STANDBY', c: 'text-orange-400' },
+            { n: 'Собственная модель', s: 'ONLINE', c: 'text-[#a3e635]' },
+            { n: 'Визуальный модуль v2.1', s: 'ACTIVE', c: 'text-cyan-400' },
+            { n: 'Аналитический модуль', s: 'ONLINE', c: 'text-[#a3e635]' }
+          ].map(m => (
+            <div key={m.n} className="flex items-center justify-between py-1 border-b border-cyan-900/30">
+              <div className="flex items-center gap-2">
+                <Settings className="w-2 h-2 text-cyan-700" />
+                <span className="text-cyan-100">{m.n}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className={`${m.c} uppercase`}>{m.s}</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${m.c.replace('text-', 'bg-')} shadow-[0_0_5px]`}></div>
               </div>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Network Activity Sparkline */}
-      <div className="flex-1 pt-2 border-t border-cyan-400/10 flex flex-col min-h-0">
-        <div className="flex items-center justify-between text-cyan-300 font-mono text-[10px] uppercase tracking-[0.15em] mb-2">
-          <div className="flex items-center gap-2">
-            <Activity className="h-3.5 w-3.5" />
-            Сетевая активность
-          </div>
-          <span className="text-[8px] text-lime-400 status-dot status-online" />
-        </div>
-        <div className="flex-1 min-h-0 rounded-md glass-panel-inset p-2">
-          <Sparkline data={netHistory} color="#22d3ee" />
-        </div>
-        <div className="flex justify-between text-[9px] font-mono text-zinc-500 mt-1.5">
-          <span>PING 1.42K</span>
-          <span>CONN 9.8K</span>
-          <span>PKTS/S 120</span>
-        </div>
-      </div>
+      
     </div>
   );
 }

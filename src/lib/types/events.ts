@@ -54,6 +54,9 @@ export const EventTypes = {
   ORCHESTRATOR_PLAN_APPROVED: 'orchestrator.plan_approved',
   ORCHESTRATOR_COST_ESTIMATED: 'orchestrator.cost_estimated',
 
+  // Local Codex subscription provider
+  CODEX_PROVIDER_EVENT: 'provider.codex.event',
+
   // Agent system events (Stage 3)
   AGENT_PROFILE_UPDATED: 'agent.profile_updated',
   AGENT_CAPABILITY_UPDATED: 'agent.capability_updated',
@@ -244,6 +247,17 @@ export interface OrchestratorCostEstimatedPayload extends BaseEventPayload {
   estimatedTokens?: number;
   estimatedUsd?: number;
   correlationId?: string;
+}
+
+export interface CodexProviderEventPayload extends BaseEventPayload {
+  providerId: 'codex-chatgpt-subscription';
+  sequence: number;
+  eventType: string;
+  threadId?: string;
+  turnId?: string;
+  itemId?: string;
+  status?: string;
+  failureCode?: string;
 }
 
 // ─── Agent System Event Payloads (Stage 3) ──────────────────
@@ -553,6 +567,7 @@ export interface EventMap {
   [EventTypes.ORCHESTRATOR_PLAN_CREATED]: OrchestratorPlanCreatedPayload;
   [EventTypes.ORCHESTRATOR_PLAN_APPROVED]: OrchestratorPlanApprovedPayload;
   [EventTypes.ORCHESTRATOR_COST_ESTIMATED]: OrchestratorCostEstimatedPayload;
+  [EventTypes.CODEX_PROVIDER_EVENT]: CodexProviderEventPayload;
   [EventTypes.AGENT_PROFILE_UPDATED]: AgentProfileUpdatedPayload;
   [EventTypes.AGENT_CAPABILITY_UPDATED]: AgentCapabilityUpdatedPayload;
   [EventTypes.AGENT_PERMISSION_UPDATED]: AgentPermissionUpdatedPayload;

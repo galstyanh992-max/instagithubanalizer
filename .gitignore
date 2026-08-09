@@ -78,6 +78,12 @@ prompt
 server.log
 # Skills directory
 /skills/
+/.jarvis/state/
+/.jarvis/cache/
+/.jarvis/logs/
+/.jarvis/tasks/
+/.jarvis/browser-profiles/
+/.jarvis/outputs/
 # Secrets
 .env.local
 .env.production
@@ -94,3 +100,36 @@ dist/
 
 .vercel
 .codebuddy
+
+# Test/build run output artifacts (not source)
+/out_*.txt
+/typecheck_out.txt
+/lint_out.txt
+/lint_full.txt
+/prisma_validate.txt
+/migrate_status.txt
+/git_head.txt
+/git_branch.txt
+/git_log.txt
+/git_status.txt
+/rls_output.json
+/models_usage.md
+/env_analysis.txt
+/env_references.txt
+/3001
+/hs_err_pid*.log
+/server.log
+
+# Graphify / extraction / temp output (generated)
+/temp_extract/
+/graphify-out/
+/output/
+/prisma/archived_migrations/
+
+# Schema backups (not the active schema)
+/prisma/schema.old.prisma
+/prisma/schema.prisma.bak*
+/prisma/schema_clean.prisma
+/prisma/schema_pull.prisma
+/prisma/draft_phase04_migration.sql
+/prisma/migrations/phase04_draft.sql

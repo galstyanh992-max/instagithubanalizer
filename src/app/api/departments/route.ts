@@ -14,9 +14,6 @@ const createDepartmentSchema = z.object({
 });
 
 export const GET = safe(async (req: Request) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return err("Unauthorized", 401);
-
   const departments = await db.department.findMany({
     orderBy: { createdAt: "desc" },
   });
@@ -24,9 +21,6 @@ export const GET = safe(async (req: Request) => {
 });
 
 export const POST = safe(async (req: Request) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return err("Unauthorized", 401);
-
   const body = await parseJson(req);
   const parsed = createDepartmentSchema.safeParse(body);
   

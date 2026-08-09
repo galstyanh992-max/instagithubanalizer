@@ -1,6 +1,7 @@
+// @vitest-environment node
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CodexWorkerAdapter } from '../adapters/codex-cli';
-import * as child_process from 'child_process';
 import { TaskPayload } from '../types';
 
 vi.mock('child_process');
@@ -20,6 +21,7 @@ vi.mock('fs');
  */
 function makeMockChild(overrides: Partial<{
   closeCode: number | null;
+  closeSignal: string | null;
   emitClose: boolean;
   killTriggersClose: boolean;
   closeCodeOnKill: number | null;
@@ -29,33 +31,49 @@ function makeMockChild(overrides: Partial<{
   const stdinEnd = overrides.stdinEnd ?? vi.fn();
   const stdinWrite = overrides.stdinWrite ?? vi.fn();
   const emitClose = overrides.emitClose ?? true;
-  const closeCode = overrides.closeCode ?? 0;
+  const closeCode = overrides.closeCode !== undefined ? overrides.closeCode : 0;
+  const closeSignal = overrides.closeSignal ?? null;
   const killTriggersClose = overrides.killTriggersClose ?? false;
   const closeCodeOnKill = overrides.closeCodeOnKill ?? null;
 
-  let closeCallback: ((code: number | null, signal?: string | null) => void) | undefined;
+  const handlers: Record<string, Array<(...args: any[]) => void>> = {};
+  const emit = (event: string, ...args: unknown[]) => {
+    for (const handler of handlers[event] ?? []) handler(...args);
+  };
 
   const kill = vi.fn((signal?: string) => {
     if (killTriggersClose) {
       // Deterministic async terminal event — no real wait, no fake timers needed.
-      queueMicrotask(() => closeCallback?.(closeCodeOnKill, signal ?? null));
+      queueMicrotask(() => emit('close', closeCodeOnKill, signal ?? null));
     }
   });
 
-  return {
+  const child: any = {
     stdin: { end: stdinEnd, write: stdinWrite },
     stdout: { on: vi.fn() },
     stderr: { on: vi.fn() },
     on: vi.fn((event: string, cb: (...args: unknown[]) => void) => {
-      if (event === 'close') {
-        closeCallback = cb as any;
-        if (emitClose && !killTriggersClose) {
-          setTimeout(() => cb(closeCode), 10);
-        }
+      (handlers[event] ??= []).push(cb);
+      if (event === 'close' && emitClose && !killTriggersClose) {
+        setTimeout(() => emit('close', closeCode, closeSignal), 10);
       }
+      return child;
     }),
-    kill
+    kill,
+    emit,
+    handlers
   };
+
+  return child;
+}
+
+/** Waits until the adapter has attached a listener for `event`. */
+async function waitForHandler(child: any, event: string): Promise<void> {
+  for (let i = 0; i < 200; i++) {
+    if ((child.handlers[event] ?? []).length > 0) return;
+    await new Promise((r) => setTimeout(r, 1));
+  }
+  throw new Error(`Adapter never registered a '${event}' handler`);
 }
 
 describe('CodexWorkerAdapter', () => {
@@ -295,5 +313,131 @@ describe('CodexWorkerAdapter', () => {
     await executePromise;
 
     expect(mockSpawn).toHaveBeenCalledTimes(1);
+  });
+
+  // ─── Terminal-state precedence regressions (Phase 06B) ─────────────────
+
+  describe('terminal-state precedence', () => {
+    it('null exit code without cancellation or timeout => FAILED, never coerced to 0', async () => {
+      mockSpawn.mockReturnValue(makeMockChild({ closeCode: null, closeSignal: null }));
+
+      const result = await adapter.execute(baseTask, 'D:\\test');
+
+      expect(result.status).toBe('FAILED');
+      expect(result.status).not.toBe('SUCCESS');
+      expect(result.exitCode).not.toBe(0);
+      expect(result.terminalReason).toBe('NO_EXIT_CODE');
+    });
+
+    it('signal-only close (null exit + SIGKILL) => FAILED, never SUCCESS', async () => {
+      mockSpawn.mockReturnValue(makeMockChild({ closeCode: null, closeSignal: 'SIGKILL' }));
+
+      const result = await adapter.execute(baseTask, 'D:\\test');
+
+      expect(result.status).toBe('FAILED');
+      expect(result.status).not.toBe('SUCCESS');
+      expect(result.terminalReason).toBe('NO_EXIT_CODE');
+      expect(result.terminalSignal).toBe('SIGKILL');
+    });
+
+    it('SUCCESS is gated on a strict exit code of 0 and nothing else', async () => {
+      const cases: Array<{ code: number | null; signal: string | null; expected: string }> = [
+        { code: 0, signal: null, expected: 'SUCCESS' },
+        { code: 1, signal: null, expected: 'FAILED' },
+        { code: 2, signal: null, expected: 'FAILED' },
+        { code: null, signal: null, expected: 'FAILED' },
+        { code: null, signal: 'SIGTERM', expected: 'FAILED' }
+      ];
+
+      for (const testCase of cases) {
+        const localAdapter = new CodexWorkerAdapter();
+        const spy = vi.spyOn(localAdapter as any, 'spawnProcess');
+        spy.mockReturnValue(makeMockChild({ closeCode: testCase.code, closeSignal: testCase.signal }));
+
+        const result = await localAdapter.execute(baseTask, 'D:\\test');
+        expect(
+          result.status,
+          `exitCode=${testCase.code} signal=${testCase.signal}`
+        ).toBe(testCase.expected);
+      }
+    });
+
+    it('cancellation followed by a later timeout stays CANCELLED', async () => {
+      const child = makeMockChild({ emitClose: false });
+      mockSpawn.mockReturnValue(child);
+
+      const promise = adapter.execute(baseTask, 'D:\\test', { timeoutMs: 15 });
+      await waitForHandler(child, 'close');
+
+      await adapter.cancel(baseTask.runId);
+      await new Promise((r) => setTimeout(r, 45));
+      child.emit('close', null, 'SIGKILL');
+
+      const result = await promise;
+      expect(result.status).toBe('CANCELLED');
+      expect(result.status).not.toBe('TIMEOUT');
+      expect(result.terminalReason).toBe('CANCELLED_BY_OWNER');
+    });
+
+    it('timeout followed by a later close(0) stays TIMEOUT', async () => {
+      const child = makeMockChild({ emitClose: false });
+      mockSpawn.mockReturnValue(child);
+
+      const promise = adapter.execute(baseTask, 'D:\\test', { timeoutMs: 15 });
+      await waitForHandler(child, 'close');
+
+      await new Promise((r) => setTimeout(r, 45));
+      child.emit('close', 0, null);
+
+      const result = await promise;
+      expect(result.status).toBe('TIMEOUT');
+      expect(result.status).not.toBe('SUCCESS');
+    });
+
+    it('a duplicate close event produces exactly one terminal result', async () => {
+      const child = makeMockChild({ emitClose: false });
+      mockSpawn.mockReturnValue(child);
+
+      const promise = adapter.execute(baseTask, 'D:\\test', { timeoutMs: 180000 });
+      await waitForHandler(child, 'close');
+
+      child.emit('close', 0, null);
+      child.emit('close', 1, null);
+
+      const result = await promise;
+      expect(result.status).toBe('SUCCESS');
+      expect(result.exitCode).toBe(0);
+      expect(await promise).toBe(result);
+    });
+
+    it('a spawn error, then a late close, produces exactly one FAILED result', async () => {
+      const child = makeMockChild({ emitClose: false });
+      mockSpawn.mockReturnValue(child);
+
+      const promise = adapter.execute(baseTask, 'D:\\test', { timeoutMs: 180000 });
+      await waitForHandler(child, 'error');
+
+      child.emit('error', new Error('spawn ENOENT'));
+      child.emit('close', 0, null);
+
+      const result = await promise;
+      expect(result.status).toBe('FAILED');
+      expect(result.terminalReason).toBe('SPAWN_ERROR');
+      expect(await promise).toBe(result);
+    });
+
+    it('emits non-secret structured terminal diagnostics', async () => {
+      mockSpawn.mockReturnValue(makeMockChild({ closeCode: 3 }));
+
+      const result = await adapter.execute(baseTask, 'D:\\test');
+
+      expect(result.warnings).toContain('terminalReason=NON_ZERO_EXIT_CODE');
+      expect(result.warnings).toContain('exitCode=3');
+      expect(result.warnings).toContain('cancelRequested=false');
+      expect(result.warnings).toContain('timedOut=false');
+      // Sandbox fail-closed diagnostics are preserved alongside them.
+      expect(result.warnings).toContain('sandboxPolicy=workspace-write');
+      expect(result.warnings).toContain('dangerousBypassUsed=false');
+    });
   });
 });

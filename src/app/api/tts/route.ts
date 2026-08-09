@@ -1,58 +1,93 @@
 import { NextResponse } from "next/server";
-import { execFile } from "child_process";
-import { mkdtemp, unlink, readFile } from "fs/promises";
-import { tmpdir } from "os";
-import { join } from "path";
 import { randomUUID } from "node:crypto";
 import { uploadAsset } from "@/services/storage.service";
 
 export const runtime = "nodejs";
+const MAX_TTS_TEXT_LENGTH = 2_000;
+const MAX_TTS_CHUNK_LENGTH = 180;
+const MAX_AUDIO_CHUNK_BYTES = 2 * 1024 * 1024;
 
-// Resolve the CLI by its stable command name. A user-profile absolute path leaks
-// machine-specific details and cannot be copied into a standalone Next.js bundle.
-const EDGE_TTS_BIN = process.platform === "win32" ? "edge-tts.exe" : "edge-tts";
+function splitTtsText(value: string): string[] {
+  const words = value.trim().split(/\s+/);
+  const chunks: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if (word.length > MAX_TTS_CHUNK_LENGTH) {
+      if (current) chunks.push(current);
+      for (let offset = 0; offset < word.length; offset += MAX_TTS_CHUNK_LENGTH) {
+        chunks.push(word.slice(offset, offset + MAX_TTS_CHUNK_LENGTH));
+      }
+      current = "";
+      continue;
+    }
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > MAX_TTS_CHUNK_LENGTH) {
+      chunks.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+async function fetchTtsChunk(text: string, index: number, total: number): Promise<Buffer> {
+  const query = new URLSearchParams({
+    ie: "UTF-8",
+    q: text,
+    tl: "ru",
+    total: String(total),
+    idx: String(index),
+    textlen: String(text.length),
+    client: "tw-ob",
+    prev: "input",
+    ttsspeed: "1",
+  });
+  const response = await fetch(`https://translate.google.com/translate_tts?${query}`, {
+    headers: { "user-agent": "JARVIS/0.2 local TTS" },
+    signal: AbortSignal.timeout(15_000),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Google TTS HTTP ${response.status}`);
+  const declaredLength = Number(response.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_AUDIO_CHUNK_BYTES) {
+    throw new Error("Ответ TTS превышает допустимый размер");
+  }
+  const bytes = await response.arrayBuffer();
+  if (bytes.byteLength > MAX_AUDIO_CHUNK_BYTES) throw new Error("Ответ TTS превышает допустимый размер");
+  return Buffer.from(bytes);
+}
 
 export async function POST(req: Request) {
   try {
-    const { text, voice = "ru-RU-SvetlanaNeural" } = await req.json();
+    const { text } = await req.json();
     if (!text || typeof text !== "string") {
-      return NextResponse.json({ error: "text is required" }, { status: 400 });
+      return NextResponse.json({ error: "Текст не передан" }, { status: 400 });
+    }
+    const normalizedText = text.trim();
+    if (normalizedText.length > MAX_TTS_TEXT_LENGTH) {
+      return NextResponse.json({ error: `Текст превышает лимит ${MAX_TTS_TEXT_LENGTH} символов` }, { status: 413 });
     }
 
-    // Create temp file for the audio output
-    const dir = await mkdtemp(join(tmpdir(), "tts-"));
-    const outFile = join(dir, "audio.mp3");
-
-    await new Promise<void>((resolve, reject) => {
-      execFile(
-        EDGE_TTS_BIN,
-        ["--voice", voice, "--text", text, "--write-media", outFile],
-        { timeout: 30000, maxBuffer: 1024 * 1024 },
-        (err) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
-
-    const audio = await readFile(outFile);
+    const textChunks = splitTtsText(normalizedText);
+    const audioBuffer = Buffer.concat(await Promise.all(
+      textChunks.map((chunk, index) => fetchTtsChunk(chunk, index, textChunks.length)),
+    ));
 
     // Upload generated audio to Supabase Storage so it does not stay on the PC
     const { publicUrl } = await uploadAsset(
       "tts",
-      audio,
+      audioBuffer,
       `${randomUUID()}.mp3`,
       "audio/mpeg"
     );
-
-    // Cleanup temp file
-    await unlink(outFile).catch(() => {});
 
     return NextResponse.json({ url: publicUrl });
   } catch (error) {
     console.error("[tts] error:", error);
     return NextResponse.json(
-      { error: `TTS failed: ${error instanceof Error ? error.message : "unknown"}` },
+      { error: `Синтез речи не выполнен: ${error instanceof Error ? error.message : "неизвестная ошибка"}` },
       { status: 500 }
     );
   }

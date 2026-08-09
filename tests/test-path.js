@@ -1,0 +1,25 @@
+const fs = require('fs');
+
+const html = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0; background:#000; overflow:hidden;">
+  <div style="position:relative; width:1920px; height:1080px; background:url('../public/dashboard/assets/backgrounds/user-background.png?v=3') no-repeat center top; background-size:100% 100%;">
+    
+    <!-- Sidebar bounding box -->
+    <div style="position:absolute; top:70px; left:0px; width:480px; height:930px; border:1px solid red; z-index:9;">
+      <!-- Shape -->
+      <div style="
+        position:absolute; inset:0; 
+        background: rgba(0,255,0,0.5); 
+        clip-path: path('M 15 15 C 150 5, 300 0, 420 10 C 460 30, 470 70, 460 150 C 450 300, 450 600, 460 780 C 470 860, 460 890, 420 900 C 300 910, 150 905, 15 895 C 0 700, 0 300, 15 15 Z');
+      "></div>
+    </div>
+    
+  </div>
+</body>
+</html>
+`;
+
+fs.writeFileSync('tests/path-test.html', html);
+console.log('Test file created.');

@@ -1,4 +1,4 @@
-import { WorkerAdapter, WorkerHealth, WorkerCapabilities, TaskPayload, ExecutionPlan, NormalizedResult, WorkerResult, ModelProfile } from '../types';
+import { WorkerAdapter, WorkerHealth, WorkerCapabilities, TaskPayload, ExecutionPlan, NormalizedResult, WorkerResult, ModelProfile, classifyWorkerTerminal, formatTerminalDiagnostics } from '../types';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,6 +53,11 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
   displayName = 'Antigravity Official CLI';
 
   private activeProcesses: Map<string, child_process.ChildProcess> = new Map();
+  // Runs whose cancellation was requested by the owner before the process
+  // closed. Drives the CANCELLED terminal classification with precedence over
+  // timeout / null-exit / exit code. Cancellation is tracked explicitly rather
+  // than inferred from the OS signal.
+  private cancelledRuns: Set<string> = new Set();
 
   /**
    * Discover executable path locally via trusted discovery.
@@ -342,6 +347,33 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
       let stdout = '';
       let stderr = '';
       let isTimedOut = false;
+      // Single-finalization guard: the Promise resolves exactly once regardless
+      // of whether 'close' and/or 'error' fire, and regardless of event order.
+      let finalized = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
+      // Single-finalization protocol.
+      //
+      // `claimTerminal()` MUST be called synchronously at the very top of every
+      // terminal handler - before any `await` - otherwise a second event that
+      // arrives during the await window would slip past the guard and race the
+      // first one. The first claimant wins; every later event returns early.
+      // Timers are cleared as part of the claim.
+      const claimTerminal = (): boolean => {
+        if (finalized) return false;
+        finalized = true;
+        if (timer !== undefined) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        this.activeProcesses.delete(runId);
+        return true;
+      };
+
+      const settle = (result: WorkerResult): void => {
+        this.cancelledRuns.delete(runId);
+        resolve(result);
+      };
 
       const child = this.spawnProcess(plan.command, plan.args, {
         cwd: plan.cwd,
@@ -354,7 +386,8 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
 
       this.activeProcesses.set(runId, child);
 
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
+        if (finalized) return;
         isTimedOut = true;
         child.kill('SIGKILL');
       }, timeoutMs);
@@ -375,22 +408,32 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
       });
 
       child.on('close', async (exitCode: number | null, signal: string | null) => {
-        clearTimeout(timer);
-        this.activeProcesses.delete(runId);
+        if (!claimTerminal()) return;
         const durationMs = Date.now() - startTime;
-        let code = exitCode ?? 0;
-        if (exitCode === null && signal) {
-          code = -1;
-        }
 
-        if (isTimedOut) {
-          return resolve({
+        // Strict terminal precedence. A null/undefined exit code is NEVER
+        // coerced to 0, so a signal-only close can never become SUCCESS.
+        const classification = classifyWorkerTerminal({
+          cancelRequested: this.cancelledRuns.has(runId),
+          timedOut: isTimedOut,
+          spawnError: null,
+          exitCode,
+          signal
+        });
+        const diagnostics = formatTerminalDiagnostics(classification);
+        const code = classification.exitCode;
+
+        if (classification.status === 'CANCELLED' || classification.status === 'TIMEOUT') {
+          const isTimeout = classification.status === 'TIMEOUT';
+          return settle({
             workerId: this.id,
             taskId,
             runId,
             executionId,
-            status: 'TIMEOUT',
-            summary: `Execution timed out after ${timeoutMs}ms`,
+            status: classification.status,
+            summary: isTimeout
+              ? `Execution timed out after ${timeoutMs}ms`
+              : 'Execution cancelled by caller.',
             changedFiles: [],
             createdFiles: [],
             deletedFiles: [],
@@ -400,13 +443,19 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
             stderrSummary: stderr.substring(0, 1000),
             exitCode: -1,
             durationMs,
-            warnings: ['TIMEOUT_EXCEEDED'],
-            errors: ['Process killed due to execution timeout.'],
+            warnings: isTimeout
+              ? ['TIMEOUT_EXCEEDED', ...diagnostics]
+              : ['CANCELLED_BY_OWNER', ...diagnostics],
+            errors: [isTimeout
+              ? 'ANTIGRAVITY_TIMED_OUT: Process killed due to execution timeout.'
+              : 'ANTIGRAVITY_CANCELLED: Process terminated via cancel().'],
+            terminalReason: classification.reason,
+            terminalSignal: classification.diagnostics.signal,
             ...modelDiagnostics
           });
         }
 
-        const normalized = await this.normalizeResult(stdout, stderr, code, workspaceRoot);
+        await this.normalizeResult(stdout, stderr, code, workspaceRoot);
 
         // Dynamically discover created files in workspaceRoot
         const createdFiles: string[] = [];
@@ -431,20 +480,16 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
           // ignore scan errors
         }
 
-        let status: 'SUCCESS' | 'FAILED' | 'TIMEOUT' | 'CANCELLED' | 'BLOCKED_BY_AUTH' = code === 0 ? 'SUCCESS' : 'FAILED';
-        if (signal === 'SIGTERM') {
-          status = 'CANCELLED';
-        }
-        
-        const summary = status === 'SUCCESS' ? 'Antigravity CLI task completed successfully.' 
-          : (status === 'CANCELLED' ? 'Execution cancelled.' : `Task failed with exit code ${code}.`);
+        const summary = classification.status === 'SUCCESS'
+          ? 'Antigravity CLI task completed successfully.'
+          : `Task failed with exit code ${code}.`;
 
-        resolve({
+        settle({
           workerId: this.id,
           taskId,
           runId,
           executionId,
-          status,
+          status: classification.status,
           summary,
           changedFiles: createdFiles,
           createdFiles,
@@ -455,22 +500,33 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
           stderrSummary: stderr.substring(0, 1000),
           exitCode: code,
           durationMs,
-          warnings: [],
-          errors: code !== 0 ? [stderr || 'Non-zero exit code returned'] : [],
+          warnings: [...diagnostics],
+          errors: classification.status === 'FAILED'
+            ? [stderr || `ANTIGRAVITY_EXECUTION_FAILED: ${classification.reason}`]
+            : [],
+          terminalReason: classification.reason,
+          terminalSignal: classification.diagnostics.signal,
           ...modelDiagnostics
         });
       });
 
       child.on('error', (err: Error) => {
-        clearTimeout(timer);
-        this.activeProcesses.delete(runId);
+        if (!claimTerminal()) return;
         const durationMs = Date.now() - startTime;
-        resolve({
+        // Spawn/process error is terminal on its own and always FAILED.
+        const classification = classifyWorkerTerminal({
+          cancelRequested: false,
+          timedOut: false,
+          spawnError: err,
+          exitCode: null,
+          signal: null
+        });
+        settle({
           workerId: this.id,
           taskId,
           runId,
           executionId,
-          status: 'FAILED',
+          status: classification.status,
           summary: `Failed to spawn process: ${err.message}`,
           changedFiles: [],
           createdFiles: [],
@@ -479,10 +535,12 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
           patchPath: '',
           stdoutSummary: '',
           stderrSummary: err.message,
-          exitCode: -1,
+          exitCode: classification.exitCode,
           durationMs,
-          warnings: [],
+          warnings: [...formatTerminalDiagnostics(classification)],
           errors: [err.message],
+          terminalReason: classification.reason,
+          terminalSignal: null,
           ...modelDiagnostics
         });
       });
@@ -492,6 +550,9 @@ export class AntigravityWorkerAdapter implements WorkerAdapter {
   async cancel(runId: string): Promise<boolean> {
     const child = this.activeProcesses.get(runId);
     if (child) {
+      // Record cancellation BEFORE killing so the close handler classifies the
+      // run as CANCELLED (precedence over timeout / null exit / exit code).
+      this.cancelledRuns.add(runId);
       child.kill('SIGTERM');
       this.activeProcesses.delete(runId);
       return true;

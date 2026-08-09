@@ -90,7 +90,15 @@ const envSchema = z.object({
   CEREBRAS_MODEL: z.string().default("llama3.1-70b"),
 
   // Mock configuration
-  AI_ENABLE_MOCK_FALLBACK: z.string().default("true"),
+  AI_ENABLE_MOCK_FALLBACK: z.string().default("false"),
+
+  // Codex (ChatGPT subscription) chat bridge — exposes Codex models as a
+  // regular provider in providerRegistry so the chat can route to them.
+  // Master switch + read-only working directory (must be on D: per path-policy).
+  JARVIS_CODEX_CHAT_ENABLED: z.string().default("true"),
+  JARVIS_CODEX_CHAT_CWD: z.string().default("D:\\АГЕНТ\\ДЖАРВИС"),
+  // Prefer Codex as the heavy-reasoning provider when it is registered.
+  JARVIS_CODEX_AS_HEAVY: z.string().default("true"),
 
 
   OCR_PROVIDER: z.string().default("local"),

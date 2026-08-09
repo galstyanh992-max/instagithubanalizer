@@ -50,6 +50,7 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
   const [level, setLevel] = useState(0)
   const [speaking, setSpeaking] = useState(false)
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -115,11 +116,37 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
     setAiResponse('')
   }, [])
 
-  const speak = useCallback((text: string, force = false) => {
+  function speakBrowser(text: string) {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'ru-RU'
+    u.rate = 1
+    u.pitch = 1
+    u.onstart = () => setSpeaking(true)
+    u.onend = () => setSpeaking(false)
+    u.onerror = () => setSpeaking(false)
+    window.speechSynthesis.speak(u)
+  }
+
+  function stopSpeaking() {
+    const audio = audioRef.current
+    if (audio) {
+      audio.pause()
+      audio.currentTime = 0
+      audioRef.current = null
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+    setSpeaking(false)
+  }
+
+  function speak(text: string, force = false) {
     if (!force && opts.autoSpeak === false) return
     if (typeof window === 'undefined' || !text) return
 
-    const useEdge = true // Microsoft Edge TTS (free, female ru-RU-SvetlanaNeural)
+    const useEdge = true // Microsoft Edge TTS (free, female ru-RU-DarinaNeural)
 
     if (useEdge) {
       // Stop any currently playing audio
@@ -129,7 +156,7 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
       fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: 'ru-RU-SvetlanaNeural' }),
+        body: JSON.stringify({ text, voice: 'ru-RU-DarinaNeural' }),
       })
         .then(async (res) => {
           if (!res.ok) throw new Error(`TTS error: ${res.status}`)
@@ -155,34 +182,7 @@ export function useVoice(opts: UseVoiceOptions = {}): UseVoiceReturn {
     }
 
     speakBrowser(text)
-  }, [opts.autoSpeak])
-
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  const speakBrowser = useCallback((text: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.lang = 'ru-RU'
-    u.rate = 1
-    u.pitch = 1
-    u.onstart = () => setSpeaking(true)
-    u.onend = () => setSpeaking(false)
-    u.onerror = () => setSpeaking(false)
-    window.speechSynthesis.speak(u)
-  }, [])
-
-  const stopSpeaking = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-      audioRef.current = null
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-    }
-    setSpeaking(false)
-  }, [])
+  }
 
   return {
     supported,

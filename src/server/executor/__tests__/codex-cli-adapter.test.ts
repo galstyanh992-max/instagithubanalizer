@@ -3,6 +3,15 @@ import { CodexCliAdapter } from "../codex-cli-adapter";
 import { JarvisTask } from "../types";
 import * as sandbox from "../../local-control/sandbox";
 
+vi.mock("@/lib/ai-provider/codex-subscription", () => ({
+  codexSubscriptionProvider: {
+    id: "codex-chatgpt-subscription",
+    startThread: vi.fn().mockResolvedValue({ threadId: "thread-1" }),
+    startTurn: vi.fn().mockResolvedValue({ turnId: "turn-1", status: "inProgress" }),
+    cancelTurn: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 // Mock dependencies
 vi.mock("../../local-control/command-runner", () => ({
   runAllowedCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: "Success", stderr: "" }),
@@ -46,5 +55,6 @@ describe("CodexCliAdapter", () => {
   it("run succeeds with approvalId", async () => {
     const result = await adapter.run({ ...baseTask, approvalId: "mock-approval-123" });
     expect(result.success).toBe(true);
+    expect(result.message).toContain("turn-1");
   });
 });

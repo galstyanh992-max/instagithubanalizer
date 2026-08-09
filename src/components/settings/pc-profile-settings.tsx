@@ -1,7 +1,8 @@
 "use client";
+import { SciFiPanel } from "@/components/ui/sci-fi-panel";
+
 
 import { useEffect, useState } from "react";
-import { HolographicPanel } from "@/components/futuristic/holographic-panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -47,7 +48,7 @@ export function PcProfileSettings() {
   if (!profile) return <div className="text-cyan-300 text-sm">Loading...</div>;
 
   return (
-    <HolographicPanel accent="lime" className="space-y-4 p-5">
+    <SciFiPanel accent="lime" className="space-y-4 p-5">
       <div className="flex items-center gap-2 text-lime-300">
         <Cpu className="h-4 w-4" />
         <h2 className="font-mono text-xs uppercase tracking-wider">My PC Profile</h2>
@@ -157,6 +158,6 @@ export function PcProfileSettings() {
       <div className="text-[10px] text-zinc-600">
         Default profile: {MY_PC_PROFILE.cpu} · {MY_PC_PROFILE.ramGb} GB RAM · {MY_PC_PROFILE.gpu} · {MY_PC_PROFILE.vramGb} GB VRAM
       </div>
-    </HolographicPanel>
+    </SciFiPanel>
   );
 }

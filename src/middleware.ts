@@ -1,48 +1,12 @@
-// AI Jarwisyan — Middleware
-// Auth включается через JARWISYAN_AUTH_ENABLED="true" в .env
-// По умолчанию auth ВЫКЛЮЧЕН для sandbox/preview окружения
+import { type NextRequest } from 'next/server'
+import { updateSession } from './lib/supabase/middleware'
 
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
-
-// Auth policy (fail closed in production):
-// - production: enabled UNLESS explicitly set to "false".
-// - non-production: disabled UNLESS explicitly set to "true".
-const IS_PROD = process.env.NODE_ENV === "production";
-const RAW = process.env.JARWISYAN_AUTH_ENABLED;
-const AUTH_ENABLED = IS_PROD ? RAW !== "false" : RAW === "true";
-
-if (IS_PROD && RAW === undefined) {
-  console.warn(
-    "[SECURITY] JARWISYAN_AUTH_ENABLED is unset in production — defaulting to ENABLED (fail closed). Set it explicitly."
-  );
+export async function middleware(request: NextRequest) {
+  return await updateSession(request)
 }
 
-// Если auth выключен — middleware не запускается
-export default AUTH_ENABLED
-  ? withAuth(
-      function middleware(req) {
-        return NextResponse.next();
-      },
-      {
-        callbacks: {
-          authorized: ({ token, req }) => {
-            const path = req.nextUrl.pathname;
-            // /api/settings removed from publicPaths: GET/PATCH require auth.
-            // SettingsHydrator (layout) safely falls back to defaults on 401.
-            const publicPaths = ["/api/auth", "/login"];
-            if (publicPaths.some((p) => path.startsWith(p))) return true;
-            if (path.startsWith("/api/")) return !!token;
-            if (path !== "/login") return !!token;
-            return true;
-          },
-        },
-      }
-    )
-  : function middleware() {
-      return NextResponse.next();
-    };
-
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public|uploads|api/auth).*)"],
-};
+  matcher: [
+    '/((?!api/music/local|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|aac|flac|m4a|mp3|ogg|opus|wav|weba)$).*)',
+  ],
+}
