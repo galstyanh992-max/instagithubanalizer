@@ -16,6 +16,7 @@ export interface WorkerUIItem {
 
 export class WorkersUIManager {
   public async getWorkerStates(): Promise<WorkerUIItem[]> {
+    await globalWorkerRegistry.ensureLocalWorkersRegistered();
     const adapters = globalWorkerRegistry.getAllAdapters();
     const states: WorkerUIItem[] = [];
 

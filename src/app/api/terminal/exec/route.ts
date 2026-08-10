@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import path from "node:path";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,28 +9,9 @@ export const dynamic = "force-dynamic";
 type Session = { cwd: string };
 const sessions = new Map<string, Session>();
 
-const DEFAULT_CWD =
-  process.platform === "win32"
-    ? process.env.USERPROFILE || "C:\\"
-    : process.env.HOME || "/";
-
 const MAX_SESSIONS = 50;
 const COMMAND_TIMEOUT_MS = 30_000;
 const MAX_OUTPUT_BYTES = 200_000;
-
-function getShell(): { cmd: string; args: (cmd: string) => string[] } {
-  if (process.platform === "win32") {
-    // PowerShell by default on Windows
-    return {
-      cmd: "powershell.exe",
-      args: (c) => ["-NoProfile", "-NonInteractive", "-Command", c],
-    };
-  }
-  return {
-    cmd: "bash",
-    args: (c) => ["-c", c],
-  };
-}
 
 function isLocalRequest(req: NextRequest): boolean {
   const host = req.headers.get("host") ?? "";
@@ -46,10 +26,10 @@ function isLocalRequest(req: NextRequest): boolean {
   return false;
 }
 
-function ensureSession(sessionId: string): Session {
+function ensureSession(sessionId: string, defaultCwd: string): Session {
   let s = sessions.get(sessionId);
   if (!s) {
-    s = { cwd: DEFAULT_CWD };
+    s = { cwd: defaultCwd };
     sessions.set(sessionId, s);
     // Evict oldest if over limit
     if (sessions.size > MAX_SESSIONS) {
@@ -60,18 +40,17 @@ function ensureSession(sessionId: string): Session {
   return s;
 }
 
-function resolveCd(target: string, cwd: string): string {
-  if (!target || target === "~") {
-    return process.env.HOME || (process.platform === "win32" ? process.env.USERPROFILE || "C:\\" : "/");
-  }
-  const resolved = path.isAbsolute(target) ? target : path.resolve(cwd, target);
-  return resolved;
-}
-
 export async function POST(req: NextRequest) {
   if (!isLocalRequest(req)) {
     return NextResponse.json({ error: "Forbidden: local only" }, { status: 403 });
   }
+  if (env.JARVIS_RUNTIME_ROLE === "web-control-plane") {
+    return NextResponse.json({ error: "Local terminal execution runs on the local JARVIS runtime only." }, { status: 501 });
+  }
+
+  const { getDefaultCwd, resolveCd, checkDirectoryExists, runCommand } = await import(
+    "@/local-runtime/api-helpers/terminal-engine"
+  );
 
   let body: { sessionId?: string; command?: string };
   try {
@@ -82,7 +61,7 @@ export async function POST(req: NextRequest) {
 
   const sessionId = body.sessionId || randomUUID();
   const command = (body.command ?? "").toString();
-  const session = ensureSession(sessionId);
+  const session = ensureSession(sessionId, getDefaultCwd());
 
   if (!command.trim()) {
     return NextResponse.json({
@@ -99,80 +78,33 @@ export async function POST(req: NextRequest) {
   if (cdMatch) {
     const target = cdMatch[1].trim().replace(/^["']|["']$/g, "");
     const newCwd = resolveCd(target, session.cwd);
-    // Verify directory exists by listing it
-    return new Promise<Response>((resolve) => {
-      const shell = getShell();
-      const checkCmd =
-        process.platform === "win32"
-          ? `if (Test-Path -LiteralPath '${newCwd.replace(/'/g, "''")}' -PathType Container) { exit 0 } else { exit 1 }`
-          : `[ -d '${newCwd.replace(/'/g, "'\\''")}' ]`;
-      exec(
-        `${shell.cmd} ${shell.args(checkCmd).map((a) => `"${a.replace(/"/g, '\\"')}"`).join(" ")}`,
-        { timeout: 5000 },
-        (err, _stdout, _stderr) => {
-          if (err) {
-            resolve(
-              NextResponse.json({
-                sessionId,
-                stdout: "",
-                stderr: `cd: no such directory: ${target}`,
-                exitCode: 1,
-                cwd: session.cwd,
-              })
-            );
-          } else {
-            session.cwd = newCwd;
-            resolve(
-              NextResponse.json({
-                sessionId,
-                stdout: "",
-                stderr: "",
-                exitCode: 0,
-                cwd: session.cwd,
-              })
-            );
-          }
-        }
-      );
+    const exists = await checkDirectoryExists(newCwd);
+    if (!exists) {
+      return NextResponse.json({
+        sessionId,
+        stdout: "",
+        stderr: `cd: no such directory: ${target}`,
+        exitCode: 1,
+        cwd: session.cwd,
+      });
+    }
+    session.cwd = newCwd;
+    return NextResponse.json({
+      sessionId,
+      stdout: "",
+      stderr: "",
+      exitCode: 0,
+      cwd: session.cwd,
     });
   }
 
-  return new Promise<Response>((resolve) => {
-    const shell = getShell();
-    const args = shell.args(command);
-    const child = exec(
-      `"${shell.cmd}" ${args.map((a) => `"${a.replace(/"/g, '\\"')}"`).join(" ")}`,
-      {
-        cwd: session.cwd,
-        timeout: COMMAND_TIMEOUT_MS,
-        maxBuffer: MAX_OUTPUT_BYTES,
-        env: { ...process.env, TERM: "xterm-256color" },
-      },
-      (err, stdout, stderr) => {
-        const exitCode = err && "code" in err ? (err.code as number) : err ? 1 : 0;
-        resolve(
-          NextResponse.json({
-            sessionId,
-            stdout: stdout ?? "",
-            stderr: stderr ?? (err && !("code" in err) ? String(err.message) : ""),
-            exitCode,
-            cwd: session.cwd,
-          })
-        );
-      }
-    );
-    // Safety: never let child hang forever beyond timeout (exec handles it, but be explicit)
-    child.on("error", () => {
-      resolve(
-        NextResponse.json({
-          sessionId,
-          stdout: "",
-          stderr: "Failed to spawn shell process.",
-          exitCode: 1,
-          cwd: session.cwd,
-        })
-      );
-    });
+  const result = await runCommand(command, session.cwd, COMMAND_TIMEOUT_MS, MAX_OUTPUT_BYTES);
+  return NextResponse.json({
+    sessionId,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    exitCode: result.exitCode,
+    cwd: session.cwd,
   });
 }
 

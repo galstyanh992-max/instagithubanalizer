@@ -99559,6 +99559,9 @@ export namespace Prisma {
     finishedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    targetDeviceId: string | null
+    leaseExpiresAt: Date | null
+    idempotencyKey: string | null
   }
 
   export type AgentTaskMaxAggregateOutputType = {
@@ -99583,6 +99586,9 @@ export namespace Prisma {
     finishedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    targetDeviceId: string | null
+    leaseExpiresAt: Date | null
+    idempotencyKey: string | null
   }
 
   export type AgentTaskCountAggregateOutputType = {
@@ -99607,6 +99613,9 @@ export namespace Prisma {
     finishedAt: number
     createdAt: number
     updatedAt: number
+    targetDeviceId: number
+    leaseExpiresAt: number
+    idempotencyKey: number
     _all: number
   }
 
@@ -99641,6 +99650,9 @@ export namespace Prisma {
     finishedAt?: true
     createdAt?: true
     updatedAt?: true
+    targetDeviceId?: true
+    leaseExpiresAt?: true
+    idempotencyKey?: true
   }
 
   export type AgentTaskMaxAggregateInputType = {
@@ -99665,6 +99677,9 @@ export namespace Prisma {
     finishedAt?: true
     createdAt?: true
     updatedAt?: true
+    targetDeviceId?: true
+    leaseExpiresAt?: true
+    idempotencyKey?: true
   }
 
   export type AgentTaskCountAggregateInputType = {
@@ -99689,6 +99704,9 @@ export namespace Prisma {
     finishedAt?: true
     createdAt?: true
     updatedAt?: true
+    targetDeviceId?: true
+    leaseExpiresAt?: true
+    idempotencyKey?: true
     _all?: true
   }
 
@@ -99800,6 +99818,9 @@ export namespace Prisma {
     finishedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    targetDeviceId: string | null
+    leaseExpiresAt: Date | null
+    idempotencyKey: string | null
     _count: AgentTaskCountAggregateOutputType | null
     _avg: AgentTaskAvgAggregateOutputType | null
     _sum: AgentTaskSumAggregateOutputType | null
@@ -99843,6 +99864,9 @@ export namespace Prisma {
     finishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    targetDeviceId?: boolean
+    leaseExpiresAt?: boolean
+    idempotencyKey?: boolean
     OrchestrationRun?: boolean | OrchestrationRunDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentTask"]>
 
@@ -99868,6 +99892,9 @@ export namespace Prisma {
     finishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    targetDeviceId?: boolean
+    leaseExpiresAt?: boolean
+    idempotencyKey?: boolean
     OrchestrationRun?: boolean | OrchestrationRunDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentTask"]>
 
@@ -99893,6 +99920,9 @@ export namespace Prisma {
     finishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    targetDeviceId?: boolean
+    leaseExpiresAt?: boolean
+    idempotencyKey?: boolean
     OrchestrationRun?: boolean | OrchestrationRunDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentTask"]>
 
@@ -99918,9 +99948,12 @@ export namespace Prisma {
     finishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    targetDeviceId?: boolean
+    leaseExpiresAt?: boolean
+    idempotencyKey?: boolean
   }
 
-  export type AgentTaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "runId" | "title" | "description" | "agentId" | "role" | "toolKeys" | "dependsOn" | "status" | "priority" | "riskLevel" | "retryCount" | "request" | "result" | "artifactIds" | "findingIds" | "checkpointId" | "startedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["agentTask"]>
+  export type AgentTaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "runId" | "title" | "description" | "agentId" | "role" | "toolKeys" | "dependsOn" | "status" | "priority" | "riskLevel" | "retryCount" | "request" | "result" | "artifactIds" | "findingIds" | "checkpointId" | "startedAt" | "finishedAt" | "createdAt" | "updatedAt" | "targetDeviceId" | "leaseExpiresAt" | "idempotencyKey", ExtArgs["result"]["agentTask"]>
   export type AgentTaskInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     OrchestrationRun?: boolean | OrchestrationRunDefaultArgs<ExtArgs>
   }
@@ -99958,6 +99991,9 @@ export namespace Prisma {
       finishedAt: Date | null
       createdAt: Date
       updatedAt: Date
+      targetDeviceId: string | null
+      leaseExpiresAt: Date | null
+      idempotencyKey: string | null
     }, ExtArgs["result"]["agentTask"]>
     composites: {}
   }
@@ -100403,6 +100439,9 @@ export namespace Prisma {
     readonly finishedAt: FieldRef<"AgentTask", 'DateTime'>
     readonly createdAt: FieldRef<"AgentTask", 'DateTime'>
     readonly updatedAt: FieldRef<"AgentTask", 'DateTime'>
+    readonly targetDeviceId: FieldRef<"AgentTask", 'String'>
+    readonly leaseExpiresAt: FieldRef<"AgentTask", 'DateTime'>
+    readonly idempotencyKey: FieldRef<"AgentTask", 'String'>
   }
     
 
@@ -107544,6 +107583,7 @@ export namespace Prisma {
     revokedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    protocolVersion: string | null
   }
 
   export type DeviceMaxAggregateOutputType = {
@@ -107559,6 +107599,7 @@ export namespace Prisma {
     revokedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    protocolVersion: string | null
   }
 
   export type DeviceCountAggregateOutputType = {
@@ -107574,6 +107615,7 @@ export namespace Prisma {
     revokedAt: number
     createdAt: number
     updatedAt: number
+    protocolVersion: number
     _all: number
   }
 
@@ -107591,6 +107633,7 @@ export namespace Prisma {
     revokedAt?: true
     createdAt?: true
     updatedAt?: true
+    protocolVersion?: true
   }
 
   export type DeviceMaxAggregateInputType = {
@@ -107606,6 +107649,7 @@ export namespace Prisma {
     revokedAt?: true
     createdAt?: true
     updatedAt?: true
+    protocolVersion?: true
   }
 
   export type DeviceCountAggregateInputType = {
@@ -107621,6 +107665,7 @@ export namespace Prisma {
     revokedAt?: true
     createdAt?: true
     updatedAt?: true
+    protocolVersion?: true
     _all?: true
   }
 
@@ -107709,6 +107754,7 @@ export namespace Prisma {
     revokedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    protocolVersion: string
     _count: DeviceCountAggregateOutputType | null
     _min: DeviceMinAggregateOutputType | null
     _max: DeviceMaxAggregateOutputType | null
@@ -107741,6 +107787,7 @@ export namespace Prisma {
     revokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    protocolVersion?: boolean
   }, ExtArgs["result"]["device"]>
 
   export type DeviceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -107756,6 +107803,7 @@ export namespace Prisma {
     revokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    protocolVersion?: boolean
   }, ExtArgs["result"]["device"]>
 
   export type DeviceSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -107771,6 +107819,7 @@ export namespace Prisma {
     revokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    protocolVersion?: boolean
   }, ExtArgs["result"]["device"]>
 
   export type DeviceSelectScalar = {
@@ -107786,9 +107835,10 @@ export namespace Prisma {
     revokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    protocolVersion?: boolean
   }
 
-  export type DeviceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerUserId" | "installationId" | "name" | "platform" | "daemonVersion" | "status" | "lastHeartbeatAt" | "capabilitiesSnapshot" | "revokedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["device"]>
+  export type DeviceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerUserId" | "installationId" | "name" | "platform" | "daemonVersion" | "status" | "lastHeartbeatAt" | "capabilitiesSnapshot" | "revokedAt" | "createdAt" | "updatedAt" | "protocolVersion", ExtArgs["result"]["device"]>
 
   export type $DevicePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Device"
@@ -107806,6 +107856,7 @@ export namespace Prisma {
       revokedAt: Date | null
       createdAt: Date
       updatedAt: Date
+      protocolVersion: string
     }, ExtArgs["result"]["device"]>
     composites: {}
   }
@@ -108241,6 +108292,7 @@ export namespace Prisma {
     readonly revokedAt: FieldRef<"Device", 'DateTime'>
     readonly createdAt: FieldRef<"Device", 'DateTime'>
     readonly updatedAt: FieldRef<"Device", 'DateTime'>
+    readonly protocolVersion: FieldRef<"Device", 'String'>
   }
     
 
@@ -141233,7 +141285,10 @@ export namespace Prisma {
     startedAt: 'startedAt',
     finishedAt: 'finishedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    targetDeviceId: 'targetDeviceId',
+    leaseExpiresAt: 'leaseExpiresAt',
+    idempotencyKey: 'idempotencyKey'
   };
 
   export type AgentTaskScalarFieldEnum = (typeof AgentTaskScalarFieldEnum)[keyof typeof AgentTaskScalarFieldEnum]
@@ -141344,7 +141399,8 @@ export namespace Prisma {
     capabilitiesSnapshot: 'capabilitiesSnapshot',
     revokedAt: 'revokedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    protocolVersion: 'protocolVersion'
   };
 
   export type DeviceScalarFieldEnum = (typeof DeviceScalarFieldEnum)[keyof typeof DeviceScalarFieldEnum]
@@ -148813,6 +148869,9 @@ export namespace Prisma {
     finishedAt?: DateTimeNullableFilter<"AgentTask"> | Date | string | null
     createdAt?: DateTimeFilter<"AgentTask"> | Date | string
     updatedAt?: DateTimeFilter<"AgentTask"> | Date | string
+    targetDeviceId?: StringNullableFilter<"AgentTask"> | string | null
+    leaseExpiresAt?: DateTimeNullableFilter<"AgentTask"> | Date | string | null
+    idempotencyKey?: StringNullableFilter<"AgentTask"> | string | null
     OrchestrationRun?: XOR<OrchestrationRunScalarRelationFilter, OrchestrationRunWhereInput>
   }
 
@@ -148838,11 +148897,15 @@ export namespace Prisma {
     finishedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    targetDeviceId?: SortOrderInput | SortOrder
+    leaseExpiresAt?: SortOrderInput | SortOrder
+    idempotencyKey?: SortOrderInput | SortOrder
     OrchestrationRun?: OrchestrationRunOrderByWithRelationInput
   }
 
   export type AgentTaskWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    idempotencyKey?: string
     AND?: AgentTaskWhereInput | AgentTaskWhereInput[]
     OR?: AgentTaskWhereInput[]
     NOT?: AgentTaskWhereInput | AgentTaskWhereInput[]
@@ -148866,8 +148929,10 @@ export namespace Prisma {
     finishedAt?: DateTimeNullableFilter<"AgentTask"> | Date | string | null
     createdAt?: DateTimeFilter<"AgentTask"> | Date | string
     updatedAt?: DateTimeFilter<"AgentTask"> | Date | string
+    targetDeviceId?: StringNullableFilter<"AgentTask"> | string | null
+    leaseExpiresAt?: DateTimeNullableFilter<"AgentTask"> | Date | string | null
     OrchestrationRun?: XOR<OrchestrationRunScalarRelationFilter, OrchestrationRunWhereInput>
-  }, "id">
+  }, "id" | "idempotencyKey">
 
   export type AgentTaskOrderByWithAggregationInput = {
     id?: SortOrder
@@ -148891,6 +148956,9 @@ export namespace Prisma {
     finishedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    targetDeviceId?: SortOrderInput | SortOrder
+    leaseExpiresAt?: SortOrderInput | SortOrder
+    idempotencyKey?: SortOrderInput | SortOrder
     _count?: AgentTaskCountOrderByAggregateInput
     _avg?: AgentTaskAvgOrderByAggregateInput
     _max?: AgentTaskMaxOrderByAggregateInput
@@ -148923,6 +148991,9 @@ export namespace Prisma {
     finishedAt?: DateTimeNullableWithAggregatesFilter<"AgentTask"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"AgentTask"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"AgentTask"> | Date | string
+    targetDeviceId?: StringNullableWithAggregatesFilter<"AgentTask"> | string | null
+    leaseExpiresAt?: DateTimeNullableWithAggregatesFilter<"AgentTask"> | Date | string | null
+    idempotencyKey?: StringNullableWithAggregatesFilter<"AgentTask"> | string | null
   }
 
   export type ArtifactWhereInput = {
@@ -149407,6 +149478,7 @@ export namespace Prisma {
     revokedAt?: DateTimeNullableFilter<"Device"> | Date | string | null
     createdAt?: DateTimeFilter<"Device"> | Date | string
     updatedAt?: DateTimeFilter<"Device"> | Date | string
+    protocolVersion?: StringFilter<"Device"> | string
   }
 
   export type DeviceOrderByWithRelationInput = {
@@ -149422,6 +149494,7 @@ export namespace Prisma {
     revokedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    protocolVersion?: SortOrder
   }
 
   export type DeviceWhereUniqueInput = Prisma.AtLeast<{
@@ -149440,6 +149513,7 @@ export namespace Prisma {
     revokedAt?: DateTimeNullableFilter<"Device"> | Date | string | null
     createdAt?: DateTimeFilter<"Device"> | Date | string
     updatedAt?: DateTimeFilter<"Device"> | Date | string
+    protocolVersion?: StringFilter<"Device"> | string
   }, "id" | "installationId">
 
   export type DeviceOrderByWithAggregationInput = {
@@ -149455,6 +149529,7 @@ export namespace Prisma {
     revokedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    protocolVersion?: SortOrder
     _count?: DeviceCountOrderByAggregateInput
     _max?: DeviceMaxOrderByAggregateInput
     _min?: DeviceMinOrderByAggregateInput
@@ -149476,6 +149551,7 @@ export namespace Prisma {
     revokedAt?: DateTimeNullableWithAggregatesFilter<"Device"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Device"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Device"> | Date | string
+    protocolVersion?: StringWithAggregatesFilter<"Device"> | string
   }
 
   export type ChatAttachmentWhereInput = {
@@ -159716,6 +159792,9 @@ export namespace Prisma {
     finishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    targetDeviceId?: string | null
+    leaseExpiresAt?: Date | string | null
+    idempotencyKey?: string | null
     OrchestrationRun: OrchestrationRunCreateNestedOneWithoutTasksInput
   }
 
@@ -159741,6 +159820,9 @@ export namespace Prisma {
     finishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    targetDeviceId?: string | null
+    leaseExpiresAt?: Date | string | null
+    idempotencyKey?: string | null
   }
 
   export type AgentTaskUpdateInput = {
@@ -159764,6 +159846,9 @@ export namespace Prisma {
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    targetDeviceId?: NullableStringFieldUpdateOperationsInput | string | null
+    leaseExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     OrchestrationRun?: OrchestrationRunUpdateOneRequiredWithoutTasksNestedInput
   }
 
@@ -159789,6 +159874,9 @@ export namespace Prisma {
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    targetDeviceId?: NullableStringFieldUpdateOperationsInput | string | null
+    leaseExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AgentTaskCreateManyInput = {
@@ -159813,6 +159901,9 @@ export namespace Prisma {
     finishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    targetDeviceId?: string | null
+    leaseExpiresAt?: Date | string | null
+    idempotencyKey?: string | null
   }
 
   export type AgentTaskUpdateManyMutationInput = {
@@ -159836,6 +159927,9 @@ export namespace Prisma {
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    targetDeviceId?: NullableStringFieldUpdateOperationsInput | string | null
+    leaseExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AgentTaskUncheckedUpdateManyInput = {
@@ -159860,6 +159954,9 @@ export namespace Prisma {
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    targetDeviceId?: NullableStringFieldUpdateOperationsInput | string | null
+    leaseExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ArtifactCreateInput = {
@@ -160395,6 +160492,7 @@ export namespace Prisma {
     revokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    protocolVersion?: string
   }
 
   export type DeviceUncheckedCreateInput = {
@@ -160410,6 +160508,7 @@ export namespace Prisma {
     revokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    protocolVersion?: string
   }
 
   export type DeviceUpdateInput = {
@@ -160425,6 +160524,7 @@ export namespace Prisma {
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    protocolVersion?: StringFieldUpdateOperationsInput | string
   }
 
   export type DeviceUncheckedUpdateInput = {
@@ -160440,6 +160540,7 @@ export namespace Prisma {
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    protocolVersion?: StringFieldUpdateOperationsInput | string
   }
 
   export type DeviceCreateManyInput = {
@@ -160455,6 +160556,7 @@ export namespace Prisma {
     revokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    protocolVersion?: string
   }
 
   export type DeviceUpdateManyMutationInput = {
@@ -160470,6 +160572,7 @@ export namespace Prisma {
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    protocolVersion?: StringFieldUpdateOperationsInput | string
   }
 
   export type DeviceUncheckedUpdateManyInput = {
@@ -160485,6 +160588,7 @@ export namespace Prisma {
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    protocolVersion?: StringFieldUpdateOperationsInput | string
   }
 
   export type ChatAttachmentCreateInput = {
@@ -167842,6 +167946,9 @@ export namespace Prisma {
     finishedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    targetDeviceId?: SortOrder
+    leaseExpiresAt?: SortOrder
+    idempotencyKey?: SortOrder
   }
 
   export type AgentTaskAvgOrderByAggregateInput = {
@@ -167870,6 +167977,9 @@ export namespace Prisma {
     finishedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    targetDeviceId?: SortOrder
+    leaseExpiresAt?: SortOrder
+    idempotencyKey?: SortOrder
   }
 
   export type AgentTaskMinOrderByAggregateInput = {
@@ -167894,6 +168004,9 @@ export namespace Prisma {
     finishedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    targetDeviceId?: SortOrder
+    leaseExpiresAt?: SortOrder
+    idempotencyKey?: SortOrder
   }
 
   export type AgentTaskSumOrderByAggregateInput = {
@@ -168154,6 +168267,7 @@ export namespace Prisma {
     revokedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    protocolVersion?: SortOrder
   }
 
   export type DeviceMaxOrderByAggregateInput = {
@@ -168169,6 +168283,7 @@ export namespace Prisma {
     revokedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    protocolVersion?: SortOrder
   }
 
   export type DeviceMinOrderByAggregateInput = {
@@ -168184,6 +168299,7 @@ export namespace Prisma {
     revokedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    protocolVersion?: SortOrder
   }
 
   export type ChatAttachmentOwnerIdContentHashCompoundUniqueInput = {
@@ -183163,6 +183279,9 @@ export namespace Prisma {
     finishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    targetDeviceId?: string | null
+    leaseExpiresAt?: Date | string | null
+    idempotencyKey?: string | null
   }
 
   export type AgentTaskUncheckedCreateWithoutOrchestrationRunInput = {
@@ -183186,6 +183305,9 @@ export namespace Prisma {
     finishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    targetDeviceId?: string | null
+    leaseExpiresAt?: Date | string | null
+    idempotencyKey?: string | null
   }
 
   export type AgentTaskCreateOrConnectWithoutOrchestrationRunInput = {
@@ -183427,6 +183549,9 @@ export namespace Prisma {
     finishedAt?: DateTimeNullableFilter<"AgentTask"> | Date | string | null
     createdAt?: DateTimeFilter<"AgentTask"> | Date | string
     updatedAt?: DateTimeFilter<"AgentTask"> | Date | string
+    targetDeviceId?: StringNullableFilter<"AgentTask"> | string | null
+    leaseExpiresAt?: DateTimeNullableFilter<"AgentTask"> | Date | string | null
+    idempotencyKey?: StringNullableFilter<"AgentTask"> | string | null
   }
 
   export type CheckpointUpsertWithWhereUniqueWithoutOrchestrationRunInput = {
@@ -187536,6 +187661,9 @@ export namespace Prisma {
     finishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    targetDeviceId?: string | null
+    leaseExpiresAt?: Date | string | null
+    idempotencyKey?: string | null
   }
 
   export type CheckpointCreateManyOrchestrationRunInput = {
@@ -187648,6 +187776,9 @@ export namespace Prisma {
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    targetDeviceId?: NullableStringFieldUpdateOperationsInput | string | null
+    leaseExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AgentTaskUncheckedUpdateWithoutOrchestrationRunInput = {
@@ -187671,6 +187802,9 @@ export namespace Prisma {
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    targetDeviceId?: NullableStringFieldUpdateOperationsInput | string | null
+    leaseExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AgentTaskUncheckedUpdateManyWithoutOrchestrationRunInput = {
@@ -187694,6 +187828,9 @@ export namespace Prisma {
     finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    targetDeviceId?: NullableStringFieldUpdateOperationsInput | string | null
+    leaseExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CheckpointUpdateWithoutOrchestrationRunInput = {

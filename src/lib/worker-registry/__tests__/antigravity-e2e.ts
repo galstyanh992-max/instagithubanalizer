@@ -1,5 +1,5 @@
-import { AntigravityWorkerAdapter } from '../adapters/antigravity-cli';
-import { WorkerWorkspaceManager } from '../workspace';
+import { AntigravityWorkerAdapter } from '@/local-runtime/worker-registry/adapters/antigravity-cli';
+import { WorkerWorkspaceManager } from '@/local-runtime/worker-registry/workspace';
 import * as fs from 'fs';
 import * as path from 'path';
 

@@ -4,7 +4,6 @@
 
 import { updateFindingStatus, createFinding } from './finding-store';
 import { createArtifact } from './artifact-store';
-import { runVerification } from './verification-engine';
 import { jarvisAgentRegistry } from './agent-registry';
 import type { AgentDefinition, AgentRequest, AgentResult, Finding, TaskNode } from './types';
 
@@ -67,7 +66,11 @@ export async function runRepair(input: RepairInput): Promise<RepairOutput> {
     fixArtifactId = artifact.id;
   }
 
-  // Run verification
+  // Run verification. runVerification's non-dryRun checks shell out (npm run
+  // build/lint/test) — local-runtime only. Dynamic import keeps it out of
+  // the Vercel web-control-plane bundle; this call path is only exercised
+  // for real (non-dryRun) on the local daemon.
+  const { runVerification } = await import('@/local-runtime/services/verification-engine');
   const verification = await runVerification({
     runId,
     type: finding.severity === 'P0' ? 'test' : 'self_check',

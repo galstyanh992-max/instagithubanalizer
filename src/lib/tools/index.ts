@@ -28,8 +28,10 @@ export { webSearchTool } from './tools/web-search-tool';
 export { memorySearchTool } from './tools/memory-search-tool';
 
 export { filesystemReadTool, filesystemWriteTool, filesystemListTool, filesystemSearchTool } from './tools/filesystem-tools';
-export { gitStatusTool, projectBuildTool, projectTypecheckTool, projectLintTool } from './tools/project-tools';
-export { terminalExecTool } from './tools/terminal-tool';
+// git/build/typecheck/lint/terminal tools shell out locally — role-gated
+// proxies (see local-tools-proxy.ts) so this barrel never statically pulls
+// child_process into a Vercel bundle.
+export { gitStatusTool, projectBuildTool, projectTypecheckTool, projectLintTool, terminalExecTool } from './local-tools-proxy';
 
 // Convenience: all built-in tools as an array
 import { calculatorTool } from './tools/calculator-tool';
@@ -40,8 +42,7 @@ import { webSearchTool } from './tools/web-search-tool';
 import { memorySearchTool } from './tools/memory-search-tool';
 
 import { filesystemReadTool, filesystemWriteTool, filesystemListTool, filesystemSearchTool } from './tools/filesystem-tools';
-import { gitStatusTool, projectBuildTool, projectTypecheckTool, projectLintTool } from './tools/project-tools';
-import { terminalExecTool } from './tools/terminal-tool';
+import { gitStatusTool, projectBuildTool, projectTypecheckTool, projectLintTool, terminalExecTool } from './local-tools-proxy';
 
 export const BUILTIN_TOOLS = [
   calculatorTool,

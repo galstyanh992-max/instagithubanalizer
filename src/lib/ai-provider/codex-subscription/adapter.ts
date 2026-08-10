@@ -55,7 +55,9 @@ export class CodexChatAdapter implements AIProvider {
       throw new ProviderError('Codex chat bridge is disabled.', this.id, 'PROVIDER_UNAVAILABLE', undefined, false);
     }
 
-    const cwd = env.JARVIS_CODEX_CHAT_CWD || 'D:\\АГЕНТ\\ДЖАРВИС';
+    // Falls back to the running process's own working directory (the JARVIS
+    // project root on the local runtime) rather than a hardcoded drive path.
+    const cwd = env.JARVIS_CODEX_CHAT_CWD || process.cwd();
     const prompt = buildPrompt(request);
     if (!prompt.trim()) {
       throw new ProviderError('Codex turn prompt is empty.', this.id, 'INVALID_REQUEST');

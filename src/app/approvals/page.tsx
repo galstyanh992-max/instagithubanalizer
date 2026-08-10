@@ -1,12 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useJarvisRealtime } from "@/hooks/use-jarvis-realtime";
+
+// Fallback interval if the Realtime channel is ever unavailable/dropped —
+// approvals are decision-critical, so this page must never depend solely on
+// a live socket to eventually show current state.
+const POLL_MS = 20_000;
 
 export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<any[]>([]);
   const [fallback, setFallback] = useState(false);
   const [loading, setLoading] = useState(true);
+  const fetchApprovalsRef = useRef<() => void>(() => {});
 
   const fetchApprovals = () => {
     setLoading(true);
@@ -20,9 +27,28 @@ export default function ApprovalsPage() {
       .finally(() => setLoading(false));
   };
 
+  // Refs must only be written outside of render (react-hooks/refs) -- keep
+  // the ref current via an effect with no dependency array (runs after
+  // every render) so the interval/Realtime callbacks below never close over
+  // a stale fetchApprovals.
   useEffect(() => {
-    fetchApprovals();
+    fetchApprovalsRef.current = fetchApprovals;
+  });
+
+  useEffect(() => {
+    fetchApprovalsRef.current();
+    const id = setInterval(() => fetchApprovalsRef.current(), POLL_MS);
+    return () => clearInterval(id);
   }, []);
+
+  // Immediate refetch the moment an approval is created or decided
+  // elsewhere (another tab, the daemon) — see
+  // src/lib/jarvis/realtime/broadcast.ts. The interval above remains the
+  // fallback if this channel is ever unavailable.
+  useJarvisRealtime({
+    events: ["approval.created", "approval.decided"],
+    onEvent: () => fetchApprovalsRef.current(),
+  });
 
   const handleAction = async (id: string, action: "approve" | "reject") => {
     try {

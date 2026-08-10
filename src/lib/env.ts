@@ -100,6 +100,12 @@ const envSchema = z.object({
   // Prefer Codex as the heavy-reasoning provider when it is registered.
   JARVIS_CODEX_AS_HEAVY: z.string().default("true"),
 
+  // Which local-only resources this process instance is allowed to touch:
+  // "web-control-plane" (Vercel, no local access), "local-worker" (the
+  // daemon), "local-full-dev" (local `npm run dev`, today's default).
+  // See scripts/check-runtime-boundary.mjs and docs/jarvis/remote-architecture.md.
+  JARVIS_RUNTIME_ROLE: z.enum(["web-control-plane", "local-worker", "local-full-dev"]).default("local-full-dev"),
+
 
   OCR_PROVIDER: z.string().default("local"),
   OCR_API_KEY: z.string().default(""),

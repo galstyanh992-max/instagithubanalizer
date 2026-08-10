@@ -1715,11 +1715,17 @@ model AgentTask {
   finishedAt       DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+  // Remote control-plane protocol (Vercel/local-runtime migration, additive/nullable):
+  targetDeviceId   String?
+  leaseExpiresAt   DateTime?
+  idempotencyKey   String?          @unique
   OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
   @@index([agentId])
   @@index([runId])
   @@index([runId, status])
+  @@index([targetDeviceId])
+  @@index([status, leaseExpiresAt])
   @@map("agent_tasks")
 }
 
@@ -1839,6 +1845,8 @@ model Device {
   revokedAt            DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  // Remote control-plane protocol (Vercel/local-runtime migration, additive/nullable):
+  protocolVersion      String    @default("1")
 
   @@index([ownerUserId])
   @@index([status])
@@ -2270,4 +2278,79 @@ model AutomationRunRef {
   @@index([ownerUserId, status])
   @@index([workflowRefId])
   @@map("automation_run_refs")
+}
+
+// ============================================================
+// JARVIS Phase C capability-intelligence control plane.
+// Only repository/routing/health metadata is persisted. Raw user content,
+// provider responses, credentials and repository source are excluded.
+// ============================================================
+
+model CapabilityRepositoryRecord {
+  id              String    @id @default(cuid())
+  ownerUserId     String
+  repository      String
+  lifecycle       String    @default("UNVERIFIED")
+  tier            String
+  capabilities    String    @default("[]")
+  integrationMode String
+  license         String    @default("UNKNOWN")
+  licensePolicy   String    @default("UNKNOWN")
+  sourceCommit    String?
+  artifactDigest  String?
+  metadata        String    @default("{}")
+  lastVerifiedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([ownerUserId, repository])
+  @@index([ownerUserId, lifecycle])
+  @@map("capability_repository_records")
+}
+
+model RepositoryCuratorAssessment {
+  id             String   @id @default(cuid())
+  ownerUserId    String
+  repository     String
+  verdict        String
+  risk           String
+  licensePolicy  String
+  findingClasses String   @default("[]")
+  stagedRef      String?
+  sourceCommit   String?
+  artifactDigest String?
+  createdAt      DateTime @default(now())
+
+  @@index([ownerUserId, verdict, createdAt])
+  @@map("repository_curator_assessments")
+}
+
+model CapabilityExecutionFeedback {
+  id              String   @id @default(cuid())
+  ownerUserId     String
+  capabilityId    String
+  taskClass       String
+  success         Boolean
+  durationMs      Int
+  failureClass    String?
+  operationalMeta String   @default("{}")
+  occurredAt      DateTime @default(now())
+
+  @@index([ownerUserId, capabilityId, taskClass, occurredAt])
+  @@map("capability_execution_feedback")
+}
+
+model CapabilityRoutingDecision {
+  id                   String   @id @default(cuid())
+  ownerUserId          String
+  taskClass            String
+  requiredCapabilities String   @default("[]")
+  selectedId           String?
+  fallbackChain        String   @default("[]")
+  factorScores         String   @default("{}")
+  status               String   @default("planned")
+  createdAt            DateTime @default(now())
+
+  @@index([ownerUserId, taskClass, createdAt])
+  @@map("capability_routing_decisions")
 }

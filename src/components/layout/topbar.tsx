@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { DeviceStatusBadge } from "./device-status-badge";
 
 const NAV_ITEMS = [
   { label: 'ЦЕНТРЫ', href: '/phase-b' },
@@ -67,10 +68,7 @@ export function TopBar() {
           <span>RAM <span className="text-cyan-100">41%</span></span>
           <span>СЕТЬ <span className="text-cyan-100">1.2Гбит/с</span></span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[#a3e635] text-glow-lime">ONLINE</span>
-          <div className="w-1.5 h-1.5 rounded-full bg-[#a3e635] shadow-[0_0_8px_#a3e635] animate-pulse"></div>
-        </div>
+        <DeviceStatusBadge />
         <div className="text-cyan-100">{time}</div>
       </div>
     </header>

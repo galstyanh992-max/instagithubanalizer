@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { CodexWorkerAdapter } from '../adapters/codex-cli';
+import { CodexWorkerAdapter } from '@/local-runtime/worker-registry/adapters/codex-cli';
 import { TaskPayload } from '../types';
 
 vi.mock('child_process');

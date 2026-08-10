@@ -35,4 +35,8 @@ export const DaemonConfig = {
   
   POLL_INTERVAL_MS: parseInt(process.env.JARVIS_DAEMON_POLL_INTERVAL_MS || '2000', 10),
   HEARTBEAT_INTERVAL_MS: parseInt(process.env.JARVIS_DAEMON_HEARTBEAT_INTERVAL_MS || '30000', 10),
+  // Configurable so the local health-check listener never collides with an
+  // unrelated app already bound to the previously-hardcoded 3001 on this
+  // machine. Discovered 2026-08-10 during real-machine E2E testing.
+  HEALTH_PORT: parseInt(process.env.JARVIS_DAEMON_HEALTH_PORT || '3001', 10),
 };

@@ -1,7 +1,7 @@
-import { CodexWorkerAdapter } from '../adapters/codex-cli';
-import { ClaudeCodeWorkerAdapter } from '../adapters/claude-code';
-import { AntigravityWorkerAdapter } from '../adapters/antigravity-cli';
-import { WorkerWorkspaceManager } from '../workspace';
+import { CodexWorkerAdapter } from '@/local-runtime/worker-registry/adapters/codex-cli';
+import { ClaudeCodeWorkerAdapter } from '@/local-runtime/worker-registry/adapters/claude-code';
+import { AntigravityWorkerAdapter } from '@/local-runtime/worker-registry/adapters/antigravity-cli';
+import { WorkerWorkspaceManager } from '@/local-runtime/worker-registry/workspace';
 import * as fs from 'fs';
 import * as path from 'path';
 

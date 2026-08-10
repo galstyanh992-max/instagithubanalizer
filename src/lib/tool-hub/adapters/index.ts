@@ -18,9 +18,9 @@ function createLazyAdapter(key: string, modulePath: string, exportName: string):
       if (modulePath === './filesystem') {
         mod = await import('./filesystem');
       } else if (modulePath === './git') {
-        mod = await import('./git');
+        mod = await import('@/local-runtime/tool-hub/adapters/git');
       } else if (modulePath === './project') {
-        mod = await import('./project');
+        mod = await import('@/local-runtime/tool-hub/adapters/project');
       }
       
       const adapter = mod[exportName] as ToolAdapter;

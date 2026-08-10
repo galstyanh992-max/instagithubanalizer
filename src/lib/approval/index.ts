@@ -8,6 +8,7 @@ import { eventBus } from '../event-bus';
 import { EventTypes } from '../types/events';
 import type { ApprovalStatus, RiskLevel, ApprovalActionType } from '../types/domain';
 import type { CreateApprovalInput } from '../types/domain';
+import { broadcastJarvisEvent } from '../jarvis/realtime/broadcast';
 
 class ApprovalSystem {
   private static instance: ApprovalSystem | null = null;
@@ -53,6 +54,8 @@ class ApprovalSystem {
       source: 'approval-system',
     });
 
+    await broadcastJarvisEvent('approval.created', { id: request.id, at: new Date().toISOString() });
+
     return {
       ...request,
       payload: request.payload ? JSON.parse(request.payload) : null,
@@ -82,6 +85,8 @@ class ApprovalSystem {
       source: 'approval-system',
     });
 
+    await broadcastJarvisEvent('approval.decided', { id: approvalId, status: 'approved', at: new Date().toISOString() });
+
     return {
       ...updated,
       payload: updated.payload ? JSON.parse(updated.payload) : null,
@@ -110,6 +115,8 @@ class ApprovalSystem {
       timestamp: Date.now(),
       source: 'approval-system',
     });
+
+    await broadcastJarvisEvent('approval.decided', { id: approvalId, status: 'rejected', at: new Date().toISOString() });
 
     return {
       ...updated,

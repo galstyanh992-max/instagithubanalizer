@@ -1,4 +1,5 @@
 import { err, ok, parseJson, safe } from '@/lib/api';
+import { env } from '@/lib/env';
 import { ollamaAdapter } from '@/lib/jarvis/platform/ollama-adapter';
 import { requireJarvisOwner } from '@/lib/jarvis/owner-guard';
 import { programRegistry } from '@/lib/jarvis/platform/program-registry';
@@ -13,7 +14,14 @@ const schema = z.object({
   cold: z.boolean().optional(),
 });
 
+// ollamaAdapter is a lazy proxy (src/lib/jarvis/platform/ollama-adapter.ts)
+// that already fails closed in web-control-plane mode without touching the
+// network. This explicit check is a second, route-level layer: a Vercel
+// deployment should never even attempt to query its own loopback address.
 export const GET = safe(async () => {
+  if (env.JARVIS_RUNTIME_ROLE === 'web-control-plane') {
+    return err('Ollama runs on the local JARVIS runtime only.', 501);
+  }
   const accessError = await requireJarvisOwner();
   if (accessError) return accessError;
   const [health, version, models, metrics] = await Promise.all([
@@ -22,10 +30,14 @@ export const GET = safe(async () => {
     ollamaAdapter.models().catch(() => []),
     ollamaAdapter.metrics(),
   ]);
-  return ok({ endpoint: 'http://127.0.0.1:11434', health, version, models, metrics });
+  const configuration = (await ollamaAdapter.configuration()) as { endpoint?: string };
+  return ok({ endpoint: configuration.endpoint ?? 'local', health, version, models, metrics });
 });
 
 export const POST = safe(async (request: Request) => {
+  if (env.JARVIS_RUNTIME_ROLE === 'web-control-plane') {
+    return err('Ollama runs on the local JARVIS runtime only.', 501);
+  }
   const accessError = await requireJarvisOwner();
   if (accessError) return accessError;
   const parsed = schema.safeParse(await parseJson(request));

@@ -1,5 +1,8 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { broadcastJarvisEvent } from '@/lib/jarvis/realtime/broadcast';
+
+const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 
 export async function updateTaskState(taskId: string, installationId: string, expectedCurrentStates: string[], targetState: string, additionalData: any = {}) {
   const device = await db.device.findUnique({ where: { installationId } });
@@ -28,6 +31,12 @@ export async function updateTaskState(taskId: string, installationId: string, ex
       status: targetState,
       ...additionalData
     }
+  });
+
+  await broadcastJarvisEvent(TERMINAL_STATES.has(targetState) ? 'task.completed' : 'task.progress', {
+    id: updated.id,
+    status: updated.status,
+    at: new Date().toISOString(),
   });
 
   return NextResponse.json({ task: updated });

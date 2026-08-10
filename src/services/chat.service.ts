@@ -6,7 +6,6 @@
 import { aiService } from "./ai.service";
 import { aiProviderRouter } from "./ai-provider-router.service";
 import { db } from "@/lib/db";
-import { graphifyService } from "./graphify.service";
 
 export type ChatIntent =
   | "general"
@@ -162,6 +161,9 @@ export const chatService = {
     const graphKeywords = /кодовая база|codebase|проект|project|файл|file|класс|class|функция|function|модуль|module|связь|connection|graph|граф|зависимость|dependency/i;
     if (graphKeywords.test(message)) {
       try {
+        // Graphify spawns a local CLI (child_process) — local-runtime only.
+        // Dynamic import keeps it out of the Vercel web-control-plane bundle.
+        const { graphifyService } = await import("@/local-runtime/services/graphify.service");
         const built = await graphifyService.isGraphBuilt();
         if (!built) {
           await graphifyService.analyzeProject();

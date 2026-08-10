@@ -15,7 +15,7 @@
 // and fast without relying on Vitest's own timeout to end a hung promise.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ClaudeCodeWorkerAdapter } from '../adapters/claude-code';
+import { ClaudeCodeWorkerAdapter } from '@/local-runtime/worker-registry/adapters/claude-code';
 import { TaskPayload } from '../types';
 
 vi.mock('child_process');

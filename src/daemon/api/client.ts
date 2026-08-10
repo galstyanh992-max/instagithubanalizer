@@ -80,4 +80,15 @@ export class GatewayClient {
       body: JSON.stringify({ taskId, metadata })
     });
   }
+
+  public static async publishRegistrySnapshot(revision: string, payload: unknown): Promise<{ status: string; revision: string }> {
+    return this.fetchWithAuth('/api/daemon/registry-snapshot', {
+      method: 'POST',
+      body: JSON.stringify({
+        installationId: DeviceIdentity.installationId,
+        revision,
+        payload,
+      })
+    });
+  }
 }

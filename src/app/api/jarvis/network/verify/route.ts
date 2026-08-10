@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runVerification } from "@/lib/jarvis/verification-engine";
+import { env } from "@/lib/env";
 import { listVerificationResults } from "@/lib/jarvis/verification-store";
 import type { VerificationType } from "@/lib/jarvis/types";
 
@@ -9,9 +9,20 @@ export const runtime = "nodejs";
  * POST /api/jarvis/network/verify
  * Body: { runId, taskId?, type, dryRun? }
  * Runs a verification check and returns the result.
+ *
+ * runVerification's non-dryRun checks call execSync (npm run
+ * build/lint/test/typecheck) — local-runtime only. Never imported
+ * statically so it can't ship in a Vercel web-control-plane bundle.
  */
 export async function POST(req: Request) {
   try {
+    if (env.JARVIS_RUNTIME_ROLE === "web-control-plane") {
+      return NextResponse.json(
+        { error: "Verification runs on the local JARVIS runtime only." },
+        { status: 501 }
+      );
+    }
+
     const body = (await req.json()) as {
       runId?: string;
       taskId?: string;
@@ -26,6 +37,7 @@ export async function POST(req: Request) {
       );
     }
 
+    const { runVerification } = await import("@/local-runtime/services/verification-engine");
     const result = await runVerification({
       runId: body.runId,
       taskId: body.taskId,

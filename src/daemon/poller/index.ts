@@ -2,6 +2,7 @@ import * as path from 'path';
 import { DaemonConfig } from '../config';
 import { GatewayClient } from '../api/client';
 import { MockExecutors } from '../executors';
+import { publishRegistryProjectionIfChanged } from '../registry-projection';
 
 export class TaskPoller {
   private isRunning: boolean = false;
@@ -13,12 +14,25 @@ export class TaskPoller {
 
     let consecutiveErrors = 0;
 
-    // Heartbeat loop
+    // Heartbeat loop. Kept intentionally light (device state + lastSeen
+    // only, per src/app/api/daemon/heartbeat/route.ts). The registry
+    // projection is publish-on-change, not sent every tick — most ticks are
+    // a no-op revision comparison against the last snapshot this process
+    // published, so it does not turn the heartbeat into a full-blast sync.
     const heartbeatTimer = setInterval(async () => {
       try {
         await GatewayClient.heartbeat();
       } catch (e: any) {
         console.warn(`[Daemon] Heartbeat failed: ${e.message}`);
+      }
+
+      try {
+        const result = await publishRegistryProjectionIfChanged(false);
+        if (result.published) {
+          console.log(`[Daemon] Registry projection published (revision ${result.revision.slice(0, 12)}, ${result.programCount} programs, ${result.capabilityCount} capabilities).`);
+        }
+      } catch (e: any) {
+        console.warn(`[Daemon] Registry projection publish failed: ${e.message}`);
       }
     }, DaemonConfig.HEARTBEAT_INTERVAL_MS);
 

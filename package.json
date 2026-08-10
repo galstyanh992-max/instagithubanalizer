@@ -18,6 +18,7 @@
         "browser:install": "npx playwright install chromium",
         "camofox:start": "node vendor/camofox-browser/server.js",
         "smoke:security": "node scripts/security-smoke.mjs",
+        "check:runtime-boundary": "node scripts/check-runtime-boundary.mjs",
         "db:deploy": "prisma migrate deploy",
         "db:status": "prisma migrate status",
         "daemon:dev": "tsx watch src/daemon/index.ts",

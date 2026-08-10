@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stat } from "node:fs/promises";
-import { join, isAbsolute, extname, resolve, basename } from "node:path";
+import { join, isAbsolute, extname, basename } from "node:path";
 import { readFile } from "node:fs/promises";
-import { getAllowedWorkspace, checkPathAllowed } from "@/lib/local-operator/workspace-policy";
-import type { AllowedWorkspace } from "@/lib/local-operator/types";
+import { checkPathAllowed } from "@/lib/local-operator/workspace-policy";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,29 +34,16 @@ function isLocalRequest(req: NextRequest): boolean {
   return !!firstIp && ["127.0.0.1", "::1"].includes(firstIp);
 }
 
-function getBrowseRoot(): string {
-  const ws = getAllowedWorkspace();
-  if (ws) return ws.rootPath;
-  if (process.platform === "win32") return "D:\\";
-  return "/";
-}
-
-function getDriveWorkspace(rootPath: string): AllowedWorkspace {
-  return {
-    id: "drive",
-    name: "Drive Root",
-    rootPath: resolve(rootPath),
-    allowedOperations: ["read_project_files", "open_preview"],
-    requiresApprovalForWrite: true,
-  };
-}
-
 export async function GET(req: NextRequest) {
   if (!isLocalRequest(req)) {
     return NextResponse.json({ error: "Forbidden: local only" }, { status: 403 });
   }
+  if (env.JARVIS_RUNTIME_ROLE === "web-control-plane") {
+    return NextResponse.json({ error: "Local file access runs on the local JARVIS runtime only." }, { status: 501 });
+  }
+  const { getBrowseRoot, getDriveWorkspace } = await import("@/local-runtime/api-helpers/drive-browse");
   const root = getBrowseRoot();
-  const ws = getDriveWorkspace(root);
+  const ws = getDriveWorkspace(root, ["read_project_files", "open_preview"]);
   const rel = req.nextUrl.searchParams.get("path") ?? "";
   if (!rel) return NextResponse.json({ error: "path required" }, { status: 400 });
   const requested = isAbsolute(rel) ? rel : join(root, rel);

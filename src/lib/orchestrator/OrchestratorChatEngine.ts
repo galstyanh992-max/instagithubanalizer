@@ -32,7 +32,7 @@ import { OPENROUTER_MODELS } from '../ai-provider/model-registry';
 import { resolveDefaultProviderId, getDefaultProvider } from '../ai-provider/default-provider';
 import { getDefaultModelsForProvider } from '../ai-provider/default-models';
 import { getProviderEntryById } from '../ai-provider/providers';
-import { initializeMcpTools } from '../mcp/init';
+import { env } from '../env';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -139,7 +139,14 @@ class OrchestratorChatEngine {
 
     if (!this.mcpInitialized) {
       this.mcpInitialized = true;
-      await initializeMcpTools();
+      // initializeMcpTools spawns local MCP server processes — local-runtime
+      // only. Dynamic import keeps it out of the Vercel web-control-plane
+      // bundle; this whole engine is currently unwired to any route, but
+      // fails closed here too per the runtime-boundary policy.
+      if (env.JARVIS_RUNTIME_ROLE !== 'web-control-plane') {
+        const { initializeMcpTools } = await import('@/local-runtime/mcp/init');
+        await initializeMcpTools();
+      }
     }
 
     // Emit orchestrator chat started event

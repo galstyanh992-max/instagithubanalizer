@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readdir, stat } from "node:fs/promises";
-import { join, resolve, isAbsolute, sep } from "node:path";
-import { getAllowedWorkspace, checkPathAllowed } from "@/lib/local-operator/workspace-policy";
-import type { AllowedWorkspace } from "@/lib/local-operator/types";
+import { join, isAbsolute, sep } from "node:path";
+import { checkPathAllowed } from "@/lib/local-operator/workspace-policy";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,27 +13,6 @@ function isLocalRequest(req: NextRequest): boolean {
   const xff = req.headers.get("x-forwarded-for") ?? "";
   const firstIp = xff.split(",")[0]?.trim();
   return !!firstIp && ["127.0.0.1", "::1"].includes(firstIp);
-}
-
-// Root for browsing: AGENT_WORKSPACE_ROOT if set, otherwise whole D: drive on Windows,
-// or filesystem root on Linux/macOS.
-function getBrowseRoot(): string {
-  const ws = getAllowedWorkspace();
-  if (ws) return ws.rootPath;
-  if (process.platform === "win32") return "D:\\";
-  return "/";
-}
-
-// Permissive workspace for the whole-drive access (still gated by checkPathAllowed
-// which blocks .env/secrets/credentials/keys and OS system dirs).
-function getDriveWorkspace(rootPath: string): AllowedWorkspace {
-  return {
-    id: "drive",
-    name: "Drive Root",
-    rootPath: resolve(rootPath),
-    allowedOperations: ["read_project_files", "list_workspace", "open_preview"],
-    requiresApprovalForWrite: true,
-  };
 }
 
 const HIDDEN = /^\./;
@@ -47,8 +26,12 @@ export async function GET(req: NextRequest) {
   if (!isLocalRequest(req)) {
     return NextResponse.json({ error: "Forbidden: local only" }, { status: 403 });
   }
+  if (env.JARVIS_RUNTIME_ROLE === "web-control-plane") {
+    return NextResponse.json({ error: "Local drive browsing runs on the local JARVIS runtime only." }, { status: 501 });
+  }
+  const { getBrowseRoot, getDriveWorkspace } = await import("@/local-runtime/api-helpers/drive-browse");
   const root = getBrowseRoot();
-  const ws = getDriveWorkspace(root);
+  const ws = getDriveWorkspace(root, ["read_project_files", "list_workspace", "open_preview"]);
   const rel = req.nextUrl.searchParams.get("path") ?? "";
   const requested = rel ? (isAbsolute(rel) ? rel : join(root, rel)) : root;
   const check = checkPathAllowed(requested, ws);

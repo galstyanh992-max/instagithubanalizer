@@ -1715,11 +1715,17 @@ model AgentTask {
   finishedAt       DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+  // Remote control-plane protocol (Vercel/local-runtime migration, additive/nullable):
+  targetDeviceId   String?
+  leaseExpiresAt   DateTime?
+  idempotencyKey   String?          @unique
   OrchestrationRun OrchestrationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
   @@index([agentId])
   @@index([runId])
   @@index([runId, status])
+  @@index([targetDeviceId])
+  @@index([status, leaseExpiresAt])
   @@map("agent_tasks")
 }
 
@@ -1839,6 +1845,8 @@ model Device {
   revokedAt            DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  // Remote control-plane protocol (Vercel/local-runtime migration, additive/nullable):
+  protocolVersion      String    @default("1")
 
   @@index([ownerUserId])
   @@index([status])

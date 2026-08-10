@@ -1248,7 +1248,10 @@ exports.Prisma.AgentTaskScalarFieldEnum = {
   startedAt: 'startedAt',
   finishedAt: 'finishedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  targetDeviceId: 'targetDeviceId',
+  leaseExpiresAt: 'leaseExpiresAt',
+  idempotencyKey: 'idempotencyKey'
 };
 
 exports.Prisma.ArtifactScalarFieldEnum = {
@@ -1338,7 +1341,8 @@ exports.Prisma.DeviceScalarFieldEnum = {
   capabilitiesSnapshot: 'capabilitiesSnapshot',
   revokedAt: 'revokedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  protocolVersion: 'protocolVersion'
 };
 
 exports.Prisma.ChatAttachmentScalarFieldEnum = {

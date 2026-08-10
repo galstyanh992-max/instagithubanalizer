@@ -1,8 +1,8 @@
 // @vitest-environment node
 
 import { describe, expect, it } from 'vitest';
-import { AntigravityWorkerAdapter, ALLOWED_ANTIGRAVITY_MODELS, MODEL_PROFILE_MAP, ANTIGRAVITY_MODEL_CONFIG } from '../adapters/antigravity-cli';
-import { WorkerWorkspaceManager } from '../workspace';
+import { AntigravityWorkerAdapter, ALLOWED_ANTIGRAVITY_MODELS, MODEL_PROFILE_MAP, ANTIGRAVITY_MODEL_CONFIG } from '@/local-runtime/worker-registry/adapters/antigravity-cli';
+import { WorkerWorkspaceManager } from '@/local-runtime/worker-registry/workspace';
 import { ModelProfile } from '../types';
 import * as child_process from 'child_process';
 import { EventEmitter } from 'events';
