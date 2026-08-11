@@ -1279,6 +1279,19 @@
   }));
 
   async function submitPrompt(text) {
+    // Remote capability commands (real system status / Ollama / filesystem /
+    // MCP / browser / n8n on HOME-PC, via the daemon) must be checked before
+    // handleBrowserChatCommand — its broad browser-intent regex ("открой" +
+    // "браузер"/"страниц"/etc.) would otherwise swallow the exact phrase
+    // "открой браузер и безопасную тестовую страницу" and route it to the
+    // local UI web-agent feature (/api/browser/camofox, a Next.js route that
+    // only works from within the Next.js server process itself and cannot
+    // reach CamoFox on HOME-PC when that process is Vercel's cloud runtime)
+    // instead of the daemon capability path. Discovered via real E2E testing
+    // against the redeployed Preview: the phrase created zero AgentTask rows
+    // and instead called /api/browser/camofox directly, which reported
+    // CamoFox unavailable regardless of whether it was actually running.
+    if (selectedChatFiles.length === 0 && matchRemoteCapability(text)) return sendCommand(text);
     if (await handleBrowserChatCommand(text)) return;
     if (mode === "auto") return sendCommand(text);
     if (mode === "analysis") return sendCommand(`Проанализируй: ${text}`);
