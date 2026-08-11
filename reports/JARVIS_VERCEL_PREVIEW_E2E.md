@@ -236,34 +236,153 @@ component rendered in the *outer* Next.js tree (opened from the cockpit's
   pass — a sandbox toolchain gap, not a regression introduced here.
   Documented rather than silently skipped or worked around.
 
-### Blocker: no live redeploy possible this session
+### Deploy blocker — resolved
 
-Sections 6/7/15 (dashboard match, realtime online/offline, translate 500
-count on the live Preview) and Sections 16-22 (remote text/tool E2E) all
-require testing against a **freshly deployed** Preview carrying these code
-changes. This session has no path to trigger that deploy:
+The Linux sandbox and the Windows-side Vercel CLI both had zero cached
+Vercel auth (confirmed by inspection, not assumption — see git history of
+this report for the original blocker writeup). Surfaced honestly to the
+user via `AskUserQuestion`; user supplied a Vercel PAT, used transiently
+(never written to any file, report, or commit) to run
+`npx vercel deploy --token=<redacted> --scope=<redacted> --yes` from the
+Windows side via a persistent Desktop Commander process (the sandboxed
+bash tool's ~180s call cap is shorter than this project's build+deploy
+time).
 
-- No Vercel PAT/token in the Linux sandbox environment (checked: no cached
-  CLI auth, no `VERCEL*` env var).
-- No Vercel CLI auth on the Windows side either (checked:
-  `%LOCALAPPDATA%\com.vercel.cli` has only a `Cache` folder, no
-  `auth.json`; `vercel env ls` there fails with "Could not retrieve
-  Project Settings").
-- The connected Vercel MCP tool (`c3c3a770-...`) is real and authenticated
-  (used above for `get_runtime_errors`/`get_project`/`list_teams`,
-  confirming project `prj_BqioTVaWMZyB9MHi0HFkj34T612R` /
-  team `team_l9AKRwnO9Q4sSfcFgYdXMwZ1`) but exposes observability,
-  deployment-protection, and greenfield file-upload deploys — no
-  incremental "redeploy this existing git-linked project" or environment-variable
-  management tool.
-- `deploy_to_vercel` (file-tree upload) exists but is documented for
-  shipping a freshly generated app; re-uploading this project's full
-  several-hundred-file tree through it is impractical and was not
-  attempted.
+Resulting deployment, confirmed via the Vercel MCP tool (`get_deployment`):
 
-Net effect: the fixes are real, targeted, and locally verified, but
-**unconfirmed live** until either a Vercel deploy token is provided again
-or the deploy is run from a session/tool that has one.
+```
+deploymentId: dpl_4Vj8656CsdLnzRTebbN4916rMnC1
+url: https://instagithubanalizer-h0iyevf0p-galstyanh992-8644s-projects.vercel.app
+state: READY
+target: null   (Preview — confirmed NOT production; no alias assigned)
+githubCommitSha: dba259d...  (carries all 4 files from the repair pass)
+```
+
+`JARVIS_DAEMON_GATEWAY_URL` in `.env.local` was updated to the new URL and
+the local daemon (Task-Scheduler-managed) restarted to point at it.
+
+## Live verification against the redeployed Preview (Sections 6, 7, 11, 12, real device E2E continuation)
+
+All of the below was observed directly — real authenticated Chrome session
+(logged in as a real Supabase user), real network trace, real Vercel
+runtime-error query, real process kill/restart on HOME-PC — not asserted
+from the code alone.
+
+### Section 7 — Dashboard registry match: now PASS
+
+- Devices tab ("Устройства") added to the existing right-sidebar tab group
+  renders live: device card shows `JARVIS-PC`, status, last-heartbeat
+  timestamp, and `Программы 46/67 · Возможности 204/245 · ревизия
+  d64f10454b...` — all read verbatim from `/api/devices/status`, no
+  hardcoded 67/245.
+- Clicking the card opens the full per-program detail view: all **67**
+  real programs listed individually with real, varied per-program
+  `installed`/`enabled`/`running`/`health` values (e.g. `Agent Reach`,
+  `Antigravity`, `Browser Use`, `Docker`, `Claude Code`, `Crawl4AI`,
+  `MCP: desktop-commander`, `supabase_db_...`, `chatbot-ragflow-...` and
+  more) — far exceeding the master prompt's ≥20-sample requirement, and
+  matching the real registry rather than a sample/mock subset.
+
+### Section 7 continued — realtime ONLINE → OFFLINE → ONLINE, no page reload: PASS
+
+Full round-trip performed against a single, never-reloaded browser tab:
+
+1. **Baseline (ONLINE).** Card read: `12.08.2026, 00:42:12 ·  Программы
+   46/67 · Возможности 204/245 · ревизия d64f10454b...`.
+2. **Killed the daemon for real.** `Stop-ScheduledTask -TaskName
+   'JARVIS-Daemon'` alone did *not* stop the underlying process — a real,
+   separate finding: `Get-CimInstance Win32_Process -Filter
+   "Name='node.exe'"` showed **two full duplicate daemon process trees**
+   (6 node.exe PIDs total) still running `src\daemon\index.ts`. Killed all
+   6 explicitly (`Stop-Process -Id <6 literal PIDs> -Force`), then
+   confirmed via a follow-up process list that zero daemon-related
+   processes remained (only unrelated MCP-server node processes).
+3. **Waited past `STALE_MS` (90s).**
+4. **Re-screenshotted the same open tab (no navigation, no reload).**
+   Sidebar card flipped to `OFFLINE`. Zoomed capture confirms the exact
+   badge text and that the **last-known** heartbeat timestamp
+   (`12.08.2026, 00:49:32`) is preserved, not fabricated fresh. Clicking
+   into the detail view showed all 67 programs' `health` forced to
+   `UNKNOWN_DEVICE_OFFLINE` — exactly the master prompt's requirement
+   ("Never display stale READY/ONLINE state for programs belonging to an
+   offline device"). This offline-forcing was pre-existing server-side
+   logic (`registry-projection.ts`'s `markProjectionOffline()`); the UI
+   simply renders what the API honestly returns.
+5. **Restarted the daemon** (`Stop-ScheduledTask` → `Start-ScheduledTask`
+   on `JARVIS-Daemon`), waited 35s for a fresh heartbeat cycle
+   (`HEARTBEAT_INTERVAL_MS=30000`).
+6. **Re-screenshotted the same tab again (still no reload).** Card flipped
+   back to `ONLINE` with a fresh heartbeat (`12.08.2026, 00:58:17`) and
+   the **same** registry revision `d64f10454b...` and counts
+   (`46/67`, `204/245`) restored — correct, since nothing changed in the
+   local registry itself, only the daemon process restarted.
+
+Transition mechanism is the dashboard's existing 20s `refreshEntities()`
+poll (`public/dashboard/live.js`) — a polling fallback, not Supabase
+Realtime, but it satisfies the master prompt's stated acceptance
+("Realtime (or polling-fallback) online/offline transition without page
+reload").
+
+**REMOTE_DASHBOARD_REALITY=PASS.**
+
+### Section 11 — `/api/translate` 500 count: PASS, count = 0
+
+- Network trace filtered on `translate`: 5 `POST /api/translate` calls
+  during this session's live testing (triggered by opening Settings →
+  "МОЙ КОМПЬЮТЕР" and other panels), all `statusCode: 200`.
+- `get_runtime_errors` for the deployment's runtime, checked directly:
+  zero errors attributable to `dpl_4Vj8656CsdLnzRTebbN4916rMnC1` (the only
+  entry present is one unrelated pre-existing error tied to the *old*
+  deployment, from before this pass).
+- PC-Profile field labels (Profile name, CPU, GPU, VRAM (GB), etc.) now
+  render fully in Russian with **zero** related network calls — resolved
+  locally from `EXACT_TRANSLATIONS`, confirming the spam-reduction fix
+  works as intended, not just the error-handling fix.
+
+**DASHBOARD_TRANSLATE_500_COUNT=0.**
+
+### Section 12 — Secret exposure check: PASS
+
+Grepped the client-shipped bundle surface (component/page source under
+`src/app`, `src/components`, and `public/dashboard/*.js`) for both
+`JARVIS_DAEMON_PROTECTION_BYPASS_SECRET`/`x-vercel-protection-bypass` and
+`JARVIS_DAEMON_TOKEN` by variable name and by their literal values — zero
+matches outside server-only files (`src/daemon/**`, `src/app/api/**` route
+handlers, `.env.local`). Both remain plain (non-`NEXT_PUBLIC_`) env vars,
+so Next.js's build never bundles them into client code by construction;
+the grep confirms no code path additionally leaks them (e.g. via a debug
+log or an API response body).
+
+### HEAD `/` → 503 (Section 5 finding) — investigated, root cause: Vercel platform, not app
+
+Unauthenticated `curl -I` against the Preview URL returns the same
+Vercel-SSO redirect/challenge behavior for both `GET` and `HEAD` requests
+(deployment protection intercepts at the edge before the app runs).
+`get_runtime_errors` shows zero application-level log entries correlating
+with any `503` for this deployment. Conclusion: this is Vercel Deployment
+Protection's edge behavior on `HEAD` requests, not a defect in
+`src/middleware.ts` or any route handler (`middleware.ts` has no
+HEAD-specific branching to begin with — see file). No code change applied;
+none is warranted for an edge-platform response code.
+
+### INP (~3.17s blocked interaction) — targeted fix applied, not a broader project
+
+`RussianInterfaceTranslator`'s initial full-`document.body` `TreeWalker`
+pass was moved off the hydration-critical path via `requestIdleCallback`
+(`setTimeout` fallback for browsers without it) — see code change list
+below. This was the one synchronous, unbounded DOM walk the component
+performed at mount; no other optimization work was undertaken, per the
+master prompt's explicit "do NOT perform a major UI optimization project
+now" constraint.
+
+### Duplicate daemon processes — new observation, not fixed in this pass
+
+Discovered while stopping the daemon for the offline test: **two full
+process trees** for `src\daemon\index.ts` were running simultaneously
+under the `JARVIS-Daemon` scheduled task (6 `node.exe` PIDs, not 3).
+Recorded here as a real finding worth follow-up (possible task-trigger
+misconfiguration causing double-start), but out of scope to fix in this
+pass — not blocking any Preview E2E requirement.
 
 ## Code changes in this pass
 
