@@ -134,13 +134,35 @@ alias/custom domain pointed at the latest Preview, or reading
 rounds — flagged here rather than solved, since changing the alias/domain
 strategy is a product decision, not a bug fix.
 
-## Section 7 — Dashboard match (≥20 real programs sampled): not yet performed
+## Section 7 — Dashboard match (≥20 real programs sampled): FAIL (real gap found, not a mock/workaround)
 
-The registry projection above proves the daemon's real program/capability
-counts reach the Preview backend correctly. Sampling ≥20 individual
-programs from the remote dashboard UI against the same local registry (the
-literal per-program spot-check the master prompt asks for) was not done in
-this pass — tracked as outstanding alongside Sections 8-30.
+Checked directly rather than assumed: `grep -r "programsSummary|registryProjection|capabilitiesSummary"
+src/` matches only `src/app/api/devices/status/route.ts` and the two
+daemon/lib registry-projection modules — **zero matches under
+`src/components` or any page**. Confirmed live by loading the real
+dashboard (`/`) in a fresh, logged-in browser session and inspecting every
+network request it fires: `/api/os-metrics`, `/api/providers/status`,
+`/api/projects`, `/api/music/local`, `/api/translate` — never
+`/api/devices/status` or anything registry-shaped. The "СИСТЕМА" nav item
+opens an AI-routing/provider settings modal, not a device/program view;
+its "МОЙ КОМПЬЮТЕР" tab is a static, user-editable PC-profile form (OS,
+CPU, GPU, storage fields), unrelated to the daemon's live registry.
+
+**Conclusion: there is currently no dashboard surface that displays the
+daemon's real program/capability inventory at all**, so the master
+prompt's literal ask (sample ≥20 real programs from the dashboard UI and
+match them against the local registry) cannot be performed — not because
+the data is wrong, but because no UI consumes it yet. Section 6 already
+proved the data itself is real and reaches the backend correctly; this is
+a distinct, real product gap (missing view), reported honestly rather than
+declared passing on the strength of the API check alone.
+
+**Second real finding from the same pass:** `POST /api/translate` returned
+**500** on every dashboard load (reproduced 3 times across page loads at
+15:39, 16:02, and this check). Not investigated further in this pass
+(out of scope for daemon connectivity) but flagged here since it's a real,
+reproducible server error on a route the dashboard calls unconditionally
+on load.
 
 ## Code changes in this pass
 
