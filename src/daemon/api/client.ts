@@ -12,6 +12,14 @@ export class GatewayClient {
     // Installation ID helps identify the device even without a body
     headers.set('X-Installation-Id', DeviceIdentity.installationId);
 
+    // See DaemonConfig.PROTECTION_BYPASS_SECRET: required only when
+    // GATEWAY_URL is a Vercel Preview deployment with SSO/Deployment
+    // Protection enabled. Harmless to send elsewhere -- non-Vercel gateways
+    // simply ignore this header.
+    if (DaemonConfig.PROTECTION_BYPASS_SECRET) {
+      headers.set('x-vercel-protection-bypass', DaemonConfig.PROTECTION_BYPASS_SECRET);
+    }
+
     const response = await fetch(url, {
       ...options,
       headers
