@@ -24,6 +24,10 @@ export interface CreateRemoteTaskInput {
   description?: string;
   idempotencyKey: string;
   role?: string;
+  // JSON-stringified CapabilityCommandEnvelope (src/lib/jarvis/capabilities/
+  // envelope.ts), stored verbatim in AgentTask.request. Optional/backward
+  // compatible — existing NOOP/HEALTH_CHECK/etc. mock commands never set it.
+  request?: string;
 }
 
 export interface CreateRemoteTaskResult {
@@ -70,6 +74,7 @@ export async function createRemoteTask(input: CreateRemoteTaskInput): Promise<Cr
           status: 'not_started',
           targetDeviceId: input.targetDeviceId,
           idempotencyKey: input.idempotencyKey,
+          request: input.request,
         },
       });
     }, { maxWait: 10000, timeout: 15000 });

@@ -8,7 +8,19 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    // Lets daemon-side capability executors reuse real src/local-runtime/**
+    // and pure src/lib/** modules (Ollama adapter, docker-service-manager,
+    // permission-checker, workspace-policy, etc.) by their normal `@/...`
+    // specifiers instead of duplicating them or rewriting every import to a
+    // long relative path. Mirrors the root tsconfig.json's `@/*` -> `./src/*`
+    // mapping; relative to this file (src/daemon/tsconfig.json) that's `../*`.
+    // Added 2026-08-12 for the daemon capability-executor layer — see
+    // docs/jarvis/remote-architecture.md.
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../*"]
+    }
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "**/*.test.ts"]

@@ -1,8 +1,10 @@
 import * as path from 'path';
 import { DaemonConfig } from '../config';
 import { GatewayClient } from '../api/client';
-import { MockExecutors } from '../executors';
+import { MockExecutors, type ExecutorResult } from '../executors';
 import { publishRegistryProjectionIfChanged } from '../registry-projection';
+import { DaemonCapabilityRegistry } from '../capabilities';
+import type { CapabilityCommandEnvelope } from '@/lib/jarvis/capabilities/envelope';
 
 export class TaskPoller {
   private isRunning: boolean = false;
@@ -91,6 +93,11 @@ export class TaskPoller {
       } else if (cmd.startsWith('READ_METADATA')) {
         const args = cmd.split(' ');
         result = await MockExecutors.executeReadAllowedFileMetadata(args[1] || '');
+      } else if (cmd.startsWith('CAPABILITY:')) {
+        // Real capability command — see src/daemon/capabilities/**. The full
+        // envelope (capability, operation, arguments) lives in task.request
+        // as JSON; the title is kept as a short, log-friendly summary only.
+        result = await this.executeCapabilityCommand(task);
       } else {
         result = { status: 'failed', errorMessage: 'Unknown mock command' };
       }
@@ -123,6 +130,22 @@ export class TaskPoller {
         console.error(`[Daemon] FATAL: Could not report failure to Gateway:`, fatalErr);
       }
     }
+  }
+
+  private async executeCapabilityCommand(task: any): Promise<ExecutorResult> {
+    if (!task.request) {
+      return { status: 'failed', errorMessage: 'Задача помечена как CAPABILITY:, но не содержит envelope в поле request' };
+    }
+    let envelope: CapabilityCommandEnvelope;
+    try {
+      envelope = JSON.parse(task.request);
+    } catch {
+      return { status: 'failed', errorMessage: 'Не удалось разобрать envelope задачи (request не является валидным JSON)' };
+    }
+    if (envelope.protocolVersion !== 1 || !envelope.capability || !envelope.operation) {
+      return { status: 'failed', errorMessage: 'Envelope задачи не соответствует ожидаемой схеме (protocolVersion/capability/operation)' };
+    }
+    return DaemonCapabilityRegistry.dispatch(envelope);
   }
 
   private async executePlan(taskId: string, plan: any) {
