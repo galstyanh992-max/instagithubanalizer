@@ -1,0 +1,25 @@
+# Deploy-only ignore file. These are large local-only directories that are
+# NOT part of the deployable Next.js app (local runtime state, vendored
+# browser binaries, Python venvs, editor/tool caches, one-off artifacts) and
+# were never added to git tracking either -- see JARVIS_VERCEL_PREVIEW_DEPLOY_MANIFEST.md
+# for why. Without this file the CLI falls back to .gitignore, which does not
+# exclude these paths (it only ignores select .jarvis/* subdirectories), so a
+# deploy would otherwise scan tens of thousands of irrelevant files.
+/.jarvis
+/vendor
+/.playwright-cli
+/.playwright-mcp
+/.vscode
+/.agents
+/architecture
+/artifacts
+/JARVIS_Live_Model_UI_v9.zip
+/JARVIS_VOLUMETRIC_SILENCE.png
+/_prisma_migrations_dump.json
+/.agent.md
+/scripts/_find-importers.ps1
+/scripts/_find-importers2.ps1
+/scripts/_find-importers3.ps1
+/scripts/_find-importers4.ps1
+/scripts/_find-importers5.ps1
+/.tmp-*

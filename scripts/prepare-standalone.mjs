@@ -1,6 +1,14 @@
 import { cp, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
+// Vercel's own builder does not use next.config's "standalone" output (see
+// next.config.ts) -- there is no .next/standalone dir to populate there, so
+// this step is a deliberate no-op on Vercel rather than a failure.
+if (process.env.VERCEL) {
+  console.log('Skipping standalone asset prep: running under Vercel build (VERCEL=1).');
+  process.exit(0);
+}
+
 const root = process.cwd();
 const standalone = join(root, '.next', 'standalone');
 
