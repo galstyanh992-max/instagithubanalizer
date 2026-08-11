@@ -384,6 +384,86 @@ Recorded here as a real finding worth follow-up (possible task-trigger
 misconfiguration causing double-start), but out of scope to fix in this
 pass — not blocking any Preview E2E requirement.
 
+## Sections 8-13 (remote tool E2E: system status, Ollama, filesystem, MCP, browser, n8n) — BLOCKED, real architectural gap found
+
+Before writing any test command, the actual command → task → daemon →
+execute → report chain was mapped end-to-end by reading the real code
+(`src/lib/command-router/**`, `src/components/jarvis/use-jarvis.ts`,
+`src/app/api/devices/[id]/commands/route.ts`,
+`src/lib/jarvis/tasks/create-remote-task.ts`, `prisma/schema.prisma`,
+`src/daemon/poller/index.ts`, `src/daemon/executors/**`,
+`src/daemon/api/client.ts`, `src/lib/jarvis/realtime/broadcast.ts`). This
+was necessary rather than optional: without it, "PASS" could only have
+been asserted by trusting that a UI affordance exists and works, which
+is exactly the kind of unverified claim this whole pass has been avoiding.
+
+**Finding, confirmed by reading the code (not inferred): none of the 6
+target capabilities are wired through the real daemon task-execution
+chain today.** This matches the project's own architecture doc
+(`docs/jarvis/remote-architecture.md`, 2026-08-10), which states under
+"Not done in this pass": *"Wiring `/api/daemon/tasks/claim` execution to
+real local capabilities (Ollama, Desktop Commander, MCP, browser) for
+remote-command tasks — the daemon's `executeTask` currently only
+understands mock commands... There is no existing 'chat/voice message →
+remote AgentTask → daemon executes it → result streams back to the
+browser' path yet."*
+
+Concretely:
+
+- The only real task-creation endpoint that inserts a daemon-claimable
+  `AgentTask` row is `POST /api/devices/{id}/commands` → `createRemoteTask()`
+  (`src/lib/jarvis/tasks/create-remote-task.ts`). The chat/voice command
+  surface (`use-jarvis.ts` → `/api/jarvis/orchestrate`) and
+  `src/lib/command-router/router.ts` are **not connected to it** —
+  `command-router` is explicitly plan-only ("never executes" in its own
+  comments) and `/api/jarvis/orchestrate` handles cloud media generation,
+  not device commands.
+- The daemon's `executeTask()` (`src/daemon/poller/index.ts`) string-matches
+  `task.title` against a class literally named `MockExecutors`
+  (`src/daemon/executors/index.ts`) with exactly four commands: `NOOP`,
+  `HEALTH_CHECK` (a path-safety boolean, not OS metrics), `READ_METADATA
+  <path>` (one file's hash/size, not a directory listing), and
+  `WRITE_TEST_ARTIFACT <name>`. `ExecutionPlan`-based steps are additionally
+  gated by `DaemonRegistry.assertAllowed()`, whose static allow-list
+  contains only `NPM_TYPECHECK` and `NPM_TEST`.
+- Real implementations of all 6 capabilities *do* exist elsewhere in the
+  codebase, but every one is architecturally scoped to run only when the
+  Next.js app itself executes locally on the home PC
+  (`JARVIS_RUNTIME_ROLE=local-full-dev`, reached via `localhost`), and each
+  fails closed with `LOCAL_EXECUTION_FORBIDDEN`/501/403 when
+  `JARVIS_RUNTIME_ROLE=web-control-plane` (i.e. when running on this Vercel
+  Preview) — confirmed by reading `src/app/api/jarvis/ollama/route.ts`,
+  `src/app/api/files/list/route.ts`,
+  `src/lib/jarvis/phase-b/docker-service-manager.ts` (n8n). The one
+  exception is `GET /api/mcp-bridge/status`, whose own doc-comment states
+  it **"Never checks a real port, never launches a process"** — that one is
+  fully mocked, not just misrouted. `POST /api/browser/control` runs a real
+  Playwright browser, but with zero `JARVIS_RUNTIME_ROLE` gate — on this
+  Preview it would launch (or fail to launch, no Chromium binary) inside
+  the Vercel function itself, not on the home PC.
+- `os-metrics` (system status) is partially real: CPU/RAM come from real
+  `os.cpus()`/`os.totalmem()`, but GPU/VRAM/temperature/network are
+  hardcoded/`Math.random()` placeholders (`src/app/api/os-metrics/route.ts`),
+  and — since this route has no runtime-role gate either — on the deployed
+  Preview it would report the Vercel serverless function's own CPU/RAM, not
+  the home PC's, regardless.
+
+**Conclusion:** the master prompt's Sections 8-13 ask to verify the full
+real chain (*Preview → task → Supabase → daemon → claim → Policy Engine →
+Capability Registry → real adapter → real local execution → events →
+Preview result*) for these 6 specific capabilities. That chain's daemon
+side currently only exists for 4 generic, already-tested primitives
+(NOOP/HEALTH_CHECK/READ_METADATA/WRITE_TEST_ARTIFACT) plus npm
+typecheck/test — not for system status, Ollama, filesystem browsing, MCP
+listing, browser control, or n8n control. Building real daemon executors
+and remote-task routing for all 6 would be substantial new engineering
+(new executor files, new claimable task types, extending the registry
+allow-list, wiring the chat surface to `/api/devices/{id}/commands`) —
+outside the scope of a "product-gap repair" pass and not something to do
+silently. **Per this pass's own explicit instruction not to fake a PASS
+result, Sections 8-13 are reported here as BLOCKED on a real, documented
+architectural gap rather than marked passing or worked around.**
+
 ## Code changes in this pass
 
 - `src/daemon/config/index.ts`, `src/daemon/api/client.ts` — Protection
