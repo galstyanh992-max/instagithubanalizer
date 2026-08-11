@@ -164,6 +164,107 @@ declared passing on the strength of the API check alone.
 reproducible server error on a route the dashboard calls unconditionally
 on load.
 
+## Product-gap repair pass (continuation, code-complete / deploy-pending)
+
+Scope: master prompt "JARVIS VERCEL PREVIEW — PRODUCT-GAP REPAIR + REMOTE E2E
+CONTINUATION," Sections 1-14. Fixes for the two Section-7/translate defects
+found above are implemented, locally verified, committed (`49199b5`, pushed),
+and additive to this report. **Live verification against a fresh Preview
+deployment (Sections 6, 15+) is blocked** — see Blocker below — so the
+statuses here are code-level, not yet deployment-confirmed.
+
+### Root cause, confirmed with real evidence (not theory)
+
+Pulled directly from Vercel's own runtime-error aggregation
+(`get_runtime_errors`, not guessed): `[api] error: MockMode`, count=19,
+route=`/api/translate`, `lastDeployment=dpl_DLkAyCLPhb7YSV3CYaLPx9XUq6n7`.
+Traced through `AiProviderRouter.chat()`: when zero AI providers are
+registered server-side (no `OPENROUTER_API_KEY`/etc. was ever set on this
+Vercel Preview — only Supabase/DB/daemon-auth vars were), `getProviderForIntent`
+returns `{isMock: true}` and `chat()` throws `Error("MockMode")` — a sentinel
+the codebase's own comment says is meant to be caught by callers to produce a
+mock reply, but `/api/translate/route.ts` never caught it, so it fell through
+to `lib/api.ts`'s generic `safe()` → 500.
+
+Trigger, confirmed by reading the render tree, not assumed: `RussianInterfaceTranslator`
+is mounted globally in `src/app/layout.tsx`, but the actual visible dashboard
+at `/` is a static HTML/JS "cockpit" (`public/dashboard/index.html` +
+`live.js`) loaded via `<iframe>` in `src/app/page.tsx` — a separate document
+the translator's `document.body` walk never touches. The English strings
+actually triggering `/api/translate` come from `src/components/settings/pc-profile-settings.tsx`
+("My PC Profile" — Profile name, CPU, GPU, VRAM (GB), etc.), a React
+component rendered in the *outer* Next.js tree (opened from the cockpit's
+"НАСТРОЙКИ"/Settings action) and therefore within the translator's reach.
+
+### Fixes applied (all pure code; none require Vercel credentials to implement)
+
+1. `src/app/api/translate/route.ts` — catches the `MockMode` sentinel and
+   returns `{translations: {}}`-shaped originals-unchanged instead of an
+   unhandled 500. Never fabricates a translation; matches what the client
+   already tolerates on a non-200 response.
+2. `src/components/i18n/russian-interface-translator.tsx` — added the ~19
+   real PC-Profile field labels to the static `EXACT_TRANSLATIONS`
+   dictionary (resolved locally, never reach the network again), and
+   deferred the initial full-`document.body` `TreeWalker` pass to
+   `requestIdleCallback` (setTimeout fallback) instead of running it
+   synchronously at mount — a small, targeted mitigation for the
+   previously-documented ~3.2s blocked-interaction INP finding, aimed at
+   the one synchronous DOM-walk this component performs.
+3. `public/dashboard/index.html` + `public/dashboard/live.js` — added a
+   fourth "Устройства" (Devices) tab to the existing right-sidebar
+   Projects/Tasks/Agents tab group (same component pattern, same 20s poll
+   cadence via the existing `refreshEntities()` loop). Renders real device
+   status/heartbeat/registry revision/program+capability counts straight
+   from `/api/devices/status` — no hardcoded counts — and a full
+   program-by-program detail view (installed/enabled/running/health) via
+   the dashboard's existing `openText()` pattern, reused rather than
+   building a second UI surface. OFFLINE handling (`UNKNOWN_DEVICE_OFFLINE`)
+   needed no new client logic — `registry-projection.ts`'s
+   `markProjectionOffline()` already forces it server-side; the UI just
+   renders whatever the API honestly returns.
+
+### Local verification (regression, Section 26)
+
+- `npm run check:runtime-boundary` → `VERCEL_LOCAL_IMPORT_VIOLATIONS=0` (+8
+  pre-existing documented false-positive exclusions, unchanged).
+- `npx tsc --noEmit` (root config) → clean, 0 errors.
+- `npx tsc --noEmit --project src/daemon/tsconfig.json` → clean, 0 errors.
+- `npx eslint` on all 4 touched files → clean, 0 errors/warnings.
+- `next build` and `vitest run` could **not** complete in this sandbox: both
+  fail/hang on a pre-existing missing native binding
+  (`@rolldown/binding-linux-x64-gnu`) unrelated to any file touched this
+  pass — a sandbox toolchain gap, not a regression introduced here.
+  Documented rather than silently skipped or worked around.
+
+### Blocker: no live redeploy possible this session
+
+Sections 6/7/15 (dashboard match, realtime online/offline, translate 500
+count on the live Preview) and Sections 16-22 (remote text/tool E2E) all
+require testing against a **freshly deployed** Preview carrying these code
+changes. This session has no path to trigger that deploy:
+
+- No Vercel PAT/token in the Linux sandbox environment (checked: no cached
+  CLI auth, no `VERCEL*` env var).
+- No Vercel CLI auth on the Windows side either (checked:
+  `%LOCALAPPDATA%\com.vercel.cli` has only a `Cache` folder, no
+  `auth.json`; `vercel env ls` there fails with "Could not retrieve
+  Project Settings").
+- The connected Vercel MCP tool (`c3c3a770-...`) is real and authenticated
+  (used above for `get_runtime_errors`/`get_project`/`list_teams`,
+  confirming project `prj_BqioTVaWMZyB9MHi0HFkj34T612R` /
+  team `team_l9AKRwnO9Q4sSfcFgYdXMwZ1`) but exposes observability,
+  deployment-protection, and greenfield file-upload deploys — no
+  incremental "redeploy this existing git-linked project" or environment-variable
+  management tool.
+- `deploy_to_vercel` (file-tree upload) exists but is documented for
+  shipping a freshly generated app; re-uploading this project's full
+  several-hundred-file tree through it is impractical and was not
+  attempted.
+
+Net effect: the fixes are real, targeted, and locally verified, but
+**unconfirmed live** until either a Vercel deploy token is provided again
+or the deploy is run from a session/tool that has one.
+
 ## Code changes in this pass
 
 - `src/daemon/config/index.ts`, `src/daemon/api/client.ts` — Protection
