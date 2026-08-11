@@ -969,6 +969,10 @@
       projects: ["Проекты", "/projects"],
       tasks: ["Задачи", "/board"],
       agents: ["Агенты", "/agents"],
+      // No dedicated route for "devices" -- it renders inline from
+      // /api/devices/status below, same as the other tabs render inline
+      // from their own APIs; only the module-drilldown (openModule) is
+      // skipped for this tab.
     }[activeTab];
     if (tabModule) openModule(tabModule[0], tabModule[1]);
     refreshEntities();
@@ -1019,6 +1023,42 @@
             refreshEntities();
           },
         })));
+      } else if (activeTab === "devices") {
+        // Real HOME-PC device + registry-projection state (see
+        // src/app/api/devices/status/route.ts). No local registry lives
+        // here or is invented client-side -- everything rendered below is
+        // exactly what that endpoint returns, including the server's own
+        // ONLINE/OFFLINE staleness computation and the forced
+        // UNKNOWN_DEVICE_OFFLINE program/capability state when a device
+        // isn't ONLINE.
+        const d = await api("/api/devices/status");
+        renderEntities((d.devices || []).map((dev) => {
+          const online = dev.status === "ONLINE";
+          const reg = dev.registryProjection;
+          const heartbeat = dev.lastHeartbeatAt ? new Date(dev.lastHeartbeatAt).toLocaleString("ru-RU") : "никогда";
+          const regLine = reg
+            ? `Программы ${reg.programsSummary?.installed ?? "?"}/${reg.programs.length} · Возможности ${reg.capabilitiesSummary?.installed ?? "?"}/${reg.capabilities.length} · ревизия ${reg.revision.slice(0, 10)}`
+            : "реестр недоступен";
+          return {
+            name: dev.name,
+            state: dev.status,
+            tone: online ? "" : (dev.status === "DISABLED" ? "off" : "warn"),
+            progress: online ? 100 : 0,
+            meta: `${heartbeat} · ${regLine}`,
+            onClick: () => openText(
+              dev.name,
+              `Статус: ${dev.status}\n` +
+              `Последний heartbeat: ${heartbeat}\n` +
+              `Версия демона: ${dev.daemonVersion || "—"}\n` +
+              `Активных задач: ${dev.runningTaskCount}\n` +
+              (reg
+                ? `Ревизия реестра: ${reg.revision}\nСформировано: ${new Date(reg.generatedAt).toLocaleString("ru-RU")}\n\n` +
+                  `ПРОГРАММЫ (${reg.programs.length}):\n` +
+                  reg.programs.map((p) => `• ${p.name} — installed:${p.installed} enabled:${p.enabled} running:${p.running} health:${p.health}`).join("\n")
+                : "\nРеестр недоступен для этого устройства.")
+            ),
+          };
+        }));
       } else {
         const d = await api("/api/agents");
         renderEntities((d.agents || []).map((a) => ({

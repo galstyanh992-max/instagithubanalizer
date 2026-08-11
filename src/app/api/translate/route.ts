@@ -30,13 +30,31 @@ export const POST = safe(async (request: Request) => {
 
   if (!texts.length) return ok({ translations: {} });
 
-  const raw = await aiProviderRouter.chat(
-    "analysis",
-    "Ты переводишь интерфейс приложения на русский. Верни только валидный JSON с объектом translations. " +
-      "Каждый исходный текст должен быть ключом, а его русский перевод — значением. " +
-      "Не переводи названия продуктов, репозиториев, URL, пути файлов, команды, код, ключи JSON, версии и лицензии.",
-    `Переведи на русский следующие тексты интерфейса:\n${JSON.stringify(texts)}`,
-  );
-
-  return ok({ translations: parseTranslations(raw, texts) });
+  try {
+    const raw = await aiProviderRouter.chat(
+      "analysis",
+      "Ты переводишь интерфейс приложения на русский. Верни только валидный JSON с объектом translations. " +
+        "Каждый исходный текст должен быть ключом, а его русский перевод — значением. " +
+        "Не переводи названия продуктов, репозиториев, URL, пути файлов, команды, код, ключи JSON, версии и лицензии.",
+      `Переведи на русский следующие тексты интерфейса:\n${JSON.stringify(texts)}`,
+    );
+    return ok({ translations: parseTranslations(raw, texts) });
+  } catch (error) {
+    // aiProviderRouter.chat() throws a bare Error("MockMode") when no AI
+    // provider is registered server-side (see AiProviderRouter.chat) --
+    // documented there as "will be caught by service to generate mock
+    // reply", but this route previously didn't catch it, so it fell
+    // through to the generic 500 in lib/api's safe() wrapper. Translation
+    // is a non-critical UI enhancement (the client already tolerates a
+    // failed/empty response and keeps the original English text -- see
+    // russian-interface-translator.tsx), so "no provider configured" is a
+    // normal, expected outcome here, not a server error. We return the
+    // originals unchanged (never a fabricated translation) rather than a
+    // fake success with invented Russian text.
+    if (error instanceof Error && error.message === "MockMode") {
+      console.warn("[api/translate] no AI provider configured; returning originals unchanged");
+      return ok({ translations: Object.fromEntries(texts.map((t) => [t, t])) });
+    }
+    throw error;
+  }
 });

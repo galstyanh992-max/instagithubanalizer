@@ -66,6 +66,31 @@ const EXACT_TRANSLATIONS: Record<string, string> = {
   "Safe": "Безопасно",
   "Warning": "Предупреждение",
   "Risk": "Риск",
+  // PC Profile settings tab (src/components/settings/pc-profile-settings.tsx) --
+  // added because this static, fixed set of field labels was previously
+  // uncovered by the dictionary and re-sent to /api/translate on every
+  // dashboard load that opened Settings, per Section 10 of the Preview
+  // product-gap repair pass.
+  "My PC Profile": "Мой профиль ПК",
+  "Profile name": "Имя профиля",
+  "OS": "ОС",
+  "System type": "Тип системы",
+  "CPU": "ЦП",
+  "CPU cores hint": "Подсказка по ядрам ЦП",
+  "GPU": "Видеокарта",
+  "RAM (GB)": "ОЗУ (ГБ)",
+  "VRAM (GB)": "Видеопамять (ГБ)",
+  "Storage total (GB)": "Хранилище всего (ГБ)",
+  "Storage used (GB)": "Хранилище занято (ГБ)",
+  "Storage free (GB)": "Хранилище свободно (ГБ)",
+  "Python version": "Версия Python",
+  "Node.js version": "Версия Node.js",
+  "Docker": "Docker",
+  "Git": "Git",
+  "CUDA (locked)": "CUDA (заблокировано)",
+  "ROCm": "ROCm",
+  "Save PC Profile": "Сохранить профиль ПК",
+  "Saving...": "Сохранение...",
 };
 
 function translate(value: string): string {
@@ -181,7 +206,20 @@ export function RussianInterfaceTranslator() {
       translationTimer = setTimeout(() => void requestTranslations(), 200);
     };
 
-    translateTree(document.body, unknownTexts);
+    // The initial pass walks the *entire* document.body with a TreeWalker --
+    // synchronously, at mount, it competes with hydration and the Three.js
+    // avatar/cockpit canvas init for the main thread. Deferred to idle time
+    // (with a setTimeout fallback for Safari, which lacks
+    // requestIdleCallback) as a small, targeted fix for the INP regression
+    // documented in reports/JARVIS_VERCEL_PREVIEW_E2E.md (~3.2s blocked
+    // interaction on <body>) rather than a broader rewrite. The
+    // MutationObserver itself is cheap to register and stays synchronous so
+    // no DOM mutations are missed while the initial pass is deferred.
+    const runInitialPass = () => translateTree(document.body, unknownTexts);
+    const idleHandle: number | ReturnType<typeof setTimeout> =
+      typeof requestIdleCallback === "function"
+        ? requestIdleCallback(runInitialPass, { timeout: 1000 })
+        : setTimeout(runInitialPass, 0);
     scheduleRemoteTranslation();
     const observer = new MutationObserver((records) => {
       for (const record of records) {
@@ -201,6 +239,8 @@ export function RussianInterfaceTranslator() {
     return () => {
       observer.disconnect();
       if (translationTimer) clearTimeout(translationTimer);
+      if (typeof requestIdleCallback === "function") cancelIdleCallback(idleHandle as number);
+      else clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
     };
   }, []);
 
