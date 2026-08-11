@@ -162,6 +162,89 @@
     logTimer = setTimeout(() => log.classList.remove("is-visible"), 45000);
   }
 
+  /* ══ REMOTE CAPABILITY COMMANDS ══
+     This cockpit (public/dashboard/*) is a standalone, no-build vanilla-JS
+     page — a separate runtime from the React tree (src/components/jarvis/
+     use-jarvis.ts + parse-remote-capability-command.ts also implement this
+     same phrase-detection + task-create-and-poll flow, but that hook is
+     only reachable from JarvisUnifiedConsole, which nothing currently
+     mounts). Duplicated here, deliberately, rather than imported, because
+     this file has no bundler/module system; the phrase list and the real
+     execution chain (POST /api/devices/[id]/commands ->
+     src/daemon/capabilities/** -> GET /api/tasks/[id] polling) are the
+     same contract described in src/lib/jarvis/capabilities/envelope.ts. */
+  const REMOTE_CAPABILITY_PATTERNS = [
+    { re: /скажи состояние систем|состояние систем[ыа]|как дела (с )?систем/i, capability: "system", operation: "status", confirmation: "Проверяю состояние системы на HOME-PC…" },
+    { re: /как[иа]е модели ollama установлен|список моделей ollama|модели ollama/i, capability: "ollama", operation: "models", confirmation: "Запрашиваю список моделей Ollama на HOME-PC…" },
+    { re: /покажи файлы корня проекта|файлы корня проекта|листинг проекта/i, capability: "filesystem", operation: "list", confirmation: "Получаю листинг корня проекта на HOME-PC…" },
+    { re: /покажи активные mcp сервер|активные mcp|список mcp сервер/i, capability: "mcp", operation: "list", confirmation: "Проверяю активные MCP-серверы на HOME-PC…" },
+    { re: /открой браузер и безопасн(ую|ой) тестов(ую|ой) страниц|открой браузер и тестовую страницу/i, capability: "browser", operation: "open", confirmation: "Открываю браузер и безопасную тестовую страницу на HOME-PC…" },
+    { re: /запусти (safe )?smoke[- ]?тест n8n|проверь n8n smoke|smoke workflow n8n/i, capability: "n8n", operation: "smoke", confirmation: "Запускаю проверенный smoke-workflow n8n на HOME-PC…" },
+    { re: /состояние n8n|n8n запущен/i, capability: "n8n", operation: "health", confirmation: "Проверяю состояние n8n на HOME-PC…" },
+  ];
+
+  function matchRemoteCapability(text) {
+    const t = (text || "").toLowerCase();
+    for (const entry of REMOTE_CAPABILITY_PATTERNS) {
+      if (entry.re.test(t)) return entry;
+    }
+    return null;
+  }
+
+  async function pollTaskUntilDone(taskId, timeoutMs = 180000, intervalMs = 1500) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      try {
+        const data = await api(`/api/tasks/${encodeURIComponent(taskId)}`);
+        const task = data.task;
+        if (task && (task.status === "succeeded" || task.status === "failed")) return task;
+      } catch { /* transient — keep polling until timeout */ }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+    throw new Error("Превышено время ожидания выполнения команды на HOME-PC");
+  }
+
+  function summarizeCapabilityResult(resultJson) {
+    if (!resultJson) return "Готово.";
+    try {
+      const parsed = JSON.parse(resultJson);
+      const pretty = JSON.stringify(parsed, null, 2);
+      return pretty.length > 3000 ? pretty.slice(0, 3000) + "\n… (обрезано)" : pretty;
+    } catch { return resultJson; }
+  }
+
+  async function runRemoteCapability(match) {
+    pushMsg("bot", match.confirmation);
+    setState("thinking", { source: "chat" });
+    try {
+      const statusData = await api("/api/devices/status");
+      const devices = statusData.devices || [];
+      const device = devices.find((d) => d.status === "ONLINE") || devices[0];
+      if (!device) throw new Error("Нет зарегистрированных устройств HOME-PC");
+      if (device.status !== "ONLINE") throw new Error(`Устройство «${device.name}» сейчас OFFLINE — команда не может быть выполнена`);
+
+      const idempotencyKey = `chat:${device.id}:${match.capability}:${match.operation}:${Date.now()}`;
+      const createData = await api(`/api/devices/${encodeURIComponent(device.id)}/commands`, {
+        method: "POST",
+        body: JSON.stringify({ capability: match.capability, operation: match.operation, idempotencyKey, source: "chat" }),
+      });
+
+      const finalTask = await pollTaskUntilDone(createData.task.id);
+      const succeeded = finalTask.status === "succeeded";
+      const resultText = succeeded
+        ? summarizeCapabilityResult(finalTask.result)
+        : `Ошибка выполнения на HOME-PC: ${finalTask.result || "неизвестная ошибка"}`;
+      pushMsg(succeeded ? "bot" : "err", resultText);
+      setState(succeeded ? "smiling" : "sad", { duration: 2200 });
+      if (succeeded) speak("Готово. Результат в чате.");
+    } catch (e) {
+      pushMsg("err", e.message);
+      setState("sad", { duration: 2400 });
+    } finally {
+      refreshEntities();
+    }
+  }
+
   function runAction(action) {
     if (action.type === "navigate") return openModule(action.label || "МОДУЛЬ", action.target);
     if (action.type === "api_call") {
@@ -265,6 +348,20 @@
   async function sendCommand(message) {
     pushMsg("user", message);
     history.push({ role: "user", content: message });
+
+    // Remote capability commands (real system status / Ollama / filesystem
+    // / MCP / browser / n8n on HOME-PC, via the daemon) take priority over
+    // the general AI chat route — a fundamentally different, task-based
+    // flow. See REMOTE_CAPABILITY_PATTERNS above.
+    if (selectedChatFiles.length === 0) {
+      const capabilityMatch = matchRemoteCapability(message);
+      if (capabilityMatch) {
+        toast("ЗАПРОС ОТПРАВЛЕН");
+        await runRemoteCapability(capabilityMatch);
+        return;
+      }
+    }
+
     setState("thinking", { source: "chat" });
     toast("ЗАПРОС ОТПРАВЛЕН");
     let uploaded = [];
