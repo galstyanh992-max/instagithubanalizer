@@ -6,6 +6,7 @@ import { codexSubscriptionProvider } from "@/lib/ai-provider/codex-subscription"
 import { db } from "@/lib/db";
 import { ollamaAdapter } from "@/lib/jarvis/platform/ollama-adapter";
 import { decideOllamaLocalRoute, isHeavyAiIntent } from "@/lib/ai-provider/ollama-local/quality-policy";
+import { buildOpenCodeGoConfig } from "@/lib/ai-provider/opencode-go/adapter";
 
 export type AiIntent =
   | "chat/general"
@@ -132,6 +133,7 @@ export class AiProviderRouter {
       { id: codexId, role: "heavy-reasoning" as ProviderRole },
       { id: "ollama-local", role: "primary-fast" as ProviderRole },
       { id: "openrouter", role: "fallback" as ProviderRole },
+      { id: "opencode-go", role: "fallback" as ProviderRole },
       { id: "gemini", role: "fallback" as ProviderRole },
       { id: "openai", role: "fallback" as ProviderRole },
       { id: "groq", role: "fallback" as ProviderRole },
@@ -278,7 +280,14 @@ export class AiProviderRouter {
     const model = preferredModel
       ?? (providerName === "ollama-local"
         ? (await ollamaAdapter.models()).find((item) => /phi4-mini/i.test(item.name))?.name
-        : entry?.config.defaultModel)
+        // OpenCode Go is registered outside PROVIDER_ENTRIES (per-model protocol
+        // dispatch, not a single OpenAICompatibleConfig — see
+        // src/lib/ai-provider/opencode-go/adapter.ts), so getProviderEntryById()
+        // never has an entry for it. Resolve its default model explicitly instead
+        // of silently falling through to "".
+        : providerName === "opencode-go"
+          ? buildOpenCodeGoConfig().defaultModel
+          : entry?.config.defaultModel)
       ?? "";
 
     const request: CompletionRequest = {

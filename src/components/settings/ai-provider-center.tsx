@@ -115,7 +115,8 @@ export function AiProviderCenter() {
 
         <div className="space-y-2">
           <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Резервные поставщики</div>
-          <StatusRow label="OpenRouter" {...rowProps("openrouter")} />
+          <StatusRow label="OpenRouter" {...rowProps("openrouter")} subtext="Cloud-tier: cost-aware model routing (deepseek-v4-flash и др.)" />
+          <StatusRow label="OpenCode Go" {...rowProps("opencode-go")} subtext="Cloud-tier: OpenAI/Responses/Anthropic-протоколы по модели" />
           <StatusRow label="Gemini" {...rowProps("gemini")} />
           <StatusRow label="OpenAI" {...rowProps("openai")} />
           <StatusRow label="Groq" {...rowProps("groq")} />

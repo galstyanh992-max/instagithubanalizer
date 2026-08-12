@@ -28,8 +28,13 @@ const openRouterEntry: ProviderConfigEntry = {
     defaultModelEnv: 'OPENROUTER_MODEL',
     // Used only when OPENROUTER_MODEL is absent. Keep this aligned with
     // OpenRouter's catalogue so a valid provider is never called with a
-    // non-existent default model.
-    fallbackModel: 'openai/gpt-4o',
+    // non-existent default model. Verified live 2026-08-12: tools-capable,
+    // ~1M context, cheapest prompt+completion pricing among the benchmarked
+    // candidate set (~$0.14/$0.28 per 1M tokens) — see
+    // reports/JARVIS_PROVIDER_MODEL_BENCHMARK.md. Was 'openai/gpt-4o', which
+    // is neither the cheapest nor the strongest option available and had no
+    // benchmark evidence behind it.
+    fallbackModel: 'deepseek/deepseek-v4-flash',
     siteUrlEnv: 'OPENROUTER_SITE_URL',
     siteNameEnv: 'OPENROUTER_SITE_NAME',
     timeoutMsEnv: 'OPENROUTER_TIMEOUT_MS',

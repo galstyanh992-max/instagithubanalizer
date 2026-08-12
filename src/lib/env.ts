@@ -26,10 +26,17 @@ const envSchema = z.object({
   GLM_BASE_URL: z.string().default("https://open.bigmodel.cn/api/paas/v4"),
   GLM_MODEL: z.string().default("glm-5.2"),
 
-  // OpenRouter (Fallback + media models)
+  // OpenRouter (cost-aware cloud tier + media models)
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_BASE_URL: z.string().default("https://openrouter.ai/api/v1"),
-  OPENROUTER_MODEL: z.string().default("anthropic/claude-3-5-sonnet-20240620"),
+  // Benchmark-verified live on OpenRouter as of 2026-08-12 (406 models in
+  // catalog, tools-capable, ~1M context, cheapest prompt+completion pricing
+  // among the master-prompt candidate set). See reports/JARVIS_PROVIDER_MODEL_BENCHMARK.md.
+  OPENROUTER_MODEL: z.string().default("deepseek/deepseek-v4-flash"),
+  OPENROUTER_SITE_URL: z.string().default(""),
+  OPENROUTER_SITE_NAME: z.string().default("JARVIS"),
+  OPENROUTER_TIMEOUT_MS: z.string().default(""),
+  OPENROUTER_MAX_RETRIES: z.string().default(""),
 
   // OpenRouter media models
   OPENROUTER_IMAGE_MODEL: z.string().default("google/gemini-3.1-flash-lite-image"),
@@ -38,6 +45,28 @@ const envSchema = z.object({
   OPENROUTER_TRANSCRIPTION_MODEL: z.string().default("openai/whisper-large-v3"),
   OPENROUTER_AUDIO_FORMAT: z.string().default("wav"),
   OPENROUTER_AUDIO_VOICE: z.string().default("alloy"),
+
+  // OpenCode Go — server/local-only credentials (HOME-PC daemon runtime).
+  // Never expose under NEXT_PUBLIC_*, never send through task payloads,
+  // Realtime events, artifacts, browser responses, logs, or reports.
+  // Models use three different upstream protocols (see
+  // src/lib/ai-provider/opencode-go/protocol-map.ts) — most are OpenAI Chat
+  // Completions compatible, gpt-5.6-luna uses the Responses API, and the
+  // Qwen/MiniMax family uses the Anthropic Messages API.
+  OPENCODE_GO_API_KEY: z.string().default(""),
+  OPENCODE_GO_BASE_URL: z.string().default("https://opencode.ai/zen/go/v1"),
+  OPENCODE_GO_MODELS_URL: z.string().default("https://opencode.ai/zen/go/v1/models"),
+  OPENCODE_GO_CHAT_URL: z.string().default("https://opencode.ai/zen/go/v1/chat/completions"),
+  OPENCODE_GO_MESSAGES_URL: z.string().default("https://opencode.ai/zen/go/v1/messages"),
+  OPENCODE_GO_RESPONSES_URL: z.string().default("https://opencode.ai/zen/go/v1/responses"),
+  // Auth-verified live 2026-08-12 (glm-5.2/kimi-k2.7-code/mimo-v2.5/deepseek-v4-pro
+  // all returned HTTP 200). deepseek-v4-flash on OpenCode Go specifically
+  // returns 403 RegionError ("hosted in China, requires explicit opt-in") —
+  // that model is routed through OpenRouter instead, not disabled globally.
+  OPENCODE_GO_MODEL: z.string().default("deepseek-v4-pro"),
+  OPENCODE_GO_TIMEOUT_MS: z.string().default(""),
+  OPENCODE_GO_MAX_RETRIES: z.string().default(""),
+
   // OpenAI (Fallback + GPT-5.5 Thinking orchestrator)
   OPENAI_API_KEY: z.string().default(""),
   OPENAI_BASE_URL: z.string().default("https://api.openai.com/v1"),
@@ -166,6 +195,7 @@ export const isAiConfigured = () =>
     Boolean(env.OLLAMA_CLOUD_API_KEY) ||
     Boolean(env.GLM_API_KEY) ||
     Boolean(env.OPENROUTER_API_KEY) ||
+    Boolean(env.OPENCODE_GO_API_KEY) ||
     Boolean(env.GEMINI_API_KEY) ||
     Boolean(env.OPENAI_API_KEY) ||
     Boolean(env.OPENAI_THINKING_API_KEY) ||

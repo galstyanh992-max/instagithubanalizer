@@ -32,6 +32,7 @@ const PROVIDERS = [
   ["ollama-cloud", "Ollama Cloud"],
   ["glm", "GLM"],
   ["openrouter", "OpenRouter"],
+  ["opencode-go", "OpenCode Go"],
   ["openai", "OpenAI API"],
   ["openai-thinking", "OpenAI Thinking API"],
   ["gemini", "Google Gemini"],

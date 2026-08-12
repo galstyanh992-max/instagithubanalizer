@@ -8,6 +8,7 @@ import { resolveDefaultProviderId } from './default-provider';
 import { codexSubscriptionProvider } from './codex-subscription';
 import { CodexChatAdapter } from './codex-subscription/adapter';
 import { OllamaLocalProvider } from './ollama-local/adapter';
+import { OpenCodeGoProvider, buildOpenCodeGoConfig, isOpenCodeGoConfigured } from './opencode-go/adapter';
 
 let initialized = false;
 
@@ -49,6 +50,30 @@ async function registerOllamaLocal(): Promise<void> {
   }
 }
 
+// OpenCode Go — additional cloud provider inside the existing Provider
+// Router (not a second router). Credentials (OPENCODE_GO_API_KEY) stay
+// server/HOME-PC-only per the runtime boundary; this function only ever
+// runs where env vars are readable (never in browser code). A missing or
+// invalid key must not block the rest of the provider stack from starting.
+async function registerOpenCodeGo(): Promise<void> {
+  try {
+    const config = buildOpenCodeGoConfig();
+    if (!isOpenCodeGoConfigured(config)) {
+      logger.info('[AI Provider] OpenCode Go skipped: OPENCODE_GO_API_KEY not set.');
+      return;
+    }
+    const provider = new OpenCodeGoProvider(config);
+    if (await provider.isAvailable()) {
+      providerRegistry.register(provider);
+      logger.info('[AI Provider] Registered OpenCode Go provider.');
+    } else {
+      logger.warn('[AI Provider] OpenCode Go configured but not reachable (models endpoint check failed).');
+    }
+  } catch (error) {
+    logger.warn({ err: error }, '[AI Provider] OpenCode Go registration failed.');
+  }
+}
+
 /**
  * Initialize all AI providers at application startup.
  * Server-only by construction; do not import this from client components.
@@ -74,6 +99,7 @@ export async function initProviders(): Promise<void> {
   // It runs the official local Codex CLI/app-server, independent of API keys.
   await registerCodexChatBridge();
   await registerOllamaLocal();
+  await registerOpenCodeGo();
 
   const registeredIds = providerRegistry.listIds();
   if (registeredIds.length > 0) {
