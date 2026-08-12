@@ -122,15 +122,34 @@ each batch of routes is migrated.
   detected, voice commands never reach real capability execution, TTS is
   Russian-only). Nothing in this pass touched the voice pipeline. Fixing it
   requires a live browser + microphone on the Windows machine.
-- **Wiring `/api/daemon/tasks/claim` execution to real local capabilities**
+- ~~**Wiring `/api/daemon/tasks/claim` execution to real local capabilities**
   (Ollama, Desktop Commander, MCP, browser) for *remote-command* tasks — the
-  daemon's `executeTask` currently only understands mock commands (`NOOP`,
-  `WRITE_TEST_ARTIFACT`, `HEALTH_CHECK`, `READ_METADATA`) plus a generic
-  `ExecutionPlan` step-runner for the multi-agent orchestrator. There is no
-  existing "chat/voice message → remote AgentTask → daemon executes it →
-  result streams back to the browser" path yet. Building one honestly is a
-  significant feature, not a patch, and this pass deliberately did not
-  attempt it blind.
+  daemon's `executeTask` currently only understands mock commands...~~
+  **RESOLVED 2026-08-12** (follow-up pass, "BUILD REAL DAEMON EXECUTION FOR
+  ALL 6 REMOTE CAPABILITIES"). A governed `DaemonCapabilityRegistry`
+  (`src/daemon/capabilities/**`) now dispatches `system.status`,
+  `ollama.{health,models}`, `filesystem.list`, `mcp.list`,
+  `browser.{open,status,stop}`, and `n8n.{health,smoke}` through real
+  local-runtime adapters, gated by the existing `checkPermission()` policy
+  engine, with real per-capability timeouts/`AbortController` cancellation/
+  output caps. The chat surface (`public/dashboard/live.js`'s real, no-build
+  `sendCommand()` — **not** the unreachable React `useJarvis()` hook, see
+  finding below) detects the 6 target phrases, creates a task via
+  `POST /api/devices/{id}/commands`, and polls `GET /api/tasks/{id}` to
+  completion. Verified live: 5 of 6 capabilities executed successfully
+  against the redeployed Preview → HOME-PC daemon → real local
+  service/filesystem/OS, with real, non-fabricated output (real PIDs, real
+  Ollama model metadata, real directory listings, real MCP connection
+  latencies, a real CamoFox browser tab). The 6th (n8n smoke) genuinely
+  attempted execution and correctly, honestly failed because Docker Desktop
+  is not running on HOME-PC right now — verified independently via
+  `docker ps`, not a code defect. Two real routing bugs were found and fixed
+  during this verification (not before it): the React chat wiring built in
+  an earlier pass was never reachable from any mounted page, and a
+  pre-existing local "open browser" quick-command was intercepting the
+  target browser phrase before it could reach the new capability dispatcher.
+  Full detail, per-capability evidence table, and both bug writeups:
+  `reports/JARVIS_VERCEL_PREVIEW_E2E.md` → "Sections 8-13 RESOLVED".
 - **Windows Task Scheduler autostart, daemon restart/offline/reconnect E2E,
   live Ollama/MCP/Desktop Commander E2E, Vercel deployment.** All require
   presence on the actual Windows machine and/or a live Vercel/Supabase

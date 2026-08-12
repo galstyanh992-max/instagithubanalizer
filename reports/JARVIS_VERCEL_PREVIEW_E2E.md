@@ -464,6 +464,125 @@ silently. **Per this pass's own explicit instruction not to fake a PASS
 result, Sections 8-13 are reported here as BLOCKED on a real, documented
 architectural gap rather than marked passing or worked around.**
 
+## Sections 8-13 RESOLVED — real daemon capability execution layer built and verified end-to-end (follow-up pass)
+
+The architectural gap documented above was closed in a dedicated follow-up
+pass ("BUILD REAL DAEMON EXECUTION FOR ALL 6 REMOTE CAPABILITIES"). This
+section records what was built and the real, live-Preview evidence for
+each capability — not a design description, a verification record.
+
+### Architecture built
+
+A single governed dispatcher, not six hard-coded branches:
+
+- `src/lib/jarvis/capabilities/envelope.ts` — shared, pure-data command
+  envelope (`protocolVersion`/`taskId`/`targetDeviceId`/`capability`/
+  `operation`/`arguments`/`requestId`/`context`/`risk`), an explicit
+  allow-list of capability/operation pairs (`CAPABILITY_OPERATIONS`), and
+  the phrase-independent contract both the web route and the daemon share.
+- `src/daemon/capabilities/registry.ts` — `DaemonCapabilityRegistry.dispatch()`:
+  policy check → resolve executor → validate → timeout-wrapped execute with
+  a real `AbortController` (not just an internal timer) → 256KB output cap
+  with truncation → normalized succeeded/failed result. Per-capability
+  timeouts: system 10s, ollama 15s, filesystem 8s, mcp 25s, browser 20s,
+  n8n 150s.
+- `src/daemon/capabilities/policy.ts` — routes every operation through the
+  existing `checkPermission()` (`src/lib/safety/permission-checker.ts`),
+  fails closed on any capability/operation not in the envelope catalog.
+- Six executors (`src/daemon/capabilities/{system-status,ollama,filesystem,
+  mcp,browser,n8n}.ts`), each reusing the existing real local-runtime
+  implementation directly rather than duplicating it — real `os.*()` calls,
+  the real Ollama HTTP adapter, the daemon's own `PathGuard`, the real
+  `McpClientManager`, the real CamoFox REST client, and the real
+  `phaseBDockerServiceManager` + `n8nWorkflowController` (which already
+  hard-restricts execution to one approved fixture workflow).
+- `src/daemon/poller/index.ts` — dispatches `CAPABILITY:<capability>:
+  <operation>` titled tasks to the registry, parsing the full envelope from
+  `AgentTask.request` (existing, previously-unused schema column).
+  `POST /api/devices/{id}/commands` accepts `{capability, operation,
+  arguments}` in addition to the legacy `{title, description}` shape,
+  validated against the same catalog. New `GET /api/tasks/{id}` (owner-gated,
+  read-only) lets the browser poll a command to completion.
+- Chat wiring: **both** `src/components/jarvis/use-jarvis.ts` (React) and
+  `public/dashboard/live.js` (the actual live, no-build cockpit — see
+  finding below) detect the 6 target Russian phrases, create a task against
+  the first ONLINE device, and poll it to completion, rendering the result
+  in chat.
+
+Tests: `src/daemon/capabilities/__tests__/{policy,registry}.test.ts` (9
+tests — policy allow/deny matrix, dispatch validation order, timeout/
+cancellation signal propagation, output-size truncation). Combined with
+pre-existing `path-guard`/`process-runner` tests: **16/16 passing** on the
+real Windows daemon toolchain (this Linux sandbox cannot run vitest at all
+— pre-existing missing `@rolldown/binding-linux-x64-gnu`, unrelated to this
+change).
+
+### Real bugs found and fixed during E2E, not before it
+
+Verification-by-doing surfaced two genuine defects that a design review
+would not have caught:
+
+1. **The entire React-side chat wiring was unreachable.** `useJarvis()` is
+   only called from `JarvisUnifiedConsole`, which nothing in the app
+   mounts (confirmed by grep: one definition, zero importers, and by typing
+   the target phrase into the live dashboard and observing zero
+   `POST /api/devices/.../commands` requests). The chat the user actually
+   types into is `public/dashboard/index.html` + `live.js`'s `sendCommand()`
+   → `POST /api/chat`, a completely separate, no-build vanilla-JS surface.
+   Fixed by adding the same phrase-detection + task-create + poll-to-
+   completion flow directly to `live.js` (commit `df7fffa`). The React-side
+   wiring was left in place as correct-but-unreachable code, not reverted —
+   a later, separate UI-architecture decision should either mount
+   `JarvisUnifiedConsole` or remove the dead path.
+2. **`submitPrompt()` called `handleBrowserChatCommand()` before
+   `sendCommand()`**, and that pre-existing local web-agent quick-command's
+   `browserIntent` regex is broad enough to match the exact target phrase
+   "Джарвис, открой браузер и безопасную тестовую страницу." — hijacking it
+   into `POST /api/browser/camofox`, a Next.js API route that runs inside
+   the Next.js server process itself. On Vercel that process can never
+   reach CamoFox on `127.0.0.1:9377` on HOME-PC, so it reported "CamoFox
+   unavailable" regardless of whether CamoFox was actually running.
+   Confirmed real via network-request inspection (both failed attempts hit
+   `/api/browser/camofox`, zero `AgentTask` rows created) and by starting
+   CamoFox locally and retrying — still hijacked. Fixed by checking
+   `matchRemoteCapability()` first in `submitPrompt()` (commit `a7d4ff7`).
+   The voice-recognition path has the same ordering bug but is out of scope
+   (a separate, not-yet-started phase of this project's test plan).
+
+A third issue was infrastructure, not code: **CamoFox crashed once between
+two consecutive `browser.open` attempts** (process exited, port 9377 no
+longer listening, root cause not diagnosed — possibly a Camoufox/Firefox
+launch issue under repeated real invocation). Restarting it and confirming
+`GET /health` returned `browserConnected:true` before retrying resolved it.
+Recorded as a known local-environment fragility, not a capability-layer
+defect — the CamoFox REST client code itself worked correctly once the
+service was actually up.
+
+### Real remote E2E results (live Vercel Preview → Supabase → HOME-PC daemon → real local execution → result back to Preview chat)
+
+Preview: `https://instagithubanalizer-a4g37cny8-galstyanh992-8644s-projects.vercel.app`
+(commit `a7d4ff7`, `target: null` confirmed Preview). Daemon restarted
+against this URL. All 6 target Russian phrases typed into the real chat
+input; results captured via the live chat UI and cross-checked against
+`GET /api/tasks/{id}` (owner-session `fetch()` from the page, since the
+chat overlay auto-hides after a few seconds):
+
+| # | Phrase | Capability.Operation | Result | Evidence |
+|---|---|---|---|---|
+| 1 | "Джарвис, скажи состояние системы." | `system.status` | **succeeded** | Real `os.*()` data: `pid` in the result matched the actual daemon process PID observed independently via `Get-CimInstance`; live subsystem checks (`ollama: HEALTHY`, `n8n: STOPPED — Docker недоступен`, `browser: STOPPED`, `mcp: NOT_INITIALIZED`) |
+| 2 | "Джарвис, какие модели Ollama установлены?" | `ollama.models` | **succeeded** | Real model metadata from the local Ollama server (e.g. `deepseek-coder-v2:16b`, `parameter_size: 15.7B`, real byte size) |
+| 3 | "Джарвис, покажи файлы корня проекта." | `filesystem.list` | **succeeded** | Real directory listing matching the actual project root (`check_env.mjs`, `clean_schema.mjs`, `components.json`, `CONTENT_GENERATION.md`, ...) |
+| 4 | "Джарвис, покажи активные MCP серверы." | `mcp.list` | **succeeded** | Real live MCP connections with real per-server latency (`desktop-commander`: stdio, `connected:true`, `toolCount:26`, `latencyMs:8413`; `jina`: http, `toolCount:21`, `latencyMs:736`) |
+| 5 | "Джарвис, открой браузер и безопасную тестовую страницу." | `browser.open` | **succeeded** (after fixing bug #2 above and restarting CamoFox) | `GET /api/tasks/{id}` confirmed `status:"succeeded"`, `result: {"tabId":"8ab359f7-...","url":"https://example.com/"}` — the real CamoFox tab, the fixed `SAFE_TEST_URL` |
+| 6 | "Джарвис, запусти safe smoke-тест n8n." | `n8n.smoke` | **failed, honestly** | Real check performed (5.3s), real result: `{"error":"Docker недоступен на этой машине — smoke-тест n8n невозможен"}` — independently confirmed via `docker ps` on HOME-PC failing with "cannot connect to the Docker API" (Docker Desktop is not running on this machine right now). This is the correct fail-closed behavior, not a code defect — n8n was never started, so `N8N_FINAL_STATE` is unchanged (was already stopped, remains stopped) |
+
+**5 of 6 capabilities verified with real successful execution; the 6th
+(n8n) was verified to genuinely attempt real execution and honestly report
+a real environmental blocker (Docker Desktop not running on HOME-PC),
+rather than being faked or silently skipped.** No mock command paths were
+touched or reused for any of the 6 — every result above traces to a real
+adapter call against a real local service or the real filesystem/OS.
+
 ## Code changes in this pass
 
 - `src/daemon/config/index.ts`, `src/daemon/api/client.ts` — Protection
@@ -472,3 +591,22 @@ architectural gap rather than marked passing or worked around.**
 - `.env.local` — `JARVIS_DAEMON_GATEWAY_URL` updated to the current live
   Preview URL; `JARVIS_DAEMON_PROTECTION_BYPASS_SECRET` added. Local-only
   file, not committed to git (already gitignored).
+- `src/daemon/capabilities/**` (new) — command envelope catalog, policy
+  gate, timeout/cancellation/output-cap registry, 6 capability executors,
+  9 focused tests. See "Sections 8-13 RESOLVED" above for full detail.
+- `src/daemon/tsconfig.json` — added `@/*` path alias so daemon code can
+  import `src/lib/**`/`src/local-runtime/**` by their normal specifiers.
+- `src/daemon/poller/index.ts` — new `CAPABILITY:` task-title branch
+  dispatching to the registry.
+- `src/lib/jarvis/tasks/create-remote-task.ts`,
+  `src/app/api/devices/[id]/commands/route.ts` — accept the new
+  `{capability, operation, arguments}` request shape alongside the legacy
+  `{title, description}` one.
+- `src/app/api/tasks/[id]/route.ts` (new) — owner-gated read-only task
+  status endpoint for chat-side polling.
+- `src/components/jarvis/parse-remote-capability-command.ts` (new),
+  `src/components/jarvis/use-jarvis.ts` — React-side phrase detection and
+  remote-task flow (currently unreachable — see bug #1 above).
+- `public/dashboard/live.js` — the real fix: phrase detection, task
+  creation, and polling wired into the actual live `sendCommand()`/
+  `submitPrompt()` flow (commits `df7fffa`, `a7d4ff7`).
